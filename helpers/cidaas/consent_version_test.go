@@ -943,6 +943,40 @@ func TestConsentVersionModel_UnmarshalJSON_ScopesObjectArray(t *testing.T) {
 	}
 }
 
+func TestConsentVersionModel_UnmarshalJSON_ScopesInvalidFormat(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":[1,2,3]}`
+	var cv ConsentVersionModel
+	err := json.Unmarshal([]byte(raw), &cv)
+	if err == nil {
+		t.Fatal("expected error for invalid scopes format, got nil")
+	}
+	if !strings.Contains(err.Error(), "decode consent version scopes") {
+		t.Fatalf("expected decode consent version scopes error, got: %v", err)
+	}
+}
+
+func TestConsentVersionModel_UnmarshalJSON_ScopesNull(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":null}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if cv.Scopes != nil {
+		t.Fatalf("expected nil scopes, got %#v", cv.Scopes)
+	}
+}
+
+func TestConsentVersionModel_UnmarshalJSON_ScopesAbsent(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES"}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if cv.Scopes != nil {
+		t.Fatalf("expected nil scopes when field is absent, got %#v", cv.Scopes)
+	}
+}
+
 func TestConsentVersion_Upsert_ObjectScopesResponse(t *testing.T) {
 	responseBody := `{
 		"success": true,
