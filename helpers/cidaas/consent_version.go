@@ -56,7 +56,11 @@ func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
 	}
 	var scopes []string
 	if err := json.Unmarshal(aux.Scopes, &scopes); err == nil {
-		cv.Scopes = scopes
+		if len(scopes) == 0 {
+			cv.Scopes = nil
+		} else {
+			cv.Scopes = scopes
+		}
 		return nil
 	}
 	var scopeObjects []consentVersionScopeWire
@@ -68,6 +72,9 @@ func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
 		if s.Scope != "" {
 			cv.Scopes = append(cv.Scopes, s.Scope)
 		}
+	}
+	if len(cv.Scopes) == 0 {
+		cv.Scopes = nil
 	}
 	return nil
 }

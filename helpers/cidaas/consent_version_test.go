@@ -977,6 +977,28 @@ func TestConsentVersionModel_UnmarshalJSON_ScopesAbsent(t *testing.T) {
 	}
 }
 
+func TestConsentVersionModel_UnmarshalJSON_ScopesEmptyStringArray(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":[]}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if cv.Scopes != nil {
+		t.Fatalf("expected nil scopes for empty string array, got %#v", cv.Scopes)
+	}
+}
+
+func TestConsentVersionModel_UnmarshalJSON_ScopesObjectArrayAllEmpty(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":[{"scope":""},{"scope":""}]}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if cv.Scopes != nil {
+		t.Fatalf("expected nil scopes when all object scope values are empty, got %#v", cv.Scopes)
+	}
+}
+
 func TestConsentVersion_Upsert_ObjectScopesResponse(t *testing.T) {
 	responseBody := `{
 		"success": true,
