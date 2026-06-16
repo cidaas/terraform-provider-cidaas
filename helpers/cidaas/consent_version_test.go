@@ -920,3 +920,64 @@ func TestConsentVersion_GetLocal_MultipleLocales(t *testing.T) {
 		}
 	}
 }
+
+func TestConsentVersionModel_UnmarshalJSON_ScopesStringArray(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":["developer","profile"]}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if len(cv.Scopes) != 2 || cv.Scopes[0] != "developer" || cv.Scopes[1] != "profile" {
+		t.Fatalf("unexpected scopes: %#v", cv.Scopes)
+	}
+}
+
+func TestConsentVersionModel_UnmarshalJSON_ScopesObjectArray(t *testing.T) {
+	raw := `{"_id":"cv-1","version":1,"consent_id":"c-1","consentType":"SCOPES","scopes":[{"scope":"developer"},{"scope":"profile","allowed_fields":["name"]}]}`
+	var cv ConsentVersionModel
+	if err := json.Unmarshal([]byte(raw), &cv); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+	if len(cv.Scopes) != 2 || cv.Scopes[0] != "developer" || cv.Scopes[1] != "profile" {
+		t.Fatalf("unexpected scopes: %#v", cv.Scopes)
+	}
+}
+
+func TestConsentVersion_Upsert_ObjectScopesResponse(t *testing.T) {
+	responseBody := `{
+		"success": true,
+		"status": 201,
+		"data": {
+			"_id": "ef00c894-246b-48f6-ac25-2fda601935b9",
+			"version": 1,
+			"consent_id": "5ebfc802-ec53-4024-bf94-3769b8d7d5b3",
+			"consentType": "SCOPES",
+			"scopes": [{"scope": "developer"}],
+			"required_fields": ["name"]
+		}
+	}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, responseBody)
+	}))
+	defer server.Close()
+
+	config := NewTestClientConfig(server.URL)
+	consentVersion := NewConsentVersion(config)
+
+	result, err := consentVersion.Upsert(context.Background(), ConsentVersionModel{
+		Version:        1,
+		ConsentID:      "5ebfc802-ec53-4024-bf94-3769b8d7d5b3",
+		ConsentType:    "SCOPES",
+		Scopes:         []string{"developer"},
+		RequiredFields: []string{"name"},
+	})
+	if err != nil {
+		t.Fatalf("Upsert failed: %v", err)
+	}
+	if len(result.Data.Scopes) != 1 || result.Data.Scopes[0] != "developer" {
+		t.Fatalf("unexpected scopes in response: %#v", result.Data.Scopes)
+	}
+}
