@@ -101,6 +101,7 @@ type FieldDefinition struct {
 	InitialDateView string     `json:"initialDateView,omitempty"`
 	Regex           string     `json:"regex,omitempty"`
 	AttributesKeys  []string   `json:"attributesKeys,omitempty"`
+	MatchWith 		string     `json:"matchWith,omitempty"`
 }
 
 type LocaleText struct {

@@ -155,6 +155,7 @@ type FieldDefinition struct {
 	InitialDateView types.String `tfsdk:"initial_date_view"`
 	InitialDate     types.String `tfsdk:"initial_date"`
 	Regex           types.String `tfsdk:"regex"`
+	MatchWith       types.String `tfsdk:"match_with"`
 }
 
 var regFieldSchema = schema.Schema{
@@ -287,6 +288,7 @@ var regFieldSchema = schema.Schema{
 		},
 		// optional: Order of the Field in the UI
 		"order": schema.Int64Attribute{
+			Optional: true,
 			Computed:            true,
 			MarkdownDescription: "The attribute order is used to set the order of the Field in the UI.",
 			PlanModifiers: []planmodifier.Int64{
@@ -427,6 +429,10 @@ var regFieldSchema = schema.Schema{
 						&validateIsMaxMinMsgAvailableForRegex{},
 					},
 				},
+				"match_with": schema.StringAttribute{
+					Optional:            true,
+					MarkdownDescription: "Match with field",
+				},
 			},
 			Default: objectdefault.StaticValue(types.ObjectValueMust(
 				map[string]attr.Type{
@@ -437,6 +443,7 @@ var regFieldSchema = schema.Schema{
 					"initial_date_view": types.StringType,
 					"initial_date":      types.StringType,
 					"regex":             types.StringType,
+					"match_with":        types.StringType,
 				},
 				map[string]attr.Value{
 					"max_length":        types.Int64Null(),
@@ -446,6 +453,7 @@ var regFieldSchema = schema.Schema{
 					"initial_date_view": types.StringNull(),
 					"initial_date":      types.StringNull(),
 					"regex":             types.StringNull(),
+					"match_with":        types.StringNull(),
 				})),
 		},
 	},
@@ -714,6 +722,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"initial_date_view": types.StringType,
 				"initial_date":      types.StringType,
 				"regex":             types.StringType,
+				"match_with":        types.StringType,
 			},
 			map[string]attr.Value{
 				"max_length": func() basetypes.Int64Value {
@@ -733,6 +742,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"initial_date_view": util.StringValueOrNull(&res.Data.FieldDefinition.InitialDateView),
 				"initial_date":      util.TimeValueOrNull(res.Data.FieldDefinition.InitialDate),
 				"regex":             util.StringValueOrNull(&res.Data.FieldDefinition.Regex),
+				"match_with":        util.StringValueOrNull(&res.Data.FieldDefinition.MatchWith),
 			})
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
@@ -1001,6 +1011,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 			MaxLength:       plan.fieldDefinition.MaxLength.ValueInt64Pointer(),
 			InitialDateView: plan.fieldDefinition.InitialDateView.ValueString(),
 			Regex:           plan.fieldDefinition.Regex.ValueString(),
+			MatchWith:       plan.fieldDefinition.MatchWith.ValueString(),
 		}
 		if len(attrKeys) > 0 {
 			regConfig.FieldDefinition.AttributesKeys = attrKeys
