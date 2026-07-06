@@ -2,6 +2,7 @@ package cidaas
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,12 @@ type ConsentVersionReadResponse struct {
 	Data    []ConsentVersionModel `json:"data,omitempty"`
 }
 
+// consentVersionScopeWire matches consent-management-srv v2 responses where scopes are
+// []DetailedFieldsByScope (scope key only is needed for Terraform state).
+type consentVersionScopeWire struct {
+	Scope string `json:"scope"`
+}
+
 type ConsentVersionModel struct {
 	ID             string        `json:"_id,omitempty"`
 	Version        float64       `json:"version,omitempty"`
@@ -30,6 +37,46 @@ type ConsentVersionModel struct {
 	ConsentLocale  ConsentLocale `json:"consent_locale,omitempty"`
 	CreatedAt      string        `json:"created_at,omitempty"`
 	UpdatedAt      string        `json:"updated_at,omitempty"`
+}
+
+// UnmarshalJSON accepts scopes as either []string (request/legacy) or []object with a
+// "scope" field (consent-management-srv POST .../v2/consent/versions response).
+func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
+	type consentVersionModelAlias ConsentVersionModel
+	aux := struct {
+		Scopes json.RawMessage `json:"scopes,omitempty"`
+		consentVersionModelAlias
+	}{}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	*cv = ConsentVersionModel(aux.consentVersionModelAlias)
+	if len(aux.Scopes) == 0 || string(aux.Scopes) == "null" {
+		return nil
+	}
+	var scopes []string
+	if err := json.Unmarshal(aux.Scopes, &scopes); err == nil {
+		if len(scopes) == 0 {
+			cv.Scopes = nil
+		} else {
+			cv.Scopes = scopes
+		}
+		return nil
+	}
+	var scopeObjects []consentVersionScopeWire
+	if err := json.Unmarshal(aux.Scopes, &scopeObjects); err != nil {
+		return fmt.Errorf("decode consent version scopes: %w", err)
+	}
+	cv.Scopes = make([]string, 0, len(scopeObjects))
+	for _, s := range scopeObjects {
+		if s.Scope != "" {
+			cv.Scopes = append(cv.Scopes, s.Scope)
+		}
+	}
+	if len(cv.Scopes) == 0 {
+		cv.Scopes = nil
+	}
+	return nil
 }
 
 type ConsentLocalResponse struct {
