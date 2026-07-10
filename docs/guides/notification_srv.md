@@ -41,9 +41,57 @@ See [examples/resources/cidaas_notification_template_type/resource.tf](https://g
 
 Discover source locale codes: `GET …/templategroups/{copy_from_group_id}/templatefilters` before defining `copy_from_locale`.
 
-Configure **`comm_setting_*`** on the group when you need per-channel service setup ids; resolve ids with **`data.cidaas_notification_service_setups`** where applicable.
+Configure **`comm_setting_*`** on the group when you need per-channel service setup ids; resolve ids with **`data.cidaas_notification_service_setups`** or **`data.cidaas_notification_service_setup`** where applicable.
 
 See [examples/resources/cidaas_notifications_template_group/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notifications_template_group/resource.tf) and [examples/resources/cidaas_notifications_template_group_locale/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notifications_template_group_locale/resource.tf).
+
+### Service setup and provider config (IaC)
+
+Terraform manages communication providers through **notification-srv**, which proxies to **mplace-srv** with a CMI service token (`CMI_BASE_URL`, `ENC_KEY`, `CONFIG_FILE` on notification-srv). Terraform never calls mplace directly.
+
+| notification-srv | mplace-srv | Purpose |
+| --- | --- | --- |
+| `GET/POST/PATCH/DELETE /servicesetups` | `admin/servicesetups/{tenantKey}` | Service setup CRUD |
+| `GET/POST /providerconfigs` | `admin/provconfs/{tenantKey}` | Provider config upsert |
+| `POST /servicesetups/{id}/verifications` | api verify | **Not used by Terraform** — verify in service-desk |
+
+**Install order**
+
+1. **`cidaas_notification_service_setup`** — metadata; `status` is computed (`in-progress` until you verify).
+2. **`cidaas_notification_provider_config`** — credentials via `config_data_wo` + `schemaData` JSON (wizard shape).
+3. **Manual verify** in service-desk (or API outside Terraform).
+4. **`terraform plan`** — refresh shows `status = active` with no config change.
+
+**Tenant:** Do **not** pass `saasInstanceID` / `saas_instance_id`. notification-srv injects the tenant from your instance token metadata.
+
+**Provider config JSON (`schemaData` mode):**
+
+```hcl
+config_data_wo = jsonencode({
+  commProvider = "custom-twilio-sms"
+  commMethod   = "sms"
+  schemaData = {
+    accountSid = var.twilio_account_sid
+    authToken  = var.twilio_auth_token
+  }
+})
+config_data_wo_version = "1"
+```
+
+Required top-level keys: `commProvider`, `commMethod`, `schemaData`. Field names inside `schemaData` must match the mplace JSON schema for that provider (obtain from service-desk wizard or mplace `provconfs/prototypes`).
+
+**Advanced:** set `config_data` to the full stored `configData` from `GET` (import/export); secrets are stored in state.
+
+**Secret rotation:** increment `config_data_wo_version` only; re-verify manually if the provider requires it.
+
+**Troubleshooting**
+
+- **mapSchema / validation errors** — check `commProvider` matches the service setup, and `schemaData` field names match the provider schema.
+- **status stuck `in-progress`** — complete verification in service-desk, then refresh.
+- **Destroy provider config** — Terraform removes state only; delete the service setup (when not `active`) to remove remote provconf.
+
+See [examples/resources/cidaas_notification_service_setup/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notification_service_setup/resource.tf).
+
 
 ### Discover existing templates or groups (graph API)
 
@@ -78,7 +126,7 @@ See [examples/datasources/cidaas_notification_templates.tf](https://github.com/C
 ## Related registry documentation
 
 - Provider schema: **`base_url`**, **`notifications_context_path`**
-- Resources: **`cidaas_notifications_template_group`**, **`cidaas_notifications_template_group_locale`**, **`cidaas_notification_template_type`**, **`cidaas_notification_template`**
-- Data sources: **`cidaas_notification_templates`**, **`cidaas_notification_template_groups`**, **`cidaas_notification_service_setups`**
+- Resources: **`cidaas_notifications_template_group`**, **`cidaas_notifications_template_group_locale`**, **`cidaas_notification_template_type`**, **`cidaas_notification_template`**, **`cidaas_notification_service_setup`**, **`cidaas_notification_provider_config`**
+- Data sources: **`cidaas_notification_templates`**, **`cidaas_notification_template_groups`**, **`cidaas_notification_service_setups`**, **`cidaas_notification_service_setup`**
 
 Run `go generate ./...` after changing schemas so the [Terraform Registry](https://registry.terraform.io/providers/cidaas/cidaas/latest/docs) docs stay in sync.

@@ -31,6 +31,8 @@ const (
 	RESOURCE_TEMPLATE                     = "cidaas_template"                     // nolint:stylecheck
 	RESOURCE_NOTIFICATION_TEMPLATE_TYPE   = "cidaas_notification_template_type"   // nolint:stylecheck
 	RESOURCE_NOTIFICATION_TEMPLATE        = "cidaas_notification_template"        // nolint:stylecheck
+	RESOURCE_NOTIFICATION_SERVICE_SETUP   = "cidaas_notification_service_setup"   // nolint:stylecheck
+	RESOURCE_NOTIFICATION_PROVIDER_CONFIG = "cidaas_notification_provider_config" // nolint:stylecheck
 	RESOURCE_USER_GROUP                   = "cidaas_user_groups"                  // nolint:stylecheck
 	RESOURCE_WEBHOOK                      = "cidaas_webhook"                      // nolint:stylecheck
 )
