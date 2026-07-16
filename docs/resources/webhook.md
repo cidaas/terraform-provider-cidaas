@@ -20,6 +20,9 @@ The Webhook resource in the provider facilitates integration of webhooks in the 
 ## Example Usage
 
 ```terraform
+# Discover webhook-capable event IDs from the tenant catalog.
+data "cidaas_webhook_events" "catalog" {}
+
 # This is a sample configuration for setting up a webhook with multiple authentication options.
 # The available authentication types include apikey_config, totp_config, and cidaas_auth_config.
 
@@ -55,7 +58,7 @@ resource "cidaas_webhook" "sample_webhook" {
 ### Required
 
 - `auth_type` (String) The attribute auth_type is to define how this url is secured from your end.The allowed values are `APIKEY`, `TOTP` and `CIDAAS_OAUTH2`
-- `events` (Set of String) A set of events that trigger the webhook.
+- `events` (Set of String) A set of webhook-capable event IDs that trigger the webhook. Use the `cidaas_webhook_events` data source (or GET /webhook-srv/eventdescriptions?category=webhook) to discover valid values for your tenant.
 - `url` (String) The webhook url that needs to be called when an event occurs.
 
 ### Optional

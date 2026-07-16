@@ -718,17 +718,23 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 			diags = plan.groupRoleRestriction.Filters.ElementsAs(ctx, &filters, false)
 			target := []cidaas.GroupRoleFilters{}
 			for _, f := range filters {
-				rf := &cidaas.RoleFilter{}
+				var rf *cidaas.RoleFilter
 				if !f.RoleFilter.IsNull() && !f.RoleFilter.IsUnknown() {
 					tfrf := &RoleFilter{}
 					diags = f.RoleFilter.As(ctx, tfrf, basetypes.ObjectAsOptions{})
-					diags.Append(assignSetValues(ctx, tfrf.Roles, &rf.Roles)...)
-					rf.MatchCondition = tfrf.MatchCondition.ValueString()
+					candidate := &cidaas.RoleFilter{}
+					diags.Append(assignSetValues(ctx, tfrf.Roles, &candidate.Roles)...)
+					candidate.MatchCondition = tfrf.MatchCondition.ValueString()
+					// Omit empty roleFilter from the API payload so Terraform null and
+					// API-normalized {} do not drift (Go omitempty never skips empty structs).
+					if !candidate.IsEmpty() {
+						rf = candidate
+					}
 				}
 				target = append(target, cidaas.GroupRoleFilters{
 					GroupID:    f.GroupID.ValueString(),
 					GroupType:  f.GroupType.ValueString(),
-					RoleFilter: *rf,
+					RoleFilter: rf,
 				})
 				grr.Filters = target
 			}

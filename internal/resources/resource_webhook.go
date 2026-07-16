@@ -114,12 +114,10 @@ var webhookSchema = schema.Schema{
 		"events": schema.SetAttribute{
 			ElementType: types.StringType,
 			Required:    true,
-			Description: "A set of events that trigger the webhook.",
+			Description: "A set of webhook-capable event IDs that trigger the webhook. " +
+				"Use the `cidaas_webhook_events` data source (or GET /webhook-srv/eventdescriptions?category=webhook) to discover valid values for your tenant.",
 			Validators: []validator.Set{
 				setvalidator.SizeAtLeast(1),
-				setvalidator.ValueStringsAre(
-					stringvalidator.OneOf(cidaas.AllowedEvents...),
-				),
 			},
 		},
 		"apikey_config": schema.SingleNestedAttribute{
@@ -220,6 +218,26 @@ var webhookSchema = schema.Schema{
 	},
 }
 
+func (r *WebhookResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	if r.cidaasClient == nil {
+		return
+	}
+	var config WebhookConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if config.Events.IsNull() || config.Events.IsUnknown() {
+		return
+	}
+	var events []string
+	resp.Diagnostics.Append(config.Events.ElementsAs(ctx, &events, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateWebhookEvents(ctx, r.cidaasClient, events)...)
+}
+
 func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) { //nolint:dupl
 	var plan WebhookConfig
 
@@ -231,6 +249,10 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 		tflog.Error(ctx, "failed to prepare webhook model", util.H{
 			"errors": resp.Diagnostics.Errors(),
 		})
+		return
+	}
+	resp.Diagnostics.Append(validateWebhookEvents(ctx, r.cidaasClient, wbModel.Events)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 	res, err := r.cidaasClient.Webhook.Upsert(ctx, *wbModel)
@@ -381,6 +403,11 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		"webhook_url": wbModel.URL,
 	})
 
+	resp.Diagnostics.Append(validateWebhookEvents(ctx, r.cidaasClient, wbModel.Events)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	tflog.Info(ctx, "Calling Cidaas API to update webhook", util.H{
 		"webhook_id": state.ID.ValueString(),
 	})
@@ -517,4 +544,30 @@ func prepareWebhookModel(ctx context.Context, plan WebhookConfig) (*cidaas.Webho
 		return nil, diags
 	}
 	return &wb, nil
+}
+
+func validateWebhookEvents(ctx context.Context, client *cidaas.Client, events []string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if client == nil || client.Webhook == nil {
+		diags.AddError("Webhook client not configured", "Cannot validate webhook events without a configured Cidaas client.")
+		return diags
+	}
+	allowed, err := client.Webhook.ListWebhookEventIDs(ctx)
+	if err != nil {
+		diags.AddError("failed to list webhook-capable events", util.FormatErrorMessage(err))
+		return diags
+	}
+	allowedSet := make(map[string]struct{}, len(allowed))
+	for _, id := range allowed {
+		allowedSet[id] = struct{}{}
+	}
+	for _, event := range events {
+		if _, ok := allowedSet[event]; !ok {
+			diags.AddError(
+				"Invalid webhook event",
+				fmt.Sprintf("event %q is not a webhook-capable event in this tenant; use the cidaas_webhook_events data source to list valid values", event),
+			)
+		}
+	}
+	return diags
 }

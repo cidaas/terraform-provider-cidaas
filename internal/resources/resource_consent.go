@@ -60,13 +60,15 @@ var consentSchema = schema.Schema{
 			},
 		},
 		"name": schema.StringAttribute{
-			Required:            true,
-			MarkdownDescription: "The name of the consent.",
+			Required: true,
+			MarkdownDescription: "The name of the consent. Cidaas stores this value in lowercase; " +
+				"uppercase input is accepted and normalized on plan.",
 			Validators: []validator.String{
 				stringvalidator.LengthAtLeast(1),
 			},
 			PlanModifiers: []planmodifier.String{
-				&validators.UniqueIdentifier{},
+				validators.ToLower{},
+				validators.CaseInsensitiveUniqueIdentifier{},
 			},
 		},
 		"consent_group_id": schema.StringAttribute{
@@ -181,7 +183,7 @@ func (r *ConsentResource) Read(ctx context.Context, req resource.ReadRequest, re
 			if strings.EqualFold(instance.ConsentName, state.Name.ValueString()) {
 				isAvailable = true
 				id := instance.ID
-				consentName := state.Name.ValueString()
+				consentName := instance.ConsentName
 				createdTime := instance.CreatedTime
 				updatedTime := instance.UpdatedTime
 				state.ID = util.StringValueOrNull(&id)

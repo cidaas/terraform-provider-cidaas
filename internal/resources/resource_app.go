@@ -881,20 +881,27 @@ func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 		for _, grr := range data.GroupRoleRestriction.Filters {
 			groupID := grr.GroupID
 			groupType := grr.GroupType
-			matchCondition := grr.RoleFilter.MatchCondition
-			roles := grr.RoleFilter.Roles
+			var roleFilterValue attr.Value
+			if grr.RoleFilter.IsEmpty() {
+				// API often returns roleFilter: {} when unset; treat as null to match omitted config.
+				roleFilterValue = types.ObjectNull(roleFilterType)
+			} else {
+				matchCondition := grr.RoleFilter.MatchCondition
+				roles := grr.RoleFilter.Roles
+				roleFilterValue = types.ObjectValueMust(
+					roleFilterType,
+					map[string]attr.Value{
+						"match_condition": util.StringValueOrNull(&matchCondition),
+						"roles":           util.SetValueOrNull(roles),
+					},
+				)
+			}
 			objValue := types.ObjectValueMust(
 				filterType,
 				map[string]attr.Value{
-					"group_id":   util.StringValueOrNull(&groupID),
-					"group_type": util.StringValueOrNull(&groupType),
-					"role_filter": types.ObjectValueMust(
-						roleFilterType,
-						map[string]attr.Value{
-							"match_condition": util.StringValueOrNull(&matchCondition),
-							"roles":           util.SetValueOrNull(roles),
-						},
-					),
+					"group_id":    util.StringValueOrNull(&groupID),
+					"group_type":  util.StringValueOrNull(&groupType),
+					"role_filter": roleFilterValue,
 				})
 			filterObjectValues = append(filterObjectValues, objValue)
 		}

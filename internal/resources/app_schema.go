@@ -673,8 +673,9 @@ var resourceAppSchema = schema.Schema{
 								MarkdownDescription: "The unique ID of the user group.",
 							},
 							"role_filter": schema.SingleNestedAttribute{
-								Optional:            true,
-								MarkdownDescription: "A filter for roles within the group.",
+								Optional: true,
+								MarkdownDescription: "A filter for roles within the group. Omit when unused. " +
+									"Empty API responses (`{}`) are normalized to null in state.",
 								Attributes: map[string]schema.Attribute{
 									"match_condition": schema.StringAttribute{
 										Optional: true,

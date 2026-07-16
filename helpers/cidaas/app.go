@@ -235,14 +235,19 @@ type GroupRoleRestriction struct {
 }
 
 type GroupRoleFilters struct {
-	GroupID    string     `json:"groupId,omitempty"`
-	GroupType  string     `json:"groupType,omitempty"`
-	RoleFilter RoleFilter `json:"roleFilter,omitempty"`
+	GroupID    string      `json:"groupId,omitempty"`
+	GroupType  string      `json:"groupType,omitempty"`
+	RoleFilter *RoleFilter `json:"roleFilter,omitempty"`
 }
 
 type RoleFilter struct {
 	MatchCondition string   `json:"matchCondition,omitempty"`
 	Roles          []string `json:"roles,omitempty"`
+}
+
+// IsEmpty reports whether the role filter has no match condition and no roles.
+func (r *RoleFilter) IsEmpty() bool {
+	return r == nil || (r.MatchCondition == "" && len(r.Roles) == 0)
 }
 
 type BasicSettings struct {

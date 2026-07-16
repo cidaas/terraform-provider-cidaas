@@ -57,13 +57,15 @@ var consentGroupSchema = schema.Schema{
 			},
 		},
 		"group_name": schema.StringAttribute{
-			Required:            true,
-			MarkdownDescription: "The name of the consent group.",
+			Required: true,
+			MarkdownDescription: "The name of the consent group. Cidaas stores this value in lowercase; " +
+				"uppercase input is accepted and normalized on plan.",
 			Validators: []validator.String{
 				stringvalidator.LengthAtLeast(1),
 			},
 			PlanModifiers: []planmodifier.String{
-				&validators.UniqueIdentifier{},
+				validators.ToLower{},
+				validators.CaseInsensitiveUniqueIdentifier{},
 			},
 		},
 		"description": schema.StringAttribute{
@@ -85,7 +87,7 @@ var consentGroupSchema = schema.Schema{
 }
 
 func (r *ConsentGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan ScopeGroupConfig
+	var plan ConsentGroupConfig
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		tflog.Error(ctx, "failed to get plan data", util.H{

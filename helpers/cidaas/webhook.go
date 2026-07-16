@@ -2,8 +2,10 @@ package cidaas
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -11,26 +13,6 @@ import (
 var (
 	AllowedAuthType          = []string{"APIKEY", "TOTP", "CIDAAS_OAUTH2"}
 	AllowedKeyPlacementValue = []string{"query", "header"}
-	AllowedEvents            = []string{
-		"GROUP_USER_ROLE_REMOVED", "PROFILE_IMAGE_REMOVED", "GROUP_TYPE_DELETED", "PASSWORD_RESET_INITIATE", "SCOPE_CREATED",
-		"CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED", "LOGOUT", "LOGIN_WITH_SOCIAL", "ACCOUNT_DELETION_SCHEDULED", "APP_CREATED", "TEMPLATE_UPDATED",
-		"EMAIL_CHANGED", "SCOPE_DELETED", "GEOFENCE_EXIT", "HOSTED_PAGE_DELETED", "CAPTCHA_CREATED", "CUSTOM_TEMPLATE_DELETED", "LOGIN_WITH_CIDAAS",
-		"LOGIN_FAILURE", "DEVICE_DELETED", "USER_REGION_ENDED", "GROUP_TYPE_CREATED", "CUSTOM_CODE_VERIFICATION_TRIGGERED", "USER_REGION_IN_PROGRESS",
-		"HOSTED_PAGE_CREATED", "REGISTRATION_FIELD_UPDATED", "USER_DEVICE_LINK_DELETED", "SCOPE_UPDATED", "FIELDSETUP_ADDED", "FIELDSETUP_MODIFIED",
-		"ACCOUNT_CREATED_WITH_SOCIAL_IDENTITY", "CUSTOM_TEMPLATE_UPDATED", "IVR_TRIGGERED", "CONSENT_REJECTED", "ACCOUNT_MODIFIED", "PASSWORD_RESET",
-		"PROFILE_IMAGE_UPDATED", "GROUP_TYPE_MODIFIED", "IDVALIDATOR_BTX_FINISHED", "HOSTED_PAGE_MODIFIED", "WEBHOOK_DELETED", "PUSH_SENT", "WEBHOOK_UPDATED",
-		"CHECKOUT_SESSION_COMPLETED", "GROUP_ADMIN_ADDED", "DEVICE_CREATED", "MFA_REQUIRED", "ACCOUNT_DEACTIVATED", "INVALID_CLIENT_SECRET_REQUESTED",
-		"REGISTRATION_FIELD_DELETED", "PHYSICAL_VERIFICATION_CONFIG", "ACCOUNT_CREATED_WITH_CIDAAS_IDENTITY", "ACCOUNT_MOBILE_NO_UNVERIFIED", "HOSTED_PAGE_UPDATED",
-		"CAPTCHA_DELETED", "GROUP_CREATED", "ACCOUNT_EMAIL_VERIFIED", "ACCOUNT_ACTIVATED", "DEVICE_UPDATED", "INVITE_USER", "CAPTCHA_UPDATED", "PHYSICAL_VERIFICATION",
-		"INVITE_ACCEPTED", "REGISTRATION_FIELD_CREATED", "GROUP_DELETED", "USER_DEVICE_LINK_CREATED", "COMBINED", "ACCOUNT_CIDAASIDENTITY_REMOVED", "CUSTOM_TEMPLATE_CREATED",
-		"WEBHOOK_CREATED", "PASS_UPDATED", "GROUP_USER_ROLE_UPDATED", "ACCOUNT_CONFLICT", "ROLE_UPDATED", "SOCIAL_PROVIDER_ENABLED", "APP_DELETED", "CHECKOUT_SESSION_EXPIRED",
-		"PASSWORD_CHANGED", "ACCOUNT_SOCIALIDENTITY_ADDED", "ACCOUNT_DELETED", "GROUP_NEW_USER_ADDED", "EMAIL_SENT", "ACCESS_TOKEN_OBTAINED", "SMS_SENT", "ROLE_DELETED",
-		"GROUP_MODIFIED", "INVALID_REDIRECT_URI_REQUESTED", "ACCOUNT_SOCIALIDENTITY_REMOVED", "PHYSICAL_VERIFICATION_REMOVED", "PASS_CREATED", "PASS_DELETED",
-		"IDVALIDATOR_CASE_STARTED", "GROUP_USER_ROLE_ADDED", "ACCOUNT_EMAIL_UNVERIFIED", "CONSENT_ACCEPTED", "FIELDSETUP_DELETED", "CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED",
-		"INVALID_CODE_VERIFIER_REQUESTED", "ACCOUNT_LOCKED", "NON_APPROVED_SCOPES_REQUESTED", "USER_REGION_STARTED", "ACCOUNT_MOBILE_NO_VERIFIED", "APP_MODIFIED",
-		"ACCOUNT_CIDAASIDENTITY_ADDED", "ROLE_CREATED", "SOCIAL_PROVIDER_DISABLED", "IDVALIDATOR_CASE_FINISHED", "GEOFENCE_ENTER", "IDVALIDATOR_VALIDATION_FINISHED",
-		"GROUP_FIRST_ADMIN_ADDED", "GROUP_USER_REMOVED", "IDVALIDATOR_DOCSIGN_FINISHED",
-	}
 )
 
 type WebhookModel struct {
@@ -67,6 +49,19 @@ type WebhookResponse struct {
 	Data    WebhookModel `json:"data,omitempty"`
 }
 
+// EventDescriptionModel is a subset of webhook-srv event description fields used by Terraform.
+type EventDescriptionModel struct {
+	ID             string `json:"_id"`
+	ObjectType     string `json:"objectType"`
+	GoodForWebhook bool   `json:"goodForWebhook"`
+}
+
+type EventDescriptionsResponse struct {
+	Success bool                    `json:"success,omitempty"`
+	Status  int                     `json:"status,omitempty"`
+	Data    []EventDescriptionModel `json:"data,omitempty"`
+}
+
 type Webhook struct {
 	ClientConfig
 }
@@ -75,7 +70,11 @@ func NewWebhook(clientConfig ClientConfig) *Webhook {
 	return &Webhook{clientConfig}
 }
 
-const webhookEndpoint = "webhook-srv/webhook"
+const (
+	webhookEndpoint           = "webhook-srv/webhook"
+	eventDescriptionsEndpoint = "webhook-srv/eventdescriptions"
+	webhookEventCategory      = "webhook"
+)
 
 func (w *Webhook) Upsert(ctx context.Context, wb WebhookModel) (*WebhookResponse, error) {
 	res, err := w.makeRequest(ctx, http.MethodPost, webhookEndpoint, wb)
@@ -120,4 +119,60 @@ func (w *Webhook) Delete(ctx context.Context, id string) error {
 	}
 	defer res.Body.Close()
 	return nil
+}
+
+// ListEventDescriptions returns event descriptions for the given category
+// (e.g. "webhook"). A 204 No Content response is treated as an empty list.
+func (w *Webhook) ListEventDescriptions(ctx context.Context, category string) ([]EventDescriptionModel, error) {
+	q := url.Values{}
+	if category != "" {
+		q.Set("category", category)
+	}
+	endpoint := eventDescriptionsEndpoint
+	if encoded := q.Encode(); encoded != "" {
+		endpoint = fmt.Sprintf("%s?%s", eventDescriptionsEndpoint, encoded)
+	}
+
+	reqURL := fmt.Sprintf("%s/%s", w.BaseURL, endpoint)
+	client, err := util.NewHTTPClient(reqURL, http.MethodGet, w.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+	status, body, hdr, err := client.MakeRequestReadBody(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list event descriptions: %w", err)
+	}
+	switch status {
+	case http.StatusNoContent:
+		return nil, nil
+	case http.StatusOK:
+		var response EventDescriptionsResponse
+		if len(body) == 0 {
+			return nil, nil
+		}
+		if err = json.Unmarshal(body, &response); err != nil {
+			return nil, fmt.Errorf("failed to decode event descriptions response: %w", err)
+		}
+		if len(response.Data) == 0 {
+			return nil, nil
+		}
+		return response.Data, nil
+	default:
+		return nil, fmt.Errorf("unexpected status code %d, response body: %s%s", status, string(body), util.XRefNumberSuffixFromHeader(hdr))
+	}
+}
+
+// ListWebhookEventIDs returns the _id values of webhook-capable event descriptions.
+func (w *Webhook) ListWebhookEventIDs(ctx context.Context) ([]string, error) {
+	eds, err := w.ListEventDescriptions(ctx, webhookEventCategory)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(eds))
+	for _, ed := range eds {
+		if ed.ID != "" {
+			ids = append(ids, ed.ID)
+		}
+	}
+	return ids, nil
 }

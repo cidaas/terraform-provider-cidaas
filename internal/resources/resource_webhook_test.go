@@ -179,7 +179,7 @@ func TestAccWebhookResource_InvalidAllowedValue(t *testing.T) {
 			},
 			{
 				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, invalidEvents, localApiKeyConfig),
-				ExpectError: regexp.MustCompile(`value must be one of`), // TODO: full error msg match
+				ExpectError: regexp.MustCompile(`is not a webhook-capable event`),
 			},
 			{
 				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, events, localApiKeyConfig),

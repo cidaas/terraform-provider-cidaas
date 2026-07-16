@@ -249,7 +249,7 @@ func TestApp_Create_WithComplexNestedStructures(t *testing.T) {
 			Filters: []GroupRoleFilters{
 				{
 					GroupID: "group-1",
-					RoleFilter: RoleFilter{
+					RoleFilter: &RoleFilter{
 						MatchCondition: "ALL",
 						Roles:          []string{"admin"},
 					},
@@ -1072,5 +1072,43 @@ func TestApp_Delete_MultipleClients(t *testing.T) {
 		if !deletedClients[clientID] {
 			t.Errorf("Client %s was not deleted", clientID)
 		}
+	}
+}
+
+func TestRoleFilter_IsEmptyAndOmitEmpty(t *testing.T) {
+	t.Parallel()
+
+	var empty *RoleFilter
+	if !empty.IsEmpty() {
+		t.Fatal("nil RoleFilter should be empty")
+	}
+	if !(&RoleFilter{}).IsEmpty() {
+		t.Fatal("zero RoleFilter should be empty")
+	}
+	if (&RoleFilter{Roles: []string{"admin"}}).IsEmpty() {
+		t.Fatal("RoleFilter with roles should not be empty")
+	}
+
+	payload, err := json.Marshal(GroupRoleFilters{GroupID: "g1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(payload), "roleFilter") {
+		t.Fatalf("expected nil RoleFilter to be omitted, got %s", payload)
+	}
+
+	// Non-nil empty struct still encodes as {}; callers must use nil (see IsEmpty).
+	payload, err = json.Marshal(GroupRoleFilters{
+		GroupID: "g1",
+		RoleFilter: &RoleFilter{
+			MatchCondition: "and",
+			Roles:          []string{"admin"},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(payload), `"roleFilter"`) {
+		t.Fatalf("expected non-empty RoleFilter to be present, got %s", payload)
 	}
 }

@@ -151,6 +151,7 @@ Here is the list of the datasources the provider supports:
 * [cidaas_notification_service_setups](#cidaas_notification_service_setups-data-source)
 * [cidaas_notification_templates](#cidaas_notification_templates-data-source)
 * [cidaas_notification_template_groups](#cidaas_notification_template_groups-data-source)
+* [cidaas_webhook_events](docs/data-sources/webhook_events.md)
 
 # cidaas_app (Resource)
 
@@ -2291,7 +2292,7 @@ resource "cidaas_webhook" "sample_webhook" {
 ### Required
 
 * `auth_type` (String) The attribute auth_type is to define how this url is secured from your end.The allowed values are `APIKEY`, `TOTP` and `CIDAAS_OAUTH2`
-* `events` (Set of String) A set of events that trigger the webhook.
+* `events` (Set of String) A set of webhook-capable event IDs that trigger the webhook. Use the `cidaas_webhook_events` data source (or GET /webhook-srv/eventdescriptions?category=webhook) to discover valid values for your tenant.
 * `url` (String) The webhook url that needs to be called when an event occurs.
 
 ### Optional

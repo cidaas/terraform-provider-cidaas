@@ -70,6 +70,7 @@ func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.Data
 		cidaasDataSources.NewNotificationServiceSetups,
 		cidaasDataSources.NewNotificationTemplates,
 		cidaasDataSources.NewNotificationTemplateGroupsGraph,
+		cidaasDataSources.NewWebhookEvents,
 	}
 }
 

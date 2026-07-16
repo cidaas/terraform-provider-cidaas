@@ -33,7 +33,7 @@ resource "cidaas_consent_group" "sample" {
 
 ### Required
 
-- `group_name` (String) The name of the consent group.
+- `group_name` (String) The name of the consent group. Cidaas stores this value in lowercase; uppercase input is accepted and normalized on plan.
 
 ### Optional
 

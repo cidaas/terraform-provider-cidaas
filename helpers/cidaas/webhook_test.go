@@ -394,7 +394,7 @@ func TestWebhook_Upsert_WithAllEvents(t *testing.T) {
 	webhookModel := WebhookModel{
 		AuthType: "APIKEY",
 		URL:      "https://example.com/webhook",
-		Events:   AllowedEvents[:5], // Use first 5 allowed events
+		Events:   []string{"ACCOUNT_MODIFIED", "LOGIN_WITH_CIDAAS", "LOGOUT", "APP_CREATED", "APP_DELETED"},
 		APIKeyDetails: APIKeyDetails{
 			ApikeyPlaceholder: "X-API-Key",
 			ApikeyPlacement:   "header",
@@ -501,24 +501,88 @@ func TestAllowedConstants(t *testing.T) {
 			t.Errorf("Expected placement %s at index %d, got %s", expected, i, AllowedKeyPlacementValue[i])
 		}
 	}
+}
 
-	// Test that AllowedEvents is not empty
-	if len(AllowedEvents) == 0 {
-		t.Error("AllowedEvents should not be empty")
+func TestWebhook_ListEventDescriptions_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("Expected GET method, got %s", r.Method)
+		}
+		if !strings.Contains(r.URL.Path, "webhook-srv/eventdescriptions") {
+			t.Errorf("Expected eventdescriptions endpoint, got %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("category") != "webhook" {
+			t.Errorf("Expected category=webhook, got %s", r.URL.Query().Get("category"))
+		}
+		response := EventDescriptionsResponse{
+			Success: true,
+			Status:  200,
+			Data: []EventDescriptionModel{
+				{ID: "ACCOUNT_MODIFIED", ObjectType: "users", GoodForWebhook: true},
+				{ID: "APP_CREATED", ObjectType: "apps", GoodForWebhook: true},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	webhook := NewWebhook(NewTestClientConfig(server.URL))
+	eds, err := webhook.ListEventDescriptions(context.Background(), "webhook")
+	if err != nil {
+		t.Fatalf("ListEventDescriptions failed: %v", err)
 	}
+	if len(eds) != 2 {
+		t.Fatalf("Expected 2 event descriptions, got %d", len(eds))
+	}
+	if eds[0].ID != "ACCOUNT_MODIFIED" {
+		t.Errorf("Expected ACCOUNT_MODIFIED, got %s", eds[0].ID)
+	}
+}
 
-	// Test that some expected events exist
-	expectedEvents := []string{"GROUP_USER_ROLE_REMOVED", "PROFILE_IMAGE_REMOVED", "ACCOUNT_CREATED_WITH_CIDAAS_IDENTITY"}
-	for _, event := range expectedEvents {
-		found := false
-		for _, allowedEvent := range AllowedEvents {
-			if allowedEvent == event {
-				found = true
-				break
-			}
+func TestWebhook_ListEventDescriptions_NoContent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	webhook := NewWebhook(NewTestClientConfig(server.URL))
+	eds, err := webhook.ListEventDescriptions(context.Background(), "webhook")
+	if err != nil {
+		t.Fatalf("ListEventDescriptions failed: %v", err)
+	}
+	if eds != nil {
+		t.Errorf("Expected nil for 204, got %v", eds)
+	}
+}
+
+func TestWebhook_ListWebhookEventIDs(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("category") != "webhook" {
+			t.Errorf("Expected category=webhook, got %s", r.URL.Query().Get("category"))
 		}
-		if !found {
-			t.Errorf("Expected event %s not found in AllowedEvents", event)
+		response := EventDescriptionsResponse{
+			Success: true,
+			Status:  200,
+			Data: []EventDescriptionModel{
+				{ID: "ACCOUNT_MODIFIED", ObjectType: "users", GoodForWebhook: true},
+				{ID: "APP_CREATED", ObjectType: "apps", GoodForWebhook: true},
+			},
 		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	webhook := NewWebhook(NewTestClientConfig(server.URL))
+	ids, err := webhook.ListWebhookEventIDs(context.Background())
+	if err != nil {
+		t.Fatalf("ListWebhookEventIDs failed: %v", err)
+	}
+	if len(ids) != 2 {
+		t.Fatalf("Expected 2 IDs, got %d", len(ids))
+	}
+	if ids[0] != "ACCOUNT_MODIFIED" || ids[1] != "APP_CREATED" {
+		t.Errorf("Unexpected IDs: %v", ids)
 	}
 }
