@@ -100,6 +100,7 @@ type FieldDefinition struct {
 	InitialDate     *time.Time `json:"initialDate,omitempty"`
 	InitialDateView string     `json:"initialDateView,omitempty"`
 	Regex           string     `json:"regex,omitempty"`
+	MatchWith       string     `json:"matchWith,omitempty"`
 	AttributesKeys  []string   `json:"attributesKeys,omitempty"`
 }
 
@@ -107,6 +108,7 @@ type LocaleText struct {
 	MinLengthErrorMsg string        `json:"minLength,omitempty"`
 	MaxLengthErrorMsg string        `json:"maxLength,omitempty"`
 	RequiredMsg       string        `json:"required,omitempty"`
+	MatchWithMsg      string        `json:"matchWith,omitempty"`
 	Locale            string        `json:"locale,omitempty"`
 	Name              string        `json:"name,omitempty"`
 	Attributes        []*Attribute  `json:"attributes,omitempty"`

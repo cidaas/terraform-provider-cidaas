@@ -1,6 +1,6 @@
 ## Changelog
 
-### Unreleased
+### 3.5.18
 
 #### Enhancements
 
@@ -8,6 +8,13 @@
 - **`cidaas_notification_provider_config`:** New resource for provider credentials (`config_data` or write-only **`config_data_wo`** + **`config_data_wo_version`**; Terraform **≥ 1.11** for write-only). Wizard-shaped JSON (`commProvider`, `commMethod`, `schemaData`) is supported; the provider injects **`configData.id`** from **`service_setup_id`** when omitted. Create/update upsert via `POST /providerconfigs`. Destroy removes Terraform state only (no remote DELETE). Scopes: `cidaas:service_setups_read`, `cidaas:provider_config_write`.
 - **`data.cidaas_notification_service_setup`:** New data source for a single setup by id (any status, including `in-progress`).
 - **`data.cidaas_notification_service_setups`:** List returns **active** setups only (suitable for wiring `comm_setting_*` after verify).
+
+### 3.5.17
+
+#### Enhancements
+
+- **`cidaas_app`:** Added optional **`require_pkce`** and **`disable_insecure_pkce_method`**. `require_pkce` enforces `code_challenge` on authz/PAR (AUTH10063 when missing). `disable_insecure_pkce_method` rejects insecure PKCE `plain` method and implicit plain default; only `S256` allowed (AUTH10048).
+- **`cidaas_registration_field`:** Added **`field_definition.match_with`** and **`local_texts.match_with_msg`** for the system **`password_echo`** field (password confirmation). Maps to API `fieldDefinition.matchWith` and `localeTexts.matchWith`. Only allowed when **`field_key`** is **`password_echo`**; when **`match_with`** is set, every locale must include **`match_with_msg`**.
 
 ### 3.5.16
 

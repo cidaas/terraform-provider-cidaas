@@ -75,6 +75,8 @@ type AppConfig struct {
 	VideoURL                        types.String `tfsdk:"video_url"`
 	BotCaptchaRef                   types.String `tfsdk:"bot_captcha_ref"`
 	OauthStandard                   types.String `tfsdk:"oauth_standard"`
+	RequirePKCE                     types.Bool   `tfsdk:"require_pkce"`
+	DisableInsecurePKCEMethod       types.Bool   `tfsdk:"disable_insecure_pkce_method"`
 
 	EnableDeduplication              types.Bool `tfsdk:"enable_deduplication"`
 	AutoLoginAfterRegister           types.Bool `tfsdk:"auto_login_after_register"`
@@ -388,6 +390,8 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 		BackchannelLogoutSessionRequired: plan.BackchannelLogoutSessionRequired.ValueBoolPointer(),
 		AcceptRolesInTheRegistration:     plan.AcceptRolesInTheRegistration.ValueBoolPointer(),
 		PasswordPolicyRef:                plan.PasswordPolicyRef.ValueString(),
+		RequirePKCE:                      plan.RequirePKCE.ValueBoolPointer(),
+		DisableInsecurePKCEMethod:        plan.DisableInsecurePKCEMethod.ValueBoolPointer(),
 		OauthStandard:                    plan.OauthStandard.ValueString(),
 	}
 

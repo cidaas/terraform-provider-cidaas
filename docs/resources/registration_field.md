@@ -102,6 +102,7 @@ Optional:
 - `attributes` (Attributes List) The field attributes must be provided for the data_type SELECT, MULTISELECT and RADIO. it's an array of key value pairs. Example provided in the example section. (see [below for nested schema](#nestedatt--local_texts--attributes))
 - `consent_label` (Attributes) required when data_type is CONSENT. Example provided in the example section. (see [below for nested schema](#nestedatt--local_texts--consent_label))
 - `locale` (String) The locale of the field. example: de-DE.
+- `match_with_msg` (String) Localized error message when field values do not match the referenced field. Only allowed when `field_key` is `password_echo`. Required in every locale when `field_definition.match_with` is set.
 - `max_length_msg` (String) warning/error msg to show to the user when user exceeds the maximum character configured. This is applicable only for the attributes of base_data_type string.
 - `min_length_msg` (String) warning/error msg to show to the user when user don't provide the minimum character required. This is applicable only for the attributes of base_data_type string.
 - `required_msg` (String) Message shown when the field is required but empty. Must be provided when `required` is true. May also be set when `required` is false to pre-define translations for fields marked required at the application level.
@@ -132,6 +133,7 @@ Optional:
 
 - `initial_date` (String) The initial date. Applicable only for DATE attributes. Example format: `2024-06-28T18:30:00Z`.
 - `initial_date_view` (String) The view of the calender. Applicable only for DATE attributes. Allowed values: `month`, `year` and `multi-year`
+- `match_with` (String) The `field_key` of another field whose value this field must match (e.g. password confirmation). Only allowed when `field_key` is `password_echo`.
 - `max_date` (String) The maximum date a user can select. Applicable only for DATE attributes. Example format: `2024-06-28T18:30:00Z`.
 - `max_length` (Number) The maximum length of a string type attribute.
 - `min_date` (String) The earliest date a user can select. Applicable only for DATE attributes. Example format: `2024-06-28T18:30:00Z`.

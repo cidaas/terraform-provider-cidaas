@@ -516,6 +516,12 @@ func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 	if !state.AcceptRolesInTheRegistration.IsNull() || isImport {
 		state.AcceptRolesInTheRegistration = util.BoolValueOrNull(data.AcceptRolesInTheRegistration)
 	}
+	if !state.RequirePKCE.IsNull() || isImport {
+		state.RequirePKCE = util.BoolValueOrNull(data.RequirePKCE)
+	}
+	if !state.DisableInsecurePKCEMethod.IsNull() || isImport {
+		state.DisableInsecurePKCEMethod = util.BoolValueOrNull(data.DisableInsecurePKCEMethod)
+	}
 
 	// Integer attributes
 	if !state.DefaultMaxAge.IsNull() || isImport {

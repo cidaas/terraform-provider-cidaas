@@ -2,7 +2,7 @@
 page_title: "cidaas_app Resource - cidaas"
 subcategory: ""
 description: |-
-  The App resource allows creation and management of clients in cidaas system. When creating a client with a custom client_id and client_secret you can include the configuration in the resource. If not provided, cidaas will generate a set for you. client_secret is sensitive data. Refer to the article Terraform Sensitive Variables https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables to properly handle sensitive information.
+  The App resource allows creation and management of clients in Cidaas system. When creating a client with a custom client_id and client_secret you can include the configuration in the resource. If not provided, Cidaas will generate a set for you. client_secret is sensitive data. Refer to the article Terraform Sensitive Variables https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables to properly handle sensitive information.
   Ensure that the below scopes are assigned to the client with the specified client_id:
   cidaas:apps_readcidaas:apps_writecidaas:apps_delete
   -> Note: Write-Only argument client_secret_wo is available to use in place of client_secret. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. Learn more https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments.
@@ -10,7 +10,7 @@ description: |-
 
 # cidaas_app (Resource)
 
-The App resource allows creation and management of clients in cidaas system. When creating a client with a custom `client_id` and `client_secret` you can include the configuration in the resource. If not provided, cidaas will generate a set for you. `client_secret` is sensitive data. Refer to the article [Terraform Sensitive Variables](https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables) to properly handle sensitive information.
+The App resource allows creation and management of clients in Cidaas system. When creating a client with a custom `client_id` and `client_secret` you can include the configuration in the resource. If not provided, Cidaas will generate a set for you. `client_secret` is sensitive data. Refer to the article [Terraform Sensitive Variables](https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables) to properly handle sensitive information.
 
  Ensure that the below scopes are assigned to the client with the specified `client_id`:
 - cidaas:apps_read
@@ -249,6 +249,7 @@ resource "cidaas_app" "sample" {
 - `default_roles` (Set of String)
 - `default_scopes` (Set of String)
 - `description` (String)
+- `disable_insecure_pkce_method` (Boolean) When `true`, rejects PKCE authorization requests that use the insecure `plain` code challenge method (RFC 7636), including requests that send `code_challenge` without `code_challenge_method` (which defaults to `plain`). Only `S256` is accepted (AUTH10048). Enforced during `/authz-srv/authz` and PAR. When omitted, `plain` remains allowed for backward compatibility.
 - `enable_bot_detection` (Boolean)
 - `enable_deduplication` (Boolean) Enable deduplication.
 - `enable_login_spi` (Boolean) If enabled, the login service verifies whether login spi responsded with success only then it issues a token.
@@ -299,6 +300,7 @@ resource "cidaas_app" "sample" {
 - `request_object_signing_alg` (String)
 - `request_uris` (Set of String)
 - `require_auth_time` (Boolean) Boolean flag to specify whether the auth_time claim is REQUIRED in a id token.
+- `require_pkce` (Boolean) When `true`, the application requires PKCE for authorization requests: clients must send `code_challenge` (and typically `code_challenge_method`) on `/authz-srv/authz` and PAR. Requests without `code_challenge` are rejected (AUTH10063). Recommended for public clients (SPA, mobile apps). When omitted, PKCE is optional.
 - `required_fields` (Set of String) The required fields while registering to the client.
 - `response_types` (Set of String) The response types of the client. The default value is set to `['code','token', 'id_token']`
 - `role` (String)

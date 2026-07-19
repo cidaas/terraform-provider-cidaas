@@ -136,6 +136,8 @@ type AppModel struct {
 	BackchannelLogoutSessionRequired *bool                       `json:"backchannel_logout_session_required,omitempty"`
 	EnableLoginSpi                   *bool                       `json:"enable_login_spi,omitempty"`
 	AcceptRolesInTheRegistration     *bool                       `json:"accept_roles_in_the_registration,omitempty"`
+	RequirePKCE                      *bool                       `json:"require_pkce,omitempty"`
+	DisableInsecurePKCEMethod        *bool                       `json:"disable_insecure_pkce_method,omitempty"`
 	OauthStandard                    string                      `json:"oauthStandard,omitempty"`
 
 	// attributes not available in resource app schema

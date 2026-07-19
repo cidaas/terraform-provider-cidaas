@@ -130,6 +130,7 @@ type LocalTexts struct {
 	MaxLengthMsg types.String `tfsdk:"max_length_msg"`
 	MinLengthMsg types.String `tfsdk:"min_length_msg"`
 	RequiredMsg  types.String `tfsdk:"required_msg"`
+	MatchWithMsg types.String `tfsdk:"match_with_msg"`
 	Attributes   types.List   `tfsdk:"attributes"`
 	ConsentLabel types.Object `tfsdk:"consent_label"`
 
@@ -155,6 +156,7 @@ type FieldDefinition struct {
 	InitialDateView types.String `tfsdk:"initial_date_view"`
 	InitialDate     types.String `tfsdk:"initial_date"`
 	Regex           types.String `tfsdk:"regex"`
+	MatchWith       types.String `tfsdk:"match_with"`
 }
 
 var regFieldSchema = schema.Schema{
@@ -341,6 +343,13 @@ var regFieldSchema = schema.Schema{
 						Optional:            true,
 						MarkdownDescription: "Message shown when the field is required but empty. Must be provided when `required` is true. May also be set when `required` is false to pre-define translations for fields marked required at the application level.",
 					},
+					"match_with_msg": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "Localized error message when field values do not match the referenced field. Only allowed when `field_key` is `password_echo`. Required in every locale when `field_definition.match_with` is set.",
+						Validators: []validator.String{
+							&validateMatchWithMsg{},
+						},
+					},
 					// optional: in case of datatype is RADIO, SELECT, MULTISELECT, etc. the localized attribute values are specified here
 					"attributes": schema.ListNestedAttribute{
 						Optional:            true,
@@ -428,6 +437,13 @@ var regFieldSchema = schema.Schema{
 						&validateIsMaxMinMsgAvailableForRegex{},
 					},
 				},
+				"match_with": schema.StringAttribute{
+					Optional:            true,
+					MarkdownDescription: "The `field_key` of another field whose value this field must match (e.g. password confirmation). Only allowed when `field_key` is `password_echo`.",
+					Validators: []validator.String{
+						&validateMatchWith{},
+					},
+				},
 			},
 			Default: objectdefault.StaticValue(types.ObjectValueMust(
 				map[string]attr.Type{
@@ -438,6 +454,7 @@ var regFieldSchema = schema.Schema{
 					"initial_date_view": types.StringType,
 					"initial_date":      types.StringType,
 					"regex":             types.StringType,
+					"match_with":        types.StringType,
 				},
 				map[string]attr.Value{
 					"max_length":        types.Int64Null(),
@@ -447,6 +464,7 @@ var regFieldSchema = schema.Schema{
 					"initial_date_view": types.StringNull(),
 					"initial_date":      types.StringNull(),
 					"regex":             types.StringNull(),
+					"match_with":        types.StringNull(),
 				})),
 		},
 	},
@@ -555,7 +573,10 @@ func (rfc *RegFieldConfig) ExtractConfigs(ctx context.Context) diag.Diagnostics 
 	return diags
 }
 
-const registrationFieldDefaultParentGroupID = "DEFAULT"
+const (
+	registrationFieldDefaultParentGroupID = "DEFAULT"
+	registrationFieldPasswordEchoKey        = "password_echo"
+)
 
 func registrationFieldParentGroupID(plan RegFieldConfig) string {
 	if !plan.ParentGroupID.IsNull() && !plan.ParentGroupID.IsUnknown() {
@@ -715,6 +736,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 			"max_length_msg": types.StringType,
 			"min_length_msg": types.StringType,
 			"required_msg":   types.StringType,
+			"match_with_msg": types.StringType,
 			"attributes":     types.ListType{ElemType: types.ObjectType{AttrTypes: typesOfAttribute}},
 			"consent_label":  types.ObjectType{AttrTypes: typesOfConsentLabel},
 		},
@@ -738,6 +760,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"max_length_msg": util.StringValueOrNull(&lt.MaxLengthErrorMsg),
 				"min_length_msg": util.StringValueOrNull(&lt.MinLengthErrorMsg),
 				"required_msg":   util.StringValueOrNull(&lt.RequiredMsg),
+				"match_with_msg": util.StringValueOrNull(&lt.MatchWithMsg),
 				"attributes": func() types.List {
 					if !(len(lt.Attributes) > 0) {
 						return types.ListNull(types.ObjectType{AttrTypes: typesOfAttribute})
@@ -779,6 +802,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"initial_date_view": types.StringType,
 				"initial_date":      types.StringType,
 				"regex":             types.StringType,
+				"match_with":        types.StringType,
 			},
 			map[string]attr.Value{
 				"max_length": func() basetypes.Int64Value {
@@ -798,6 +822,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"initial_date_view": util.StringValueOrNull(&res.Data.FieldDefinition.InitialDateView),
 				"initial_date":      util.TimeValueOrNull(res.Data.FieldDefinition.InitialDate),
 				"regex":             util.StringValueOrNull(&res.Data.FieldDefinition.Regex),
+				"match_with":        util.StringValueOrNull(&res.Data.FieldDefinition.MatchWith),
 			})
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
@@ -1047,6 +1072,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 				MaxLengthErrorMsg: s.MaxLengthMsg.ValueString(),
 				MinLengthErrorMsg: s.MinLengthMsg.ValueString(),
 				RequiredMsg:       s.RequiredMsg.ValueString(),
+				MatchWithMsg:      s.MatchWithMsg.ValueString(),
 			}
 			cidaasAttribues := []*cidaas.Attribute{}
 
@@ -1079,6 +1105,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 			MaxLength:       plan.fieldDefinition.MaxLength.ValueInt64Pointer(),
 			InitialDateView: plan.fieldDefinition.InitialDateView.ValueString(),
 			Regex:           plan.fieldDefinition.Regex.ValueString(),
+			MatchWith:       plan.fieldDefinition.MatchWith.ValueString(),
 		}
 		if len(attrKeys) > 0 {
 			regConfig.FieldDefinition.AttributesKeys = attrKeys
@@ -1200,6 +1227,8 @@ var (
 	_ validator.String    = dateValidator{}
 	_ validator.String    = dataTypeValidator{}
 	_ validator.String    = validateIsMaxMinMsgAvailableForRegex{}
+	_ validator.String    = validateMatchWith{}
+	_ validator.String    = validateMatchWithMsg{}
 )
 
 type (
@@ -1210,6 +1239,8 @@ type (
 	dateValidator                        struct{}
 	dataTypeValidator                    struct{}
 	validateIsMaxMinMsgAvailableForRegex struct{}
+	validateMatchWith                    struct{}
+	validateMatchWithMsg                 struct{}
 )
 
 func (v validateIsMaxMinMsgAvailableForRegex) Description(_ context.Context) string {
@@ -1477,5 +1508,96 @@ func (v dataTypeValidator) ValidateString(ctx context.Context, req validator.Str
 				)
 			}
 		}
+	}
+
+	if config.FieldKey.ValueString() != registrationFieldPasswordEchoKey {
+		if !config.FieldDefinition.IsNull() && !config.FieldDefinition.IsUnknown() &&
+			!config.fieldDefinition.MatchWith.IsNull() && config.fieldDefinition.MatchWith.ValueString() != "" {
+			resp.Diagnostics.AddError(
+				"Unexpected Resource Configuration",
+				"Attribute field_definition.match_with is only allowed when field_key is password_echo.",
+			)
+		}
+		for _, lt := range config.localTexts {
+			if !lt.MatchWithMsg.IsNull() && lt.MatchWithMsg.ValueString() != "" {
+				resp.Diagnostics.AddError(
+					"Unexpected Resource Configuration",
+					"Attribute local_texts.match_with_msg is only allowed when field_key is password_echo.",
+				)
+				return
+			}
+		}
+	}
+}
+
+func (v validateMatchWith) Description(_ context.Context) string {
+	return "match_with is only allowed when field_key is password_echo"
+}
+
+func (v validateMatchWith) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v validateMatchWith) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+	if config.FieldKey.ValueString() != registrationFieldPasswordEchoKey {
+		resp.Diagnostics.AddError(
+			"Validation Error",
+			fmt.Sprintf("The attribute %s is only allowed when field_key is password_echo", req.Path.String()),
+		)
+		return
+	}
+
+	for _, lt := range config.localTexts {
+		if lt.MatchWithMsg.IsNull() || lt.MatchWithMsg.ValueString() == "" {
+			resp.Diagnostics.AddError(
+				"Validation Error",
+				"The attribute local_texts.match_with_msg can not be empty when field_definition.match_with is set",
+			)
+			return
+		}
+	}
+}
+
+func (v validateMatchWithMsg) Description(_ context.Context) string {
+	return "match_with_msg is only allowed when field_key is password_echo and required when match_with is set"
+}
+
+func (v validateMatchWithMsg) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v validateMatchWithMsg) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+
+	if !req.ConfigValue.IsNull() && req.ConfigValue.ValueString() != "" &&
+		config.FieldKey.ValueString() != registrationFieldPasswordEchoKey {
+		resp.Diagnostics.AddError(
+			"Validation Error",
+			fmt.Sprintf("The attribute %s is only allowed when field_key is password_echo", req.Path.String()),
+		)
+		return
+	}
+
+	if config.FieldDefinition.IsNull() || config.FieldDefinition.IsUnknown() || config.fieldDefinition == nil {
+		return
+	}
+	if config.fieldDefinition.MatchWith.IsNull() || config.fieldDefinition.MatchWith.ValueString() == "" {
+		return
+	}
+
+	if req.ConfigValue.IsNull() || req.ConfigValue.ValueString() == "" {
+		resp.Diagnostics.AddError(
+			"Validation Error",
+			"The attribute local_texts.match_with_msg can not be empty when field_definition.match_with is set",
+		)
 	}
 }

@@ -101,6 +101,14 @@ var resourceAppSchema = schema.Schema{
 				stringvalidator.OneOf([]string{"OAuth2.1", "OAuth2.0"}...),
 			},
 		},
+		"require_pkce": schema.BoolAttribute{
+			Optional:            true,
+			MarkdownDescription: "When `true`, the application requires PKCE for authorization requests: clients must send `code_challenge` (and typically `code_challenge_method`) on `/authz-srv/authz` and PAR. Requests without `code_challenge` are rejected (AUTH10063). Recommended for public clients (SPA, mobile apps). When omitted, PKCE is optional.",
+		},
+		"disable_insecure_pkce_method": schema.BoolAttribute{
+			Optional:            true,
+			MarkdownDescription: "When `true`, rejects PKCE authorization requests that use the insecure `plain` code challenge method (RFC 7636), including requests that send `code_challenge` without `code_challenge_method` (which defaults to `plain`). Only `S256` is accepted (AUTH10048). Enforced during `/authz-srv/authz` and PAR. When omitted, `plain` remains allowed for backward compatibility.",
+		},
 		// optional for NON_INTERACTIVE/IOS/ANDROID/DESKTOP/MOBILE/WINDOWS_MOBILE/DEVICE
 		"allowed_logout_urls": schema.SetAttribute{
 			ElementType:         types.StringType,
@@ -169,7 +177,7 @@ var resourceAppSchema = schema.Schema{
 		"grant_types": schema.SetAttribute{
 			ElementType:         types.StringType,
 			Optional:            true,
-			MarkdownDescription: "The grant types of the client. The default value is set to `['implicit','authorization_code', 'password', 'refresh_token']`",
+			MarkdownDescription: "The grant types of the client. The default value is set to `['implicit','authorization_code', 'password', 'refresh_token']`. Include `session_transfer` on the native client when using the session transfer token (STT) flow.",
 		},
 		"login_providers": schema.SetAttribute{
 			ElementType:         types.StringType,
