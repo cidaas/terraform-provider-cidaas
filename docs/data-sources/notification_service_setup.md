@@ -35,7 +35,7 @@ output "twilio_status" {
 
 - `description` (String) Description.
 - `has_remote_templates` (Boolean) Whether templates are remote.
-- `id` (String) Datasource instance id (UUID).
+- `id` (String) Service setup `_id` (same as `service_setup_id`).
 - `name` (String) Human-readable name.
 - `parent_service_setup_id` (String) Parent setup id when applicable.
 - `service_category` (String) Service category from `serviceDescInfo`.

@@ -125,7 +125,7 @@ func (r *NotificationServiceSetupResource) Create(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiReq, diags := buildNotificationServiceSetupCreate(plan)
+	apiReq, diags := buildNotificationServiceSetupCreate(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -136,7 +136,7 @@ func (r *NotificationServiceSetupResource) Create(ctx context.Context, req resou
 		return
 	}
 	tflog.Info(ctx, "created notification service setup", util.H{"id": created.ID})
-	state := notificationServiceSetupFromAPI(created, plan)
+	state := notificationServiceSetupFromAPI(ctx, created, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -158,7 +158,7 @@ func (r *NotificationServiceSetupResource) Read(ctx context.Context, req resourc
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	out := notificationServiceSetupFromAPI(got, state)
+	out := notificationServiceSetupFromAPI(ctx, got, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &out)...)
 }
 
@@ -183,7 +183,7 @@ func (r *NotificationServiceSetupResource) Update(ctx context.Context, req resou
 		resp.Diagnostics.AddError("failed to update notification service setup", util.FormatErrorMessage(err))
 		return
 	}
-	out := notificationServiceSetupFromAPI(updated, plan)
+	out := notificationServiceSetupFromAPI(ctx, updated, plan)
 	out.ID = state.ID
 	out.ServiceID = state.ServiceID
 	out.CommunicationMethods = state.CommunicationMethods
@@ -216,12 +216,12 @@ func (r *NotificationServiceSetupResource) ImportState(ctx context.Context, req 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func buildNotificationServiceSetupCreate(plan notificationServiceSetupModel) (cidaas.NotificationsSrvServiceSetupWrite, diag.Diagnostics) {
+func buildNotificationServiceSetupCreate(ctx context.Context, plan notificationServiceSetupModel) (cidaas.NotificationsSrvServiceSetupWrite, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	methods := make([]string, 0)
 	if !plan.CommunicationMethods.IsNull() && !plan.CommunicationMethods.IsUnknown() {
 		var elems []types.String
-		diags.Append(plan.CommunicationMethods.ElementsAs(context.Background(), &elems, false)...)
+		diags.Append(plan.CommunicationMethods.ElementsAs(ctx, &elems, false)...)
 		if diags.HasError() {
 			return cidaas.NotificationsSrvServiceSetupWrite{}, diags
 		}
@@ -247,12 +247,12 @@ func buildNotificationServiceSetupCreate(plan notificationServiceSetupModel) (ci
 	return write, diags
 }
 
-func notificationServiceSetupFromAPI(api *cidaas.NotificationsSrvServiceSetupModel, plan notificationServiceSetupModel) notificationServiceSetupModel {
+func notificationServiceSetupFromAPI(ctx context.Context, api *cidaas.NotificationsSrvServiceSetupModel, plan notificationServiceSetupModel) notificationServiceSetupModel {
 	methods := make([]string, 0, len(api.ServiceDescInfo.CommProv.CommMethods))
 	for _, m := range api.ServiceDescInfo.CommProv.CommMethods {
 		methods = append(methods, strings.ToLower(strings.TrimSpace(m)))
 	}
-	commSet, _ := types.SetValueFrom(context.Background(), types.StringType, methods)
+	commSet, _ := types.SetValueFrom(ctx, types.StringType, methods)
 	category := api.ServiceDescInfo.ServiceCategory
 	if category == "" {
 		category = plan.ServiceCategory.ValueString()

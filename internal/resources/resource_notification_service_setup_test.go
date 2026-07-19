@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestNotificationServiceSetupFromAPI_StatusComputed(t *testing.T) {
 			},
 		},
 	}
-	state := notificationServiceSetupFromAPI(api, notificationServiceSetupModel{})
+	state := notificationServiceSetupFromAPI(context.Background(), api, notificationServiceSetupModel{})
 	if state.Status.ValueString() != "active" {
 		t.Fatalf("status %q", state.Status.ValueString())
 	}

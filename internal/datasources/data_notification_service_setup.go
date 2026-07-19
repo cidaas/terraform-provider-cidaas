@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -31,7 +30,7 @@ var notificationServiceSetupDataSchema = schema.Schema{
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Stable datasource instance id (random UUID).",
+			MarkdownDescription: "Service setup `_id` (same as `service_setup_id`).",
 		},
 		"service_setup_id": schema.StringAttribute{
 			Required:            true,
@@ -96,7 +95,7 @@ func (d *notificationServiceSetupDataSource) Read(ctx context.Context, req datas
 		return
 	}
 	out := notificationServiceSetupDataModel{
-		ID:                   types.StringValue(uuid.New().String()),
+		ID:                   types.StringValue(got.ID),
 		ServiceSetupID:       types.StringValue(got.ID),
 		Name:                 types.StringValue(got.Name),
 		Status:               types.StringValue(got.Status),
