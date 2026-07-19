@@ -15,6 +15,7 @@ type Client struct {
 	NotificationsSrvTemplateGroup *NotificationsSrvTemplateGroup
 	NotificationsSrvTemplate      *NotificationsSrvTemplate
 	NotificationsSrvServiceSetup  *NotificationsSrvServiceSetup
+	NotificationsSrvProviderConfig *NotificationsSrvProviderConfig
 	CustomProvider                *CustomProvider
 	SocialProvider                *SocialProvider
 	Scopes                        *Scope
@@ -93,7 +94,8 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		Roles:                         NewRole(config),
 		NotificationsSrvTemplateGroup: NewNotificationsSrvTemplateGroup(config),
 		NotificationsSrvTemplate:      NewNotificationsSrvTemplate(config),
-		NotificationsSrvServiceSetup:  NewNotificationsSrvServiceSetup(config),
+		NotificationsSrvServiceSetup:   NewNotificationsSrvServiceSetup(config),
+		NotificationsSrvProviderConfig: NewNotificationsSrvProviderConfig(config),
 		CustomProvider:                NewCustomProvider(config),
 		Scopes:                        NewScope(config),
 		ScopeGroup:                    NewScopeGroup(config),

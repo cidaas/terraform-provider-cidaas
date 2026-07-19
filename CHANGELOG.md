@@ -1,5 +1,14 @@
 ## Changelog
 
+### Unreleased
+
+#### Enhancements
+
+- **`cidaas_notification_service_setup`:** New resource to create/update/delete communication provider service setups via notification-srv. **`status`** is computed (manual service-desk verify; Terraform does not call verify). **`parent_service_setup_id`** is optional+computed (may be auto-filled when omitted). Changing **`service_id`** or **`communication_methods`** forces replacement. Update sends **`name`** / **`description`** only. Destroy treats remote **404** as success. Active setups cannot be deleted until deactivated outside Terraform. Scopes: `cidaas:service_setups_read`, `cidaas:service_setups_write`, `cidaas:service_setups_delete`.
+- **`cidaas_notification_provider_config`:** New resource for provider credentials (`config_data` or write-only **`config_data_wo`** + **`config_data_wo_version`**; Terraform **≥ 1.11** for write-only). Wizard-shaped JSON (`commProvider`, `commMethod`, `schemaData`) is supported; the provider injects **`configData.id`** from **`service_setup_id`** when omitted. Create/update upsert via `POST /providerconfigs`. Destroy removes Terraform state only (no remote DELETE). Scopes: `cidaas:service_setups_read`, `cidaas:provider_config_write`.
+- **`data.cidaas_notification_service_setup`:** New data source for a single setup by id (any status, including `in-progress`).
+- **`data.cidaas_notification_service_setups`:** List returns **active** setups only (suitable for wiring `comm_setting_*` after verify).
+
 ### 3.5.16
 
 #### Enhancements

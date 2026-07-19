@@ -27,8 +27,9 @@ func NewNotificationServiceSetups() datasource.DataSource {
 }
 
 var notificationServiceSetupsSchema = schema.Schema{
-	MarkdownDescription: "Lists **service setups** from notification-srv `GET /{notifications_context_path}/servicesetups/` " +
-		"so you can reference `service_setup_id` values in `cidaas_notifications_template_group` comm settings.",
+	MarkdownDescription: "Lists **active** service setups from notification-srv `GET /{notifications_context_path}/servicesetups/` " +
+		"so you can reference `service_setup_id` values in `cidaas_notifications_template_group` comm settings. " +
+		"Setups that are still `in-progress` (not yet verified) do not appear; use `data.cidaas_notification_service_setup` or the managed resource to read by id.",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,

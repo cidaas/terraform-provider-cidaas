@@ -100,6 +100,7 @@ Configure the provider with `base_url` and optional `notifications_context_path`
 | Create a new template group and configure templates | `cidaas_notifications_template_group` (`POST/PUT templategroups`); `data.cidaas_notification_service_setups` to resolve `serviceSetupId` per channel; `cidaas_notification_template` per row (`POST /templates/`) |
 | Add another locale and translated content | Copy options on `cidaas_notifications_template_group` and/or additional `cidaas_notification_template` instances per locale |
 | Point the group at another comm / service setup | `data.cidaas_notification_service_setups` + `cidaas_notifications_template_group` `comm_setting_*` |
+| Provision a communication provider (service setup + credentials) | `cidaas_notification_service_setup` + `cidaas_notification_provider_config` (`config_data_wo` + `schemaData`); verify in service-desk, then refresh `status` |
 | Developer template type and template body | `cidaas_notification_template_type` (`POST /templatetypes/`) + `cidaas_notification_template` with `group_id = "developer"` |
 
 **Legacy:** `cidaas_template` and `cidaas_template_group` call **templates-srv**; they remain for existing configurations but are deprecated for greenfield IaC in favour of the resources above.
@@ -130,6 +131,8 @@ Explore the following resources to understand their attributes, functionalities 
 * [cidaas_notifications_template_group](#cidaas_notifications_template_group-resource) (notification-srv)
 * [cidaas_notification_template](#cidaas_notification_template-resource) (notification-srv)
 * [cidaas_notification_template_type](#cidaas_notification_template_type-resource) (notification-srv)
+* [cidaas_notification_service_setup](#cidaas_notification_service_setup-resource) (notification-srv)
+* [cidaas_notification_provider_config](#cidaas_notification_provider_config-resource) (notification-srv)
 * [cidaas_user_groups](#cidaas_user_groups-resource)
 * [cidaas_webhook](#cidaas_webhook-resource)
 
@@ -148,6 +151,7 @@ Here is the list of the datasources the provider supports:
 * [cidaas_scope](#cidaas_scope-data-source)
 * [cidaas_social_provider](#cidaas_social_provider-data-source)
 * [cidaas_system_template_option](#cidaas_system_template_option-data-source)
+* [cidaas_notification_service_setup](#cidaas_notification_service_setup-data-source)
 * [cidaas_notification_service_setups](#cidaas_notification_service_setups-data-source)
 * [cidaas_notification_templates](#cidaas_notification_templates-data-source)
 * [cidaas_notification_template_groups](#cidaas_notification_template_groups-data-source)
@@ -2157,9 +2161,21 @@ terraform import cidaas_notification_template.example "<template_document_id>"
 
 Manages **template types** via notification-srv `…/templatetypes/…` (same `{ctx}` as other notification-srv resources). Scopes: `cidaas:templates_*` as documented on the resource.
 
+# cidaas_notification_service_setup (Resource)
+
+Manages a **communication provider service setup** via notification-srv `…/servicesetups/`. **`status`** is computed (manual service-desk verify). Pair with **`cidaas_notification_provider_config`**. Scopes: `cidaas:service_setups_read`, `cidaas:service_setups_write`, `cidaas:service_setups_delete`. See the [Notification service guide](docs/guides/notification_srv.md).
+
+# cidaas_notification_provider_config (Resource)
+
+Stores **provider credentials** for a service setup via `POST …/providerconfigs` (`config_data` or write-only `config_data_wo` + `config_data_wo_version`; Terraform **≥ 1.11**). Destroy removes state only. Scopes: `cidaas:service_setups_read`, `cidaas:provider_config_write`.
+
+# cidaas_notification_service_setup (Data source)
+
+`data.cidaas_notification_service_setup` reads one setup by id (`GET …/servicesetups/{id}`), including **`in-progress`** status for polling after create.
+
 # cidaas_notification_service_setups (Data source)
 
-`data.cidaas_notification_service_setups` calls `GET …/servicesetups/` and exposes `setups` with `id`, `name`, `service_id`, etc., for wiring `comm_setting_*` blocks.
+`data.cidaas_notification_service_setups` calls `GET …/servicesetups/` and exposes **active** setups (`id`, `name`, `service_id`, etc.) for wiring `comm_setting_*` blocks. Newly created setups stay out of this list until verified/`active`.
 
 # cidaas_notification_templates (Data source)
 

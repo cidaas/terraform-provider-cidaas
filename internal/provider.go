@@ -49,7 +49,7 @@ func (p *cidaasProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"notifications_context_path": schema.StringAttribute{
 				Optional: true,
 				Description: "URL path segment for notification-srv APIs (default: `notifications-srv`). " +
-					"Used by notification-srv resources and datasources (`cidaas_notifications_template_group`, `cidaas_notification_template`, `cidaas_notification_template_type`, service setups, graph datasources). " +
+					"Used by notification-srv resources and datasources (`cidaas_notifications_template_group`, `cidaas_notification_template`, `cidaas_notification_service_setup`, `cidaas_notification_provider_config`, service setups, graph datasources). " +
 					"Legacy `cidaas_template` / `cidaas_template_group` use `templates-srv` and ignore this setting.",
 			},
 		},
@@ -68,6 +68,7 @@ func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.Data
 		cidaasDataSources.NewCustomProvider,
 		cidaasDataSources.NewRegistrationField,
 		cidaasDataSources.NewNotificationServiceSetups,
+		cidaasDataSources.NewNotificationServiceSetup,
 		cidaasDataSources.NewNotificationTemplates,
 		cidaasDataSources.NewNotificationTemplateGroupsGraph,
 		cidaasDataSources.NewWebhookEvents,
@@ -94,6 +95,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		cidaasResource.NewTemplateResource,
 		cidaasResource.NewNotificationTemplateTypeResource,
 		cidaasResource.NewNotificationTemplateResource,
+		cidaasResource.NewNotificationServiceSetupResource,
+		cidaasResource.NewNotificationProviderConfigResource,
 		cidaasResource.NewPasswordPolicy,
 		cidaasResource.NewSecuritySettings,
 		cidaasResource.NewConsentResource,
