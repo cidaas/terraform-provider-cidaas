@@ -2,22 +2,26 @@
 page_title: "cidaas_notification_provider_config Resource - cidaas"
 subcategory: ""
 description: |-
-  Stores provider credentials for a service setup via notification-srv (proxied to mplace provconfs).
+  Stores provider credentials for a service setup via notification-srv.
 ---
 
 # cidaas_notification_provider_config (Resource)
 
-Stores **provider credentials** for a service setup via **notification-srv** (`POST /providerconfigs`). notification-srv proxies to mplace admin **`provconfs`** (upsert by `_id` = `service_setup_id`).
+Stores **provider credentials** for a service setup via **notification-srv** (`POST /{notifications_context_path}/providerconfigs`). Upsert is keyed by `_id` = `service_setup_id` (create and update both `POST`).
 
-**Recommended:** use `config_data_wo` with wizard-shaped JSON (`commProvider`, `commMethod`, `schemaData`) so mplace validates and maps fields server-side.
+**Recommended:** use `config_data_wo` with wizard-shaped JSON (`commProvider`, `commMethod`, `schemaData`) so the platform validates and maps fields server-side. You do **not** need to set top-level `id` inside the JSON — the provider injects `configData.id` from `service_setup_id` when it is omitted.
 
 -> **Note:** Write-Only argument `config_data_wo` is available to use in place of `config_data`. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. [Learn more](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments).
 
+**Scopes:** `cidaas:service_setups_read`, `cidaas:provider_config_write`.
+
 **Verification** is manual (service-desk). Refresh `cidaas_notification_service_setup.status` after verify.
 
-**Destroy** removes the resource from Terraform state only; notification-srv has no DELETE for provider configs.
+**Destroy** removes the resource from Terraform state only; notification-srv has no DELETE for provider configs. Deleting the related service setup (when allowed) removes the remote configuration.
 
 **Import:** `terraform import cidaas_notification_provider_config.NAME <service_setup_id>`
+
+Import may populate sensitive `config_data` from `GET` unless you manage secrets with the write-only workflow afterward.
 
 ## Example Usage
 

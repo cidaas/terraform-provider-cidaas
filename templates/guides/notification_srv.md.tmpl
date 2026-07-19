@@ -1,7 +1,7 @@
 ---
 page_title: "Notification service (notification-srv)"
 description: |-
-  How to use the cidaas Terraform provider with notification-srv: template groups, template types, templates, graph datasources, limitations, and legacy templates-srv.
+  How to use the cidaas Terraform provider with notification-srv: template groups, template types, templates, service setups, graph datasources, limitations, and legacy templates-srv.
 ---
 
 # Notification service (notification-srv)
@@ -12,7 +12,7 @@ This guide describes **notification-srv** resources and datasources in the cidaa
 
 | Stack | Provider resources | Backend |
 | --- | --- | --- |
-| **Notification service** | `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template_type`, `cidaas_notification_template`, graph datasources | **notification-srv** under `/{notifications_context_path}/…` |
+| **Notification service** | `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template_type`, `cidaas_notification_template`, service setup / provider config, graph datasources | **notification-srv** under `/{notifications_context_path}/…` |
 | **Legacy** | `cidaas_template_group`, `cidaas_template` | **templates-srv** (separate API paths) |
 
 - Set optional provider argument **`notifications_context_path`** (default: `notifications-srv`) so all notification-srv clients use the same URL prefix. Legacy `cidaas_template` / `cidaas_template_group` **do not** use this setting.
@@ -21,7 +21,8 @@ This guide describes **notification-srv** resources and datasources in the cidaa
 ## Authentication and scopes
 
 - The provider uses **client credentials** from environment variables `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` (non-interactive app).
-- Template APIs typically require scopes such as **`cidaas:templates_read`**, **`cidaas:templates_write`**, and **`cidaas:templates_delete`** (exact enforcement is on notification-srv and your tenant). Grant these on the client used by Terraform.
+- Template APIs typically require **`cidaas:templates_read`**, **`cidaas:templates_write`**, and **`cidaas:templates_delete`**.
+- Service setup / provider config require **`cidaas:service_setups_read`**, **`cidaas:service_setups_write`**, **`cidaas:service_setups_delete`**, and **`cidaas:provider_config_write`**. Exact enforcement is on notification-srv and your tenant — grant these on the client used by Terraform.
 
 ## Use cases and building blocks
 
@@ -41,9 +42,55 @@ See [examples/resources/cidaas_notification_template_type/resource.tf](https://g
 
 Discover source locale codes: `GET …/templategroups/{copy_from_group_id}/templatefilters` before defining `copy_from_locale`.
 
-Configure **`comm_setting_*`** on the group when you need per-channel service setup ids; resolve ids with **`data.cidaas_notification_service_setups`** where applicable.
+Configure **`comm_setting_*`** on the group when you need per-channel service setup ids; resolve ids with **`data.cidaas_notification_service_setups`** (active only) or **`data.cidaas_notification_service_setup`** / the managed resource (any status).
 
 See [examples/resources/cidaas_notifications_template_group/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notifications_template_group/resource.tf) and [examples/resources/cidaas_notifications_template_group_locale/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notifications_template_group_locale/resource.tf).
+
+### Service setup and provider config (IaC)
+
+Terraform manages communication providers through **notification-srv** APIs (`/servicesetups`, `/providerconfigs`). The tenant is taken from your instance token — do **not** pass `saas_instance_id`.
+
+| API | Purpose |
+| --- | --- |
+| `GET` / `POST` / `PATCH` / `DELETE` `/servicesetups` | Service setup CRUD |
+| `GET` / `POST` `/providerconfigs` | Provider config upsert |
+| Verify endpoint | **Not used by Terraform** — verify in service-desk |
+
+**Install order**
+
+1. **`cidaas_notification_service_setup`** — metadata; `status` is computed (`in-progress` until you verify). Optional `parent_service_setup_id` may be auto-filled when omitted.
+2. **`cidaas_notification_provider_config`** — credentials via `config_data_wo` + `schemaData` JSON (wizard shape). The provider injects `configData.id` from `service_setup_id` when omitted.
+3. **Manual verify** in service-desk (or API outside Terraform).
+4. **`terraform plan`** — refresh shows `status = active` with no config change. Only then does **`data.cidaas_notification_service_setups`** include the setup (list is **active-only**).
+
+**Provider config JSON (`schemaData` mode):**
+
+```hcl
+config_data_wo = jsonencode({
+  commProvider = "custom-twilio-sms"
+  commMethod   = "sms"
+  schemaData = {
+    accountSid = var.twilio_account_sid
+    authToken  = var.twilio_auth_token
+  }
+})
+config_data_wo_version = "1"
+```
+
+Required top-level keys: `commProvider`, `commMethod`, `schemaData`. Field names inside `schemaData` must match the provider schema (obtain from the Admin / service-desk wizard for that communication provider). Write-only arguments require Terraform **≥ 1.11**.
+
+**Advanced:** set `config_data` to the full stored `configData` from `GET` (import/export); secrets are stored in state.
+
+**Secret rotation:** increment `config_data_wo_version` only; re-verify manually if the provider requires it.
+
+**Troubleshooting**
+
+- **Validation errors on create** — check `commProvider` matches the service setup, and `schemaData` field names match the provider schema.
+- **status stuck `in-progress`** — complete verification in service-desk, then refresh. List datasources will not show the setup until `active`.
+- **Destroy provider config** — Terraform removes state only; delete the service setup (when not `active`) to remove remote credentials. Active setups must be deactivated outside Terraform before delete.
+- **Destroy service setup returns 404** — treated as success (already removed remotely).
+
+See [examples/resources/cidaas_notification_service_setup/resource.tf](https://github.com/Cidaas/terraform-provider-cidaas/blob/master/examples/resources/cidaas_notification_service_setup/resource.tf).
 
 ### Discover existing templates or groups (graph API)
 
@@ -74,11 +121,12 @@ See [examples/datasources/cidaas_notification_templates.tf](https://github.com/C
 - **Graph filters** are passed through as JSON strings; invalid filter shapes fail at runtime with API errors—validate against notification-srv graph filter rules.
 - **Import** identifiers are resource-specific (for example template document **`id`** for `cidaas_notification_template`); see each resource’s documentation.
 - **Destroy** behavior for system or protected objects follows API rules; some resources may warn instead of deleting.
+- **Service setup list** (`data.cidaas_notification_service_setups`) is **active-only**; poll with GET-by-id / managed resource for `in-progress` setups.
 
 ## Related registry documentation
 
 - Provider schema: **`base_url`**, **`notifications_context_path`**
-- Resources: **`cidaas_notifications_template_group`**, **`cidaas_notifications_template_group_locale`**, **`cidaas_notification_template_type`**, **`cidaas_notification_template`**
-- Data sources: **`cidaas_notification_templates`**, **`cidaas_notification_template_groups`**, **`cidaas_notification_service_setups`**
+- Resources: **`cidaas_notifications_template_group`**, **`cidaas_notifications_template_group_locale`**, **`cidaas_notification_template_type`**, **`cidaas_notification_template`**, **`cidaas_notification_service_setup`**, **`cidaas_notification_provider_config`**
+- Data sources: **`cidaas_notification_templates`**, **`cidaas_notification_template_groups`**, **`cidaas_notification_service_setups`**, **`cidaas_notification_service_setup`**
 
 Run `go generate ./...` after changing schemas so the [Terraform Registry](https://registry.terraform.io/providers/cidaas/cidaas/latest/docs) docs stay in sync.

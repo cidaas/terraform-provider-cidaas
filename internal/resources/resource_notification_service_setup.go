@@ -6,9 +6,9 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -39,9 +39,10 @@ func NewNotificationServiceSetupResource() resource.Resource {
 
 var notificationServiceSetupSchema = schema.Schema{
 	MarkdownDescription: "Manages a **communication provider service setup** via **notification-srv** (`POST/PATCH/DELETE /{notifications_context_path}/servicesetups`). " +
-		"notification-srv proxies to mplace-srv; the tenant is taken from your instance token — do **not** set `saas_instance_id`.\n\n" +
+		"The tenant is taken from your instance token — do **not** set `saas_instance_id`.\n\n" +
 		"**`status`** is computed from `GET` and reflects manual verification in service-desk (e.g. `in-progress` → `active`). Terraform does **not** call verify.\n\n" +
 		"Pair with **`cidaas_notification_provider_config`** for credentials (`config_data_wo` + `schemaData`).\n\n" +
+		"Destroy treats remote **404** as success. Active setups must be deactivated outside Terraform before delete.\n\n" +
 		"**Scopes:** `cidaas:service_setups_read`, `cidaas:service_setups_write`, `cidaas:service_setups_delete`.",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
@@ -92,7 +93,11 @@ var notificationServiceSetupSchema = schema.Schema{
 		},
 		"parent_service_setup_id": schema.StringAttribute{
 			Optional:            true,
-			MarkdownDescription: "Optional parent service setup id.",
+			Computed:            true,
+			MarkdownDescription: "Parent service setup id. Optional in config; if omitted, the platform may auto-populate it on create.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"has_remote_templates": schema.BoolAttribute{
 			Optional:            true,
@@ -104,15 +109,15 @@ var notificationServiceSetupSchema = schema.Schema{
 }
 
 type notificationServiceSetupModel struct {
-	ID                    types.String `tfsdk:"id"`
-	Name                  types.String `tfsdk:"name"`
-	Description           types.String `tfsdk:"description"`
-	Status                types.String `tfsdk:"status"`
-	ServiceID             types.String `tfsdk:"service_id"`
-	ServiceCategory       types.String `tfsdk:"service_category"`
-	CommunicationMethods  types.Set    `tfsdk:"communication_methods"`
-	ParentServiceSetupID  types.String `tfsdk:"parent_service_setup_id"`
-	HasRemoteTemplates    types.Bool   `tfsdk:"has_remote_templates"`
+	ID                   types.String `tfsdk:"id"`
+	Name                 types.String `tfsdk:"name"`
+	Description          types.String `tfsdk:"description"`
+	Status               types.String `tfsdk:"status"`
+	ServiceID            types.String `tfsdk:"service_id"`
+	ServiceCategory      types.String `tfsdk:"service_category"`
+	CommunicationMethods types.Set    `tfsdk:"communication_methods"`
+	ParentServiceSetupID types.String `tfsdk:"parent_service_setup_id"`
+	HasRemoteTemplates   types.Bool   `tfsdk:"has_remote_templates"`
 }
 
 func (r *NotificationServiceSetupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -195,11 +200,17 @@ func (r *NotificationServiceSetupResource) Delete(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.cidaasClient.NotificationsSrvServiceSetup.Delete(ctx, state.ID.ValueString()); err != nil {
+	id := state.ID.ValueString()
+	if err := r.cidaasClient.NotificationsSrvServiceSetup.Delete(ctx, id); err != nil {
+		// Already gone remotely (e.g. deleted in UI) — treat as successful destroy.
+		if util.IsResourceNotFound(err) {
+			tflog.Info(ctx, "notification service setup already absent remotely; removing from state", util.H{"id": id})
+			return
+		}
 		resp.Diagnostics.AddError("failed to delete notification service setup", util.FormatErrorMessage(err))
 		return
 	}
-	tflog.Info(ctx, "deleted notification service setup", util.H{"id": state.ID.ValueString()})
+	tflog.Info(ctx, "deleted notification service setup", util.H{"id": id})
 }
 
 func (r *NotificationServiceSetupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -250,6 +261,10 @@ func notificationServiceSetupFromAPI(api *cidaas.NotificationsSrvServiceSetupMod
 	if category == "" {
 		category = "comm_prov"
 	}
+	parentID := types.StringNull()
+	if api.ParentServiceSetupID != "" {
+		parentID = types.StringValue(api.ParentServiceSetupID)
+	}
 	return notificationServiceSetupModel{
 		ID:                   types.StringValue(api.ID),
 		Name:                 types.StringValue(api.Name),
@@ -258,7 +273,7 @@ func notificationServiceSetupFromAPI(api *cidaas.NotificationsSrvServiceSetupMod
 		ServiceID:            types.StringValue(api.ServiceDescInfo.ServiceID),
 		ServiceCategory:      types.StringValue(category),
 		CommunicationMethods: commSet,
-		ParentServiceSetupID: types.StringValue(api.ParentServiceSetupID),
+		ParentServiceSetupID: parentID,
 		HasRemoteTemplates:   types.BoolValue(api.HasRemoteTemplates),
 	}
 }

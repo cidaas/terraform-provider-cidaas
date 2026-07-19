@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
@@ -45,5 +46,35 @@ func TestResolveProviderConfigData_WriteOnly(t *testing.T) {
 	}
 	if string(raw) == "" {
 		t.Fatal("expected raw json")
+	}
+}
+
+func TestEnsureProviderConfigDataID_InjectsWhenMissing(t *testing.T) {
+	t.Parallel()
+	raw, diags := ensureProviderConfigDataID("ss-1", []byte(`{"commProvider":"custom-twilio-sms","commMethod":"sms","schemaData":{}}`))
+	if diags.HasError() {
+		t.Fatalf("diags: %v", diags)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatal(err)
+	}
+	if m["id"] != "ss-1" {
+		t.Fatalf("expected id ss-1, got %#v", m["id"])
+	}
+}
+
+func TestEnsureProviderConfigDataID_PreservesExisting(t *testing.T) {
+	t.Parallel()
+	raw, diags := ensureProviderConfigDataID("ss-1", []byte(`{"id":"keep-me","commProvider":"x"}`))
+	if diags.HasError() {
+		t.Fatalf("diags: %v", diags)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatal(err)
+	}
+	if m["id"] != "keep-me" {
+		t.Fatalf("expected keep-me, got %#v", m["id"])
 	}
 }

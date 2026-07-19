@@ -6,8 +6,8 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -32,10 +32,11 @@ func NewNotificationProviderConfigResource() resource.Resource {
 
 var notificationProviderConfigSchema = schema.Schema{
 	MarkdownDescription: "Stores **provider credentials** for a service setup via **notification-srv** (`POST /{notifications_context_path}/providerconfigs`). " +
-		"notification-srv proxies to mplace admin `provconfs` (upsert by `_id` = `service_setup_id`).\n\n" +
+		"Upsert by `_id` = `service_setup_id`.\n\n" +
 		"**Recommended:** pass wizard-shaped JSON in `config_data_wo` with top-level `commProvider`, `commMethod`, and `schemaData` " +
-		"so mplace validates and maps fields server-side.\n\n" +
+		"so the platform validates and maps fields server-side. The provider injects `configData.id` from `service_setup_id` when omitted.\n\n" +
 		"**Verification** is manual (service-desk); use `cidaas_notification_service_setup.status` after refresh.\n\n" +
+		"Destroy removes Terraform state only (no remote DELETE for provider configs).\n\n" +
 		"**Scopes:** `cidaas:service_setups_read`, `cidaas:provider_config_write`.\n\n" +
 		"-> **Note:** Write-Only argument `config_data_wo` is available to use in place of `config_data`. " +
 		"Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later.",
@@ -73,11 +74,11 @@ var notificationProviderConfigSchema = schema.Schema{
 }
 
 type notificationProviderConfigModel struct {
-	ID                   types.String `tfsdk:"id"`
-	ServiceSetupID       types.String `tfsdk:"service_setup_id"`
-	ConfigData           types.String `tfsdk:"config_data"`
-	ConfigDataWO         types.String `tfsdk:"config_data_wo"`
-	ConfigDataWOVersion  types.String `tfsdk:"config_data_wo_version"`
+	ID                  types.String `tfsdk:"id"`
+	ServiceSetupID      types.String `tfsdk:"service_setup_id"`
+	ConfigData          types.String `tfsdk:"config_data"`
+	ConfigDataWO        types.String `tfsdk:"config_data_wo"`
+	ConfigDataWOVersion types.String `tfsdk:"config_data_wo_version"`
 }
 
 func (r *NotificationProviderConfigResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
@@ -105,6 +106,11 @@ func (r *NotificationProviderConfigResource) Create(ctx context.Context, req res
 		return
 	}
 	raw, diags := resolveProviderConfigData(plan, config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	raw, diags = ensureProviderConfigDataID(plan.ServiceSetupID.ValueString(), raw)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -160,6 +166,11 @@ func (r *NotificationProviderConfigResource) Update(ctx context.Context, req res
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	raw, diags = ensureProviderConfigDataID(plan.ServiceSetupID.ValueString(), raw)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	updated, err := r.cidaasClient.NotificationsSrvProviderConfig.Create(ctx, plan.ServiceSetupID.ValueString(), raw)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification provider config", util.FormatErrorMessage(err))
@@ -205,6 +216,30 @@ func resolveProviderConfigData(plan, config notificationProviderConfigModel) (js
 		return nil, diags
 	}
 	return json.RawMessage(jsonStr), diags
+}
+
+// ensureProviderConfigDataID sets configData.id from service_setup_id when omitted.
+// mplace BaseProvConf.Validate requires id (= service setup id); wizard/schemaData payloads often omit it.
+func ensureProviderConfigDataID(serviceSetupID string, raw json.RawMessage) (json.RawMessage, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if serviceSetupID == "" {
+		return raw, diags
+	}
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		diags.AddError("invalid config_data JSON", err.Error())
+		return nil, diags
+	}
+	if existing, ok := m["id"].(string); ok && existing != "" {
+		return raw, diags
+	}
+	m["id"] = serviceSetupID
+	out, err := json.Marshal(m)
+	if err != nil {
+		diags.AddError("failed to encode config_data", err.Error())
+		return nil, diags
+	}
+	return json.RawMessage(out), diags
 }
 
 func providerConfigStateFromAPI(api *cidaas.NotificationsSrvProviderConfigModel, plan, config notificationProviderConfigModel) notificationProviderConfigModel {

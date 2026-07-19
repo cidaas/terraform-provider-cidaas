@@ -2,16 +2,22 @@
 page_title: "cidaas_notification_service_setup Resource - cidaas"
 subcategory: ""
 description: |-
-  Manages a communication provider service setup via notification-srv (proxied to mplace-srv).
+  Manages a communication provider service setup via notification-srv.
 ---
 
 # cidaas_notification_service_setup (Resource)
 
-Manages a **communication provider service setup** via **notification-srv** (`/servicesetups`). notification-srv proxies to **mplace-srv**; the tenant comes from your instance token — do **not** pass `saas_instance_id`.
+Manages a **communication provider service setup** via **notification-srv** (`POST` / `PATCH` / `DELETE` `/{notifications_context_path}/servicesetups`). The tenant comes from your instance token — do **not** pass `saas_instance_id`.
 
 **`status`** is computed from `GET` and reflects manual verification in service-desk (`in-progress` → `active`). Terraform does **not** call verify.
 
 Pair with **`cidaas_notification_provider_config`** for credentials.
+
+**Scopes:** `cidaas:service_setups_read`, `cidaas:service_setups_write`, `cidaas:service_setups_delete`.
+
+**Update:** only **`name`** and **`description`** are sent on `PATCH`.
+
+**Destroy:** deletes the remote setup when allowed by the API. If the setup was already removed outside Terraform (HTTP **404**), destroy succeeds and clears state. The API blocks delete while **`status = active`** — deactivate outside Terraform first, then destroy.
 
 **Import:** `terraform import cidaas_notification_service_setup.NAME <service_setup_id>`
 
@@ -20,7 +26,7 @@ Pair with **`cidaas_notification_provider_config`** for credentials.
 ```terraform
 resource "cidaas_notification_service_setup" "twilio_sms" {
   name                  = "Twilio SMS"
-  service_id            = "twilio-sms"
+  service_id            = "custom-twilio-sms"
   communication_methods = ["sms"]
 }
 
@@ -39,13 +45,13 @@ resource "cidaas_notification_provider_config" "twilio_sms" {
 }
 ```
 
-After `terraform apply`, verify the provider in **service-desk**, then run `terraform plan` — `status` should become `active` with no config change.
+After `terraform apply`, verify the provider in **service-desk**, then run `terraform plan` — `status` should become `active` with no config change. Until then, `data.cidaas_notification_service_setups` will not list this setup (active-only).
 
 ## Schema
 
 ### Required
 
-- `communication_methods` (Set of String) Communication methods: `email`, `sms`, `ivr`, `push`.
+- `communication_methods` (Set of String) Communication methods: `email`, `sms`, `ivr`, `push`. Changing forces replacement.
 - `name` (String) Human-readable name.
 - `service_id` (String) Service id (`serviceDescInfo.serviceId`). Changing forces replacement.
 
@@ -53,8 +59,8 @@ After `terraform apply`, verify the provider in **service-desk**, then run `terr
 
 - `description` (String) Optional description.
 - `has_remote_templates` (Boolean) Whether templates are remote. Default: `false`.
-- `parent_service_setup_id` (String) Optional parent service setup id.
-- `service_category` (String) Service category. Default: `comm_prov`.
+- `parent_service_setup_id` (String) Optional + computed. Omit to let the platform auto-fill the parent when applicable; value is stored after create/refresh.
+- `service_category` (String) Optional + computed. Default: `comm_prov`.
 
 ### Read-Only
 

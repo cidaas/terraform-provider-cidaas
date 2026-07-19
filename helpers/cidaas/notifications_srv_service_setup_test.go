@@ -144,6 +144,26 @@ func TestNotificationsSrvServiceSetup_UpdateAndDelete(t *testing.T) {
 	}
 }
 
+func TestNotificationsSrvServiceSetup_DeleteNotFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Fatalf("expected DELETE, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"success":false,"status":404,"error":"resource not found","code":"35010"}`))
+	}))
+	defer server.Close()
+
+	client := NewNotificationsSrvServiceSetup(NewTestClientConfig(server.URL))
+	err := client.Delete(context.Background(), "gone")
+	if err == nil {
+		t.Fatal("expected not-found error")
+	}
+	if !strings.Contains(err.Error(), "resource not found") {
+		t.Fatalf("expected resource not found, got: %v", err)
+	}
+}
+
 func TestNotificationsSrvProviderConfig_CreateSchemaData(t *testing.T) {
 	var posted NotificationsSrvProviderConfigModel
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -26,7 +26,8 @@ func NewNotificationServiceSetup() datasource.DataSource {
 }
 
 var notificationServiceSetupDataSchema = schema.Schema{
-	MarkdownDescription: "Reads a single **service setup** from notification-srv `GET /{notifications_context_path}/servicesetups/{id}`.",
+	MarkdownDescription: "Reads a single **service setup** from notification-srv `GET /{notifications_context_path}/servicesetups/{id}`. " +
+		"Unlike the list datasource, this returns any status (including `in-progress`) for status polling after create.",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
