@@ -38,8 +38,7 @@ func NewNotificationServiceSetupResource() resource.Resource {
 }
 
 var notificationServiceSetupSchema = schema.Schema{
-	MarkdownDescription: "Manages a **communication provider service setup** via **notification-srv** (`POST/PATCH/DELETE /{notifications_context_path}/servicesetups`). " +
-		"The tenant is taken from your instance token — do **not** set `saas_instance_id`.\n\n" +
+	MarkdownDescription: "Manages a **communication provider service setup** via **notification-srv** (`POST/PATCH/DELETE /{notifications_context_path}/servicesetups`).\n\n" +
 		"**`status`** is computed from `GET` and reflects manual verification in service-desk (e.g. `in-progress` → `active`). Terraform does **not** call verify.\n\n" +
 		"Pair with **`cidaas_notification_provider_config`** for credentials (`config_data_wo` + `schemaData`).\n\n" +
 		"Destroy treats remote **404** as success. Active setups must be deactivated outside Terraform before delete.\n\n" +

@@ -7,7 +7,7 @@ description: |-
 
 # cidaas_notification_service_setup (Resource)
 
-Manages a **communication provider service setup** via **notification-srv** (`POST` / `PATCH` / `DELETE` `/{notifications_context_path}/servicesetups`). The tenant comes from your instance token — do **not** pass `saas_instance_id`.
+Manages a **communication provider service setup** via **notification-srv** (`POST` / `PATCH` / `DELETE` `/{notifications_context_path}/servicesetups`).
 
 **`status`** is computed from `GET` and reflects manual verification in service-desk (`in-progress` → `active`). Terraform does **not** call verify.
 

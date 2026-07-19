@@ -48,7 +48,7 @@ See [examples/resources/cidaas_notifications_template_group/resource.tf](https:/
 
 ### Service setup and provider config (IaC)
 
-Terraform manages communication providers through **notification-srv** APIs (`/servicesetups`, `/providerconfigs`). The tenant is taken from your instance token — do **not** pass `saas_instance_id`.
+Terraform manages communication providers through **notification-srv** APIs (`/servicesetups`, `/providerconfigs`).
 
 | API | Purpose |
 | --- | --- |
