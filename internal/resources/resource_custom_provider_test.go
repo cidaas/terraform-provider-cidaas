@@ -73,10 +73,12 @@ func TestAccCustomProviderResource_Basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     providerName,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           providerName,
+				// API fills userinfo_source=USERINFOENDPOINT when unset; create state omits it.
+				ImportStateVerifyIgnore: []string{"userinfo_source"},
 			},
 			{
 				Config: fmt.Sprintf(`
