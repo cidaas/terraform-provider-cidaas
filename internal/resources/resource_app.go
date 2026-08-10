@@ -621,27 +621,30 @@ func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 		state.ApplicationMetaData = types.MapValueMust(types.StringType, metaData)
 	}
 
-	if ((!state.SocialProviders.IsNull() && len(state.SocialProviders.Elements()) > 0) || isImport) && len(data.SocialProviders) > 0 {
-		var spObjectValues []attr.Value
-		spObjectType := types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"provider_name": types.StringType,
-				"social_id":     types.StringType,
-			},
+	spObjectType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"provider_name": types.StringType,
+			"social_id":     types.StringType,
+		},
+	}
+	if (!state.SocialProviders.IsNull() && len(state.SocialProviders.Elements()) > 0) || isImport {
+		if len(data.SocialProviders) > 0 {
+			var spObjectValues []attr.Value
+			for _, sp := range data.SocialProviders {
+				providerName := sp.ProviderName
+				socialID := sp.SocialID
+				objValue := types.ObjectValueMust(
+					spObjectType.AttrTypes,
+					map[string]attr.Value{
+						"provider_name": util.StringValueOrNull(&providerName),
+						"social_id":     util.StringValueOrNull(&socialID),
+					})
+				spObjectValues = append(spObjectValues, objValue)
+			}
+			state.SocialProviders = types.ListValueMust(spObjectType, spObjectValues)
+		} else {
+			state.SocialProviders = types.ListNull(spObjectType)
 		}
-
-		for _, sp := range data.SocialProviders {
-			providerName := sp.ProviderName
-			socialID := sp.SocialID
-			objValue := types.ObjectValueMust(
-				spObjectType.AttrTypes,
-				map[string]attr.Value{
-					"provider_name": util.StringValueOrNull(&providerName),
-					"social_id":     util.StringValueOrNull(&socialID),
-				})
-			spObjectValues = append(spObjectValues, objValue)
-		}
-		state.SocialProviders = types.ListValueMust(spObjectType, spObjectValues)
 	}
 
 	providerObjectType := types.ObjectType{
@@ -679,14 +682,26 @@ func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 		return providerMetaObjectValues
 	}
 
-	if ((!state.CustomProviders.IsNull() && len(state.CustomProviders.Elements()) > 0) || isImport) && len(data.CustomProviders) > 0 {
-		state.CustomProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.CustomProviders))
+	if (!state.CustomProviders.IsNull() && len(state.CustomProviders.Elements()) > 0) || isImport {
+		if len(data.CustomProviders) > 0 {
+			state.CustomProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.CustomProviders))
+		} else {
+			state.CustomProviders = types.ListNull(providerObjectType)
+		}
 	}
-	if ((!state.SamlProviders.IsNull() && len(state.SamlProviders.Elements()) > 0) || isImport) && len(data.SamlProviders) > 0 {
-		state.SamlProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.SamlProviders))
+	if (!state.SamlProviders.IsNull() && len(state.SamlProviders.Elements()) > 0) || isImport {
+		if len(data.SamlProviders) > 0 {
+			state.SamlProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.SamlProviders))
+		} else {
+			state.SamlProviders = types.ListNull(providerObjectType)
+		}
 	}
-	if ((!state.AdProviders.IsNull() && len(state.AdProviders.Elements()) > 0) || isImport) && len(data.AdProviders) > 0 {
-		state.AdProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.AdProviders))
+	if (!state.AdProviders.IsNull() && len(state.AdProviders.Elements()) > 0) || isImport {
+		if len(data.AdProviders) > 0 {
+			state.AdProviders = types.ListValueMust(providerObjectType, createProviderMetaObjectValues(data.AdProviders))
+		} else {
+			state.AdProviders = types.ListNull(providerObjectType)
+		}
 	}
 
 	allowedGroupsObjectType := types.ObjectType{
@@ -718,29 +733,41 @@ func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 		return allowedGroupObjectValues
 	}
 
-	if ((!state.AllowedGroups.IsNull() && len(state.AllowedGroups.Elements()) > 0) || isImport) && len(data.AllowedGroups) > 0 {
-		state.AllowedGroups = types.ListValueMust(allowedGroupsObjectType, createAllowedGroupsObjectValues(data.AllowedGroups))
+	if (!state.AllowedGroups.IsNull() && len(state.AllowedGroups.Elements()) > 0) || isImport {
+		if len(data.AllowedGroups) > 0 {
+			state.AllowedGroups = types.ListValueMust(allowedGroupsObjectType, createAllowedGroupsObjectValues(data.AllowedGroups))
+		} else {
+			state.AllowedGroups = types.ListNull(allowedGroupsObjectType)
+		}
 	}
-	if ((!state.OperationsAllowedGroups.IsNull() && len(state.OperationsAllowedGroups.Elements()) > 0) || isImport) && len(data.OperationsAllowedGroups) > 0 {
-		state.OperationsAllowedGroups = types.ListValueMust(allowedGroupsObjectType, createAllowedGroupsObjectValues(data.OperationsAllowedGroups))
+	if (!state.OperationsAllowedGroups.IsNull() && len(state.OperationsAllowedGroups.Elements()) > 0) || isImport {
+		if len(data.OperationsAllowedGroups) > 0 {
+			state.OperationsAllowedGroups = types.ListValueMust(allowedGroupsObjectType, createAllowedGroupsObjectValues(data.OperationsAllowedGroups))
+		} else {
+			state.OperationsAllowedGroups = types.ListNull(allowedGroupsObjectType)
+		}
 	}
 
-	if ((!state.AllowGuestLoginGroups.IsNull() && len(state.AllowGuestLoginGroups.Elements()) > 0) || isImport) && len(data.AllowGuestLoginGroups) > 0 {
-		var allowedGroupObjectValues []attr.Value
-		for _, group := range data.AllowGuestLoginGroups {
-			groupID := group.GroupID
-			groupType := group.GroupType
-			objValue := types.ObjectValueMust(
-				allowedGroupsObjectType.AttrTypes,
-				map[string]attr.Value{
-					"group_id":      util.StringValueOrNull(&groupID),
-					"group_type":    util.StringValueOrNull(&groupType),
-					"roles":         util.SetValueOrNull(group.Roles),
-					"default_roles": util.SetValueOrNull(group.DefaultRoles),
-				})
-			allowedGroupObjectValues = append(allowedGroupObjectValues, objValue)
+	if (!state.AllowGuestLoginGroups.IsNull() && len(state.AllowGuestLoginGroups.Elements()) > 0) || isImport {
+		if len(data.AllowGuestLoginGroups) > 0 {
+			var allowedGroupObjectValues []attr.Value
+			for _, group := range data.AllowGuestLoginGroups {
+				groupID := group.GroupID
+				groupType := group.GroupType
+				objValue := types.ObjectValueMust(
+					allowedGroupsObjectType.AttrTypes,
+					map[string]attr.Value{
+						"group_id":      util.StringValueOrNull(&groupID),
+						"group_type":    util.StringValueOrNull(&groupType),
+						"roles":         util.SetValueOrNull(group.Roles),
+						"default_roles": util.SetValueOrNull(group.DefaultRoles),
+					})
+				allowedGroupObjectValues = append(allowedGroupObjectValues, objValue)
+			}
+			state.AllowGuestLoginGroups = types.ListValueMust(allowedGroupsObjectType, allowedGroupObjectValues)
+		} else {
+			state.AllowGuestLoginGroups = types.ListNull(allowedGroupsObjectType)
 		}
-		state.AllowGuestLoginGroups = types.ListValueMust(allowedGroupsObjectType, allowedGroupObjectValues)
 	}
 
 	if (!state.LoginSpi.IsNull() || isImport) && data.LoginSpi != nil {
