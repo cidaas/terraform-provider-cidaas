@@ -60,6 +60,8 @@ func TestSocialProvider_Basic(t *testing.T) {
 					}
 					return rs.Primary.Attributes["provider_name"] + ":" + rs.Primary.ID, nil
 				},
+				// API may return userinfo_fields in a different order than config.
+				ImportStateVerifyIgnore: []string{"userinfo_fields"},
 			},
 			{
 				Config: socialProviderConfig(spName, spProviderName, spClientID, spClientSecret, testResourceID),

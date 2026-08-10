@@ -22,6 +22,10 @@ func TestConsentVersion_Basic(t *testing.T) {
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Apply consent first so version create does not race a just-created consent_id.
+			{
+				Config: testConsentVersionDepsConfig(groupName, consentName),
+			},
 			{
 				Config: testConsentVersionConfig("consent version in German", testResourceID, groupName, consentName),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -51,6 +55,23 @@ func TestConsentVersion_Basic(t *testing.T) {
 	})
 }
 
+func testConsentVersionDepsConfig(groupName, consentName string) string {
+	return fmt.Sprintf(`
+		provider "cidaas" {
+			base_url = "%s"
+		}
+		resource "cidaas_consent_group" "sample" {
+			group_name  = "%s"
+			description = "sample description"
+		}
+		resource "cidaas_consent" "sample" {
+			consent_group_id = cidaas_consent_group.sample.id
+			name             = "%s"
+			enabled          = true
+		}
+	`, acctest.GetBaseURL(), groupName, consentName)
+}
+
 func testConsentVersionConfig(content, resourceID, groupName, consentName string) string {
 	return fmt.Sprintf(`
 		provider "cidaas" {
@@ -69,7 +90,7 @@ func testConsentVersionConfig(content, resourceID, groupName, consentName string
 			version         = 1
 			consent_id      = cidaas_consent.sample.id
 			consent_type    = "SCOPES"
-			scopes          = ["developer"]
+			scopes          = ["openid", "profile"]
 			required_fields = ["name"]
 			consent_locales = [
 				{
@@ -81,6 +102,6 @@ func testConsentVersionConfig(content, resourceID, groupName, consentName string
 					locale  = "en"
 				}
 			]
-		}		
+		}
 	`, acctest.GetBaseURL(), groupName, consentName, resourceID, content)
 }
