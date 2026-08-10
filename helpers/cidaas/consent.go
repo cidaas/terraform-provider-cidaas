@@ -37,7 +37,7 @@ func NewConsent(clientConfig ClientConfig) *Consent {
 	return &Consent{clientConfig}
 }
 
-func (c *Consent) Upsert(ctx context.Context, consentConfig ConsentModel) (*ConsentResponse, error) {
+func (c *Consent) Upsert(ctx context.Context, consentConfig ConsentModel) (*ConsentResponse, error) { //nolint:dupl
 	var response ConsentResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/instance")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -45,12 +45,12 @@ func (c *Consent) Upsert(ctx context.Context, consentConfig ConsentModel) (*Cons
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, consentConfig)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -70,11 +70,11 @@ func (c *Consent) GetConsentInstances(ctx context.Context, consentGroupID string
 			Status:  http.StatusNoContent,
 		}, nil
 	}
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -87,14 +87,14 @@ func (c *Consent) Delete(ctx context.Context, consentID string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (c *Consent) GetAll(ctx context.Context) ([]ConsentModel, error) {
+func (c *Consent) GetAll(ctx context.Context) ([]ConsentModel, error) { //nolint:dupl
 	var response ConsentInstanceResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/instance/all/list")
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -102,11 +102,11 @@ func (c *Consent) GetAll(ctx context.Context) ([]ConsentModel, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

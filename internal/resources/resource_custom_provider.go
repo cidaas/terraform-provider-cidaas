@@ -1,3 +1,4 @@
+//nolint:dupl // apikey/totp auth schema blocks mirror resource_webhook
 package resources
 
 import (
@@ -200,7 +201,7 @@ func (pc *ProviderConfig) extract(ctx context.Context) diag.Diagnostics {
 	return diags
 }
 
-var customProviderSchema = schema.Schema{
+var customProviderSchema = schema.Schema{ //nolint:dupl
 	MarkdownDescription: "This example demonstrates the configuration of a custom provider resource for interacting with Cidaas." +
 		"\n\n Ensure that the below scopes are assigned to the client with the specified `client_id`:" +
 		"\n- cidaas:providers_read" +
@@ -826,7 +827,7 @@ func (r *CustomProvider) Update(ctx context.Context, req resource.UpdateRequest,
 	tflog.Info(ctx, "resource custom provider updated successfully")
 }
 
-func (r *CustomProvider) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *CustomProvider) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state ProviderConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {

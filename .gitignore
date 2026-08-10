@@ -6,3 +6,8 @@ samples
 terraform-provider-cidaas
 terraform-provider-cidaas_*
 darwin_arm64/
+.golangci.yml
+.coverage.txt
+coverage.html
+coverage.out
+gl-code-quality-report.json

@@ -38,7 +38,7 @@ func NewHostedPage(clientConfig ClientConfig) *HostedPage {
 	return &HostedPage{clientConfig}
 }
 
-func (hp *HostedPage) Upsert(ctx context.Context, hpm HostedPageModel) (*HostedPageResponse, error) {
+func (hp *HostedPage) Upsert(ctx context.Context, hpm HostedPageModel) (*HostedPageResponse, error) { //nolint:dupl
 	var response HostedPageResponse
 	url := fmt.Sprintf("%s/%s", hp.BaseURL, "hostedpages-srv/hpgroup")
 	client, err := util.NewHTTPClient(url, http.MethodPost, hp.AccessToken)
@@ -46,18 +46,18 @@ func (hp *HostedPage) Upsert(ctx context.Context, hpm HostedPageModel) (*HostedP
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, hpm)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (hp *HostedPage) Get(ctx context.Context, hpGroupName string) (*HostedPageResponse, error) {
+func (hp *HostedPage) Get(ctx context.Context, hpGroupName string) (*HostedPageResponse, error) { //nolint:dupl
 	var response HostedPageResponse
 	url := fmt.Sprintf("%s/%s/%s", hp.BaseURL, "hostedpages-srv/hpgroup", hpGroupName)
 	client, err := util.NewHTTPClient(url, http.MethodGet, hp.AccessToken)
@@ -65,12 +65,12 @@ func (hp *HostedPage) Get(ctx context.Context, hpGroupName string) (*HostedPageR
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -83,7 +83,7 @@ func (hp *HostedPage) Delete(ctx context.Context, hpGroupName string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

@@ -117,8 +117,9 @@ func listConsents(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	return TypedSliceToAny(consents), nil
 }
 
-func parseConsent(c cidaas.ConsentModel) (result Consent) {
-	result.ID = types.StringValue(c.ID)
-	result.ConsentName = types.StringValue(c.ConsentName)
-	return result
+func parseConsent(c cidaas.ConsentModel) Consent {
+	return Consent{
+		ID:          types.StringValue(c.ID),
+		ConsentName: types.StringValue(c.ConsentName),
+	}
 }

@@ -300,7 +300,7 @@ func (w *AppConfig) ExtractAppConfigs(ctx context.Context) diag.Diagnostics {
 	return diags
 }
 
-func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, diag.Diagnostics) { //nolint:gocognit
+func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, diag.Diagnostics) { //nolint:gocognit,gocyclo
 
 	assignSetValues := func(ctx context.Context, planValue basetypes.SetValue, target *[]string) diag.Diagnostics {
 		if !planValue.IsNull() && len(planValue.Elements()) > 0 {

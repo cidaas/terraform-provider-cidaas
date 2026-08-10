@@ -57,7 +57,7 @@ func NewTemplateGroup(clientConfig ClientConfig) *TemplateGroup {
 	return &TemplateGroup{clientConfig}
 }
 
-func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) {
+func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) { //nolint:dupl
 	var response TemplateGroupResponse
 	url := fmt.Sprintf("%s/%s", t.BaseURL, "templates-srv/groups")
 	client, err := util.NewHTTPClient(url, http.MethodPost, t.AccessToken)
@@ -65,12 +65,12 @@ func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*Tem
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, tg)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -84,12 +84,12 @@ func (t *TemplateGroup) Update(ctx context.Context, tg TemplateGroupModel) (*Tem
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, tg)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -109,12 +109,12 @@ func (t *TemplateGroup) Get(ctx context.Context, groupID string) (*TemplateGroup
 		}
 		return resp, fmt.Errorf("%w: template group not found by the provider group_id  %s", util.ErrResourceNotFound, groupID)
 	}
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -127,7 +127,7 @@ func (t *TemplateGroup) Delete(ctx context.Context, groupID string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

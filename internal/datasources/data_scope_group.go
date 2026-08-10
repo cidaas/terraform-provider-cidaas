@@ -78,7 +78,7 @@ func NewScopeGroup() datasource.DataSource {
 	}
 }
 
-func (d *ScopeGroupDataSource) Read(
+func (d *ScopeGroupDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -124,9 +124,10 @@ func listScopeGroups(ctx context.Context, client *cidaas.Client) ([]any, error) 
 	return TypedSliceToAny(sgs), nil
 }
 
-func parseScopeGroup(scope cidaas.ScopeGroupConfig) (result ScopeGroup) {
-	result.ID = types.StringValue(scope.ID)
-	result.GroupName = types.StringValue(scope.GroupName)
-	result.Description = types.StringValue(scope.Description)
-	return result
+func parseScopeGroup(scope cidaas.ScopeGroupConfig) ScopeGroup {
+	return ScopeGroup{
+		ID:          types.StringValue(scope.ID),
+		GroupName:   types.StringValue(scope.GroupName),
+		Description: types.StringValue(scope.Description),
+	}
 }

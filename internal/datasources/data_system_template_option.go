@@ -145,7 +145,7 @@ func NewSystemTemplateOption() datasource.DataSource {
 	}
 }
 
-func (d *SystemTemplateOptionsDataSource) Read(
+func (d *SystemTemplateOptionsDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -201,9 +201,11 @@ func listSystemTemplateOptions(ctx context.Context, client *cidaas.Client) ([]an
 	return TypedSliceToAny(masterListResp.Data), nil
 }
 
-func parseSystemTemplate(ml cidaas.MasterList) (r SystemTemplateOption) {
-	r.TemplateKey = types.StringValue(ml.TemplateKey)
-	r.Enabled = types.BoolValue(ml.Enabled)
+func parseSystemTemplate(ml cidaas.MasterList) SystemTemplateOption {
+	r := SystemTemplateOption{
+		TemplateKey: types.StringValue(ml.TemplateKey),
+		Enabled:     types.BoolValue(ml.Enabled),
+	}
 
 	verificationTypes := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -344,44 +346,50 @@ type TemaplateTagHandler struct {
 	TagsListPayload TagsListPayload
 }
 
-func (th *TemaplateTagHandler) getTemplateTags(text string) TemplateTags { //nolint:gocognit
+func (th *TemaplateTagHandler) getTemplateTags(text string) TemplateTags {
 	var tags TemplateTags
 
 	switch text {
 	case "VERIFY_ACCOUNT":
-		if th.TemplateData.TemplateType == EMAIL || th.TemplateData.TemplateType == SMS {
-			if th.TemplateData.ProcessingType == LINK {
+		switch th.TemplateData.TemplateType {
+		case EMAIL, SMS:
+			switch th.TemplateData.ProcessingType {
+			case LINK:
 				tags = th.TagsListPayload.VerifyAccountEmailSMSLink
-			} else if th.TemplateData.ProcessingType == CODE {
+			case CODE:
 				tags = th.TagsListPayload.VerifyAccountEmailSMSCode
 			}
-		} else if th.TemplateData.TemplateType == IVR {
+		case IVR:
 			tags = th.TagsListPayload.VerifyAccountIVRCode
 		}
 	case "WELCOME_USER":
-		if th.TemplateData.TemplateType == EMAIL || th.TemplateData.TemplateType == SMS {
+		switch th.TemplateData.TemplateType {
+		case EMAIL, SMS:
 			tags = th.TagsListPayload.WelcomeUserEmailSMSLink
-		} else if th.TemplateData.TemplateType == IVR {
+		case IVR:
 			tags = th.TagsListPayload.WelcomeUserIVRLink
 		}
 	case "INVITE_USER":
 		tags = th.TagsListPayload.InviteUserEmail
 	case "RESET_PASSWORD":
-		if th.TemplateData.TemplateType == EMAIL {
-			if th.TemplateData.ProcessingType == LINK {
+		switch th.TemplateData.TemplateType {
+		case EMAIL:
+			switch th.TemplateData.ProcessingType {
+			case LINK:
 				tags = th.TagsListPayload.ResetPasswordEmailLink
-			} else if th.TemplateData.ProcessingType == CODE {
+			case CODE:
 				tags = th.TagsListPayload.ResetPasswordEmailCode
 			}
-		} else if th.TemplateData.TemplateType == SMS {
+		case SMS:
 			tags = th.TagsListPayload.ResetPasswordSMS
-		} else if th.TemplateData.TemplateType == IVR {
+		case IVR:
 			tags = th.TagsListPayload.ResetPasswordIVR
 		}
 	case "CHANGE_PASSWORD", "AFTER_CHANGE_PASSWORD":
-		if th.TemplateData.TemplateType == EMAIL || th.TemplateData.TemplateType == SMS {
+		switch th.TemplateData.TemplateType {
+		case EMAIL, SMS:
 			tags = th.TagsListPayload.AfterChangePasswordEmailSMS
-		} else if th.TemplateData.TemplateType == IVR {
+		case IVR:
 			tags = th.TagsListPayload.AfterChangePasswordIVR
 		}
 	case "NEW_DEVICE", "NEW_LOCATION", "NEW_NETWORK":
@@ -391,15 +399,17 @@ func (th *TemaplateTagHandler) getTemplateTags(text string) TemplateTags { //nol
 	case "USER_CREATED":
 		tags = th.TagsListPayload.UserCreatedEmailSMS
 	case "VERIFY_USER":
-		if th.TemplateData.TemplateType == EMAIL {
-			if th.TemplateData.ProcessingType == LINK {
+		switch th.TemplateData.TemplateType {
+		case EMAIL:
+			switch th.TemplateData.ProcessingType {
+			case LINK:
 				tags = th.TagsListPayload.VerifyUserEmailLink
-			} else if th.TemplateData.ProcessingType == CODE || th.TemplateData.ProcessingType == GENERAL {
+			case CODE, GENERAL:
 				tags = th.TagsListPayload.VerifyUserCodeGeneral
 			}
-		} else if th.TemplateData.TemplateType == SMS || th.TemplateData.TemplateType == IVR {
+		case SMS, IVR:
 			tags = th.TagsListPayload.VerifyUserSMSIVR
-		} else if th.TemplateData.TemplateType == PUSH {
+		case PUSH:
 			tags = th.TagsListPayload.VerifyUserPush
 		}
 	case "NOTIFY_COMMUNICATION_CHANGE":

@@ -100,7 +100,7 @@ func (h *HTTPClient) MakeRequest(ctx context.Context, requestBody interface{}) (
 // MakeRequestReadBody executes the request, reads the full response body, and returns the HTTP status code
 // and response headers (for correlation, e.g. X-Ref-Number). Only transport/body-read errors are returned as err;
 // non-2xx status codes are not treated as errors.
-func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interface{}) (statusCode int, body []byte, respHeader http.Header, err error) {
+func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interface{}) (int, []byte, http.Header, error) {
 	var reqBodyByte io.Reader
 	if requestBody == nil {
 		reqBodyByte = nil
@@ -129,9 +129,9 @@ func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interf
 		return 0, nil, nil, fmt.Errorf("request failed, %w", err)
 	}
 	defer resp.Body.Close()
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, nil, resp.Header, fmt.Errorf("failed to read response body, %w", err)
+	body, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return resp.StatusCode, nil, resp.Header, fmt.Errorf("failed to read response body, %w", readErr)
 	}
 	return resp.StatusCode, body, resp.Header, nil
 }

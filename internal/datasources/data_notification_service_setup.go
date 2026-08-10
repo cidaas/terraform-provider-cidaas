@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const NOTIFICATION_SERVICE_SETUP_DATASOURCE = "cidaas_notification_service_setup" // nolint:stylecheck
+const notificationServiceSetupDataSourceName = "cidaas_notification_service_setup"
 
 type notificationServiceSetupDataSource struct {
 	BaseDataSource
@@ -18,7 +18,7 @@ type notificationServiceSetupDataSource struct {
 func NewNotificationServiceSetup() datasource.DataSource {
 	return &notificationServiceSetupDataSource{
 		BaseDataSource: NewBaseDataSource(BaseDataSourceConfig{
-			Name:   NOTIFICATION_SERVICE_SETUP_DATASOURCE,
+			Name:   notificationServiceSetupDataSourceName,
 			Schema: &notificationServiceSetupDataSchema,
 		}),
 	}

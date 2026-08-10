@@ -257,7 +257,7 @@ func (r *ConsentResource) Update(ctx context.Context, req resource.UpdateRequest
 	tflog.Debug(ctx, "resource consent updated successfully")
 }
 
-func (r *ConsentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *ConsentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state ConsentConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {

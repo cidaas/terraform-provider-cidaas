@@ -32,7 +32,7 @@ type NotificationsSrvProviderConfigModel struct {
 }
 
 // Get returns provider config for a service setup id (GET /providerconfigs/:id).
-func (p *NotificationsSrvProviderConfig) Get(ctx context.Context, serviceSetupID string) (*NotificationsSrvProviderConfigModel, error) {
+func (p *NotificationsSrvProviderConfig) Get(ctx context.Context, serviceSetupID string) (*NotificationsSrvProviderConfigModel, error) { //nolint:dupl
 	escaped := url.PathEscape(serviceSetupID)
 	urlStr := p.segmentURL("providerconfigs", escaped)
 	client, err := util.NewHTTPClient(urlStr, http.MethodGet, p.AccessToken)

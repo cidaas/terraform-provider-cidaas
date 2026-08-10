@@ -85,7 +85,7 @@ func BoolValueOrNullWithPlanValue(value *bool, planValue *basetypes.BoolValue, a
 			diags.AddWarning(summaryMsg, msg)
 		}
 		*planValue = types.BoolValue(*value)
-	} else if !(!planValue.IsNull() && !planValue.IsUnknown()) {
+	} else if planValue.IsNull() || planValue.IsUnknown() {
 		*planValue = types.BoolValue(defautlValue)
 	}
 	return diags
