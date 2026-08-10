@@ -203,6 +203,10 @@ var _ resource.ResourceWithModifyPlan = (*TemplateTypeResource)(nil)
 
 // ModifyPlan normalizes communication_methods to lowercase so planned values match API responses and state.
 func (r *TemplateTypeResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
 	var plan TemplateTypeConfig
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
