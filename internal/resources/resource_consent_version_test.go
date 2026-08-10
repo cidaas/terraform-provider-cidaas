@@ -136,6 +136,11 @@ func waitUntilVersionsAPIAcceptsConsent(consentID string) error {
 		}
 		lastErr = err
 		msg := strings.ToLower(err.Error())
+		// New consent has no versions yet → versions list returns HTTP 204.
+		// That means the versions API accepted the consent_id (empty list), not a failure.
+		if strings.Contains(msg, "status code 204") || strings.Contains(msg, "no content") {
+			return nil
+		}
 		// Same flake as create: 400/30001 while versions service has not indexed the consent yet.
 		if strings.Contains(msg, "consent version not found") || strings.Contains(msg, "30001") {
 			time.Sleep(time.Duration(i+1) * time.Second)
