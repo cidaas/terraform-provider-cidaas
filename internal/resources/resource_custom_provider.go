@@ -335,7 +335,8 @@ var customProviderSchema = schema.Schema{
 						"default": schema.BoolAttribute{
 							Optional: true,
 							Computed: true,
-							Default:  booldefault.StaticBool(true),
+							// API returns false when unset; keep schema default aligned to avoid drift.
+							Default: booldefault.StaticBool(false),
 						},
 					},
 				},
@@ -616,52 +617,61 @@ func (r *CustomProvider) Read(ctx context.Context, req resource.ReadRequest, res
 	customFields := map[string]attr.Value{}
 	hasCustomfield := false
 
+	setStandardUserinfoField := func(key string, fieldMap map[string]interface{}) {
+		if key == "email_verified" {
+			extFieldKey, _ := fieldMap["extFieldKey"].(string)
+			defaultValue, _ := fieldMap["default"].(bool)
+			metadataAttributes[key] = types.ObjectValueMust(
+				metadataAttributeTypes[key].(types.ObjectType).AttrTypes,
+				map[string]attr.Value{
+					"ext_field_key": types.StringValue(extFieldKey),
+					"default":       types.BoolValue(defaultValue),
+				},
+			)
+			return
+		}
+		extFieldKey, _ := fieldMap["extFieldKey"].(string)
+		defaultValue, hasDefault := fieldMap["default"].(string)
+
+		var defaultAttrValue attr.Value
+		if hasDefault && defaultValue != "" {
+			defaultAttrValue = types.StringValue(defaultValue)
+		} else {
+			defaultAttrValue = types.StringNull()
+		}
+
+		metadataAttributes[key] = types.ObjectValueMust(
+			metadataAttributeTypes[key].(types.ObjectType).AttrTypes,
+			map[string]attr.Value{
+				"ext_field_key": types.StringValue(extFieldKey),
+				"default":       defaultAttrValue,
+			},
+		)
+	}
+
 	for key, fieldInterface := range res.Data.UserinfoFields {
+		fieldMap, ok := fieldInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
 		if strings.HasPrefix(key, "customFields.") {
-			if fieldMap, ok := fieldInterface.(map[string]interface{}); ok {
-				customFieldKey := strings.TrimPrefix(key, "customFields.")
-				if extFieldKey, exists := fieldMap["extFieldKey"].(string); exists {
-					customFields[customFieldKey] = types.StringValue(extFieldKey)
-					hasCustomfield = true
-				}
+			customFieldKey := strings.TrimPrefix(key, "customFields.")
+			// API sometimes stores standard fields under customFields.<name>; promote those
+			// so state matches the schema default / config shape and avoids perpetual drift.
+			if _, isStandard := metadataAttributeTypes[customFieldKey]; isStandard {
+				setStandardUserinfoField(customFieldKey, fieldMap)
+				continue
+			}
+			if extFieldKey, exists := fieldMap["extFieldKey"].(string); exists {
+				customFields[customFieldKey] = types.StringValue(extFieldKey)
+				hasCustomfield = true
 			}
 			continue
 		}
 
 		if _, exists := metadataAttributeTypes[key]; exists {
-			if key == "email_verified" {
-				if fieldMap, ok := fieldInterface.(map[string]interface{}); ok {
-					extFieldKey, _ := fieldMap["extFieldKey"].(string)
-					defaultValue, _ := fieldMap["default"].(bool)
-					metadataAttributes[key] = types.ObjectValueMust(
-						metadataAttributeTypes[key].(types.ObjectType).AttrTypes,
-						map[string]attr.Value{
-							"ext_field_key": types.StringValue(extFieldKey),
-							"default":       types.BoolValue(defaultValue),
-						},
-					)
-				}
-			} else {
-				if fieldMap, ok := fieldInterface.(map[string]interface{}); ok {
-					extFieldKey, _ := fieldMap["extFieldKey"].(string)
-					defaultValue, hasDefault := fieldMap["default"].(string)
-
-					var defaultAttrValue attr.Value
-					if hasDefault && defaultValue != "" {
-						defaultAttrValue = types.StringValue(defaultValue)
-					} else {
-						defaultAttrValue = types.StringNull()
-					}
-
-					metadataAttributes[key] = types.ObjectValueMust(
-						metadataAttributeTypes[key].(types.ObjectType).AttrTypes,
-						map[string]attr.Value{
-							"ext_field_key": types.StringValue(extFieldKey),
-							"default":       defaultAttrValue,
-						},
-					)
-				}
-			}
+			setStandardUserinfoField(key, fieldMap)
 		}
 	}
 
@@ -711,7 +721,10 @@ func (r *CustomProvider) Read(ctx context.Context, req resource.ReadRequest, res
 		})
 	}
 
-	state.UserinfoSource = util.StringValueOrNull(&res.Data.UserInfoSource)
+	// API defaults userInfoSource to USERINFOENDPOINT when unset; keep prior null to avoid drift.
+	if !state.UserinfoSource.IsNull() || isImport {
+		state.UserinfoSource = util.StringValueOrNull(&res.Data.UserInfoSource)
+	}
 
 	authConfig := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -1043,7 +1056,7 @@ func userInfoDefaultValue() basetypes.ObjectValue {
 			emailVerifiedType.AttrTypes,
 			map[string]attr.Value{
 				"ext_field_key": types.StringValue("email_verified"),
-				"default":       types.BoolValue(true),
+				"default":       types.BoolValue(false),
 			},
 		),
 		"phone_number":  assignedValue("phone_number"),

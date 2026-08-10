@@ -93,7 +93,7 @@ func testAccConsentResourceConfig(groupName, name string, enabled bool) string {
 	resource "cidaas_consent" "%s" {
 		consent_group_id  = cidaas_consent_group.example.id
 		name = "%s"
-		enabled = "%v"
+		enabled = %t
 	}
 	`, acctest.GetBaseURL(), groupName, groupName, name, enabled)
 }

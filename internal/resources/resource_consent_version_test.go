@@ -14,6 +14,8 @@ func TestConsentVersion_Basic(t *testing.T) {
 	t.Parallel()
 
 	testResourceID := acctest.RandString(10)
+	groupName := acctest.RandString(10)
+	consentName := acctest.RandString(10)
 	testResourceName := fmt.Sprintf("%s.%s", resources.RESOURCE_CONSENT_VERSION, testResourceID)
 
 	resource.Test(t, resource.TestCase{
@@ -21,7 +23,7 @@ func TestConsentVersion_Basic(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testConsentVersionConfig("consent version in German", testResourceID),
+				Config: testConsentVersionConfig("consent version in German", testResourceID, groupName, consentName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(testResourceName, "consent_type", "SCOPES"),
 					resource.TestCheckResourceAttrSet(testResourceName, "id"),
@@ -40,7 +42,7 @@ func TestConsentVersion_Basic(t *testing.T) {
 				},
 			},
 			{
-				Config: testConsentVersionConfig("updated consent version in German", testResourceID),
+				Config: testConsentVersionConfig("updated consent version in German", testResourceID, groupName, consentName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(testResourceName, "consent_type", "SCOPES"),
 				),
@@ -49,18 +51,18 @@ func TestConsentVersion_Basic(t *testing.T) {
 	})
 }
 
-func testConsentVersionConfig(content, resourceID string) string {
+func testConsentVersionConfig(content, resourceID, groupName, consentName string) string {
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
 		}
 		resource "cidaas_consent_group" "sample" {
-			group_name  = "sample_consent_group"
+			group_name  = "%s"
 			description = "sample description"
 		}
 		resource "cidaas_consent" "sample" {
 			consent_group_id = cidaas_consent_group.sample.id
-			name             = "sample_consent"
+			name             = "%s"
 			enabled          = true
 		}
 		resource "cidaas_consent_version" "%s" {
@@ -80,5 +82,5 @@ func testConsentVersionConfig(content, resourceID string) string {
 				}
 			]
 		}		
-	`, acctest.GetBaseURL(), resourceID, content)
+	`, acctest.GetBaseURL(), groupName, consentName, resourceID, content)
 }

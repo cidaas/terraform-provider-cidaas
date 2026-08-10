@@ -163,8 +163,8 @@ func TestAccWebhookResource_InvalidAllowedValue(t *testing.T) {
 	t.Parallel()
 	invalidAuthType := "INVALID"
 	invalidEvents := []string{"INVALID"}
-	localApiKeyConfig := getDefaultAPIKeyConfig()
-	localApiKeyConfig["placement"] = "body"
+	invalidPlacementConfig := getDefaultAPIKeyConfig()
+	invalidPlacementConfig["placement"] = "body"
 
 	testResourceID := acctest.RandString(10)
 	testURL := testWebhookURL(acctest.RandString(10))
@@ -174,15 +174,16 @@ func TestAccWebhookResource_InvalidAllowedValue(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccWebhookResourceConfig(invalidAuthType, testURL, testResourceID, events, localApiKeyConfig),
+				Config:      testAccWebhookResourceConfig(invalidAuthType, testURL, testResourceID, events, getDefaultAPIKeyConfig()),
 				ExpectError: regexp.MustCompile(`Attribute auth_type value must be one of: \["APIKEY" "TOTP" "CIDAAS_OAUTH2"\]`),
 			},
 			{
-				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, invalidEvents, localApiKeyConfig),
+				// Keep valid placement so event validation is what fails (not placement).
+				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, invalidEvents, getDefaultAPIKeyConfig()),
 				ExpectError: regexp.MustCompile(`is not a webhook-capable event`),
 			},
 			{
-				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, events, localApiKeyConfig),
+				Config:      testAccWebhookResourceConfig(apiKey, testURL, testResourceID, events, invalidPlacementConfig),
 				ExpectError: regexp.MustCompile(`placement value must be one of: \["query" "header"\]`),
 			},
 		},
