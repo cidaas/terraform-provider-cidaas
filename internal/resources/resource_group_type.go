@@ -298,11 +298,11 @@ func (v allowedRolesValidator) ValidateSet(ctx context.Context, req validator.Se
 
 	var (
 		roleMode     string
-		allowedRoles []string
+		allowedRoles []types.String
 		diags        diag.Diagnostics
 	)
 
-	diags = req.ConfigValue.ElementsAs(ctx, &allowedRoles, false)
+	diags = req.ConfigValue.ElementsAs(ctx, &allowedRoles, true)
 	resp.Diagnostics.Append(diags...)
 	diags = req.Config.GetAttribute(ctx, path.Root("role_mode"), &roleMode)
 	resp.Diagnostics.Append(diags...)
