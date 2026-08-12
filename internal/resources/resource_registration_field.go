@@ -949,10 +949,21 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 
 	fieldModel.ID = state.ID.ValueString()
 
-	if _, previous, ok := registrationFieldOrderChangeRequested(plan, state); ok {
-		if err := r.applyRegistrationFieldOrderChange(ctx, plan, previous); err != nil {
-			resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+	if _, _, ok := registrationFieldOrderChangeRequested(plan, state); ok {
+		// Fetch the latest registration field details from the server to get the actual current order.
+		// The stored state order can be stale if other fields were reordered in the same apply run.
+		actualField, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get actual registration field order before update", util.FormatErrorMessage(err))
 			return
+		}
+
+		actualOrder := actualField.Data.Order
+		if actualOrder != plan.Order.ValueInt64() {
+			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+				return
+			}
 		}
 	}
 

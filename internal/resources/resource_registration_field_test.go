@@ -246,3 +246,131 @@ func TestRegistrationField_SelectBasic(t *testing.T) {
 		},
 	})
 }
+
+func TestRegistrationField_ConcurrentReorder(t *testing.T) {
+	t.Parallel()
+
+	fieldKeyA := "tf_reorder_a_" + acctest.RandString(6)
+	fieldKeyB := "tf_reorder_b_" + acctest.RandString(6)
+	resourceNameA := fmt.Sprintf("%s.%s", resources.RESOURCE_REGISTRATION_FIELD, fieldKeyA)
+	resourceNameB := fmt.Sprintf("%s.%s", resources.RESOURCE_REGISTRATION_FIELD, fieldKeyB)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRegFieldNoOrderConfig(fieldKeyA, fieldKeyB),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceNameA, "order"),
+					resource.TestCheckResourceAttrSet(resourceNameB, "order"),
+				),
+			},
+			{
+				Config: testAccRegFieldOrderConfig(fieldKeyA, 25, fieldKeyB, 24),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceNameA, "order", "25"),
+					resource.TestCheckResourceAttr(resourceNameB, "order", "24"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRegFieldNoOrderConfig(keyA, keyB string) string {
+	return fmt.Sprintf(`
+	provider "cidaas" {
+		base_url = "%s"
+	}
+	resource "cidaas_registration_field" "%s" {
+		data_type       = "TEXT"
+		field_key       = "%s"
+		field_type      = "CUSTOM"
+		internal        = true
+		required        = false
+		read_only       = false
+		unique          = false
+		enabled         = true
+		claimable       = true
+		parent_group_id = "DEFAULT"
+		scopes          = ["profile"]
+		local_texts = [
+			{
+				locale       = "en-US"
+				name         = "%s"
+				required_msg = "The field is required"
+			}
+		]
+	}
+	resource "cidaas_registration_field" "%s" {
+		data_type       = "TEXT"
+		field_key       = "%s"
+		field_type      = "CUSTOM"
+		internal        = true
+		required        = false
+		read_only       = false
+		unique          = false
+		enabled         = true
+		claimable       = true
+		parent_group_id = "DEFAULT"
+		scopes          = ["profile"]
+		local_texts = [
+			{
+				locale       = "en-US"
+				name         = "%s"
+				required_msg = "The field is required"
+			}
+		]
+	}
+	`, acctest.GetBaseURL(), keyA, keyA, keyA, keyB, keyB, keyB)
+}
+
+func testAccRegFieldOrderConfig(keyA string, orderA int, keyB string, orderB int) string {
+	return fmt.Sprintf(`
+	provider "cidaas" {
+		base_url = "%s"
+	}
+	resource "cidaas_registration_field" "%s" {
+		data_type       = "TEXT"
+		field_key       = "%s"
+		field_type      = "CUSTOM"
+		internal        = true
+		required        = false
+		read_only       = false
+		unique          = false
+		enabled         = true
+		claimable       = true
+		order           = %d
+		parent_group_id = "DEFAULT"
+		scopes          = ["profile"]
+		local_texts = [
+			{
+				locale       = "en-US"
+				name         = "%s"
+				required_msg = "The field is required"
+			}
+		]
+	}
+	resource "cidaas_registration_field" "%s" {
+		data_type       = "TEXT"
+		field_key       = "%s"
+		field_type      = "CUSTOM"
+		internal        = true
+		required        = false
+		read_only       = false
+		unique          = false
+		enabled         = true
+		claimable       = true
+		order           = %d
+		parent_group_id = "DEFAULT"
+		scopes          = ["profile"]
+		local_texts = [
+			{
+				locale       = "en-US"
+				name         = "%s"
+				required_msg = "The field is required"
+			}
+		]
+	}
+	`, acctest.GetBaseURL(), keyA, keyA, orderA, keyA, keyB, keyB, orderB, keyB)
+}
