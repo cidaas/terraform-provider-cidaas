@@ -213,9 +213,12 @@ func TestAccGroupTypeResource_UnknownAllowedRolesReference(t *testing.T) {
 	groupType := acctest.RandString(10)
 	description := "Test Group Type Description"
 
+	testResourceName := fmt.Sprintf("%s.%s", resources.RESOURCE_GROUP_TYPE, groupType)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		CheckDestroy:             testCheckGroupTypeDestroyed(testResourceName),
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
