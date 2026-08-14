@@ -204,3 +204,39 @@ func TestAccGroupTypeResource_EmptyAllowedRolesError(t *testing.T) {
 		},
 	})
 }
+
+// allowed_roles with unknown resource reference should not crash with value conversion error
+func TestAccGroupTypeResource_UnknownAllowedRolesReference(t *testing.T) {
+	t.Parallel()
+
+	roleMode := "allowed_roles"
+	groupType := acctest.RandString(10)
+	description := "Test Group Type Description"
+
+	testResourceName := fmt.Sprintf("%s.%s", resources.RESOURCE_GROUP_TYPE, groupType)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		CheckDestroy:             testCheckGroupTypeDestroyed(testResourceName),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				provider "cidaas" {
+					base_url = "%s"
+				}
+				resource "cidaas_role" "test_role" {
+					role = "ROLE_%s"
+					description = "test role"
+				}
+				resource "cidaas_group_type" "%s" {
+					group_type  = "%s"
+					role_mode   = "%s"
+					description = "%s"
+					allowed_roles = [cidaas_role.test_role.id]
+				}
+				`, acctest.GetBaseURL(), groupType, groupType, groupType, roleMode, description),
+			},
+		},
+	})
+}

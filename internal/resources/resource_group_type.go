@@ -298,11 +298,11 @@ func (v allowedRolesValidator) ValidateSet(ctx context.Context, req validator.Se
 
 	var (
 		roleMode     string
-		allowedRoles []string
+		allowedRoles []types.String
 		diags        diag.Diagnostics
 	)
 
-	diags = req.ConfigValue.ElementsAs(ctx, &allowedRoles, false)
+	diags = req.ConfigValue.ElementsAs(ctx, &allowedRoles, true)
 	resp.Diagnostics.Append(diags...)
 	diags = req.Config.GetAttribute(ctx, path.Root("role_mode"), &roleMode)
 	resp.Diagnostics.Append(diags...)
@@ -312,10 +312,20 @@ func (v allowedRolesValidator) ValidateSet(ctx context.Context, req validator.Se
 	}
 
 	allowedRolesRequired := util.Contains([]string{"roles_required", "allowed_roles"}, roleMode)
-	if allowedRolesRequired && len(allowedRoles) == 0 {
+
+	// Filter out null elements, but keep unknown elements (resource references) as valid
+	var hasAllowedRoles bool
+	for _, r := range allowedRoles {
+		if !r.IsNull() {
+			hasAllowedRoles = true
+			break
+		}
+	}
+
+	if allowedRolesRequired && !hasAllowedRoles {
 		resp.Diagnostics.AddError("Unexpected Resource Configuration",
 			fmt.Sprintf("The attribute allowed_roles cannot be empty when role_mode is set to %s", roleMode))
-	} else if !allowedRolesRequired && len(allowedRoles) > 0 {
+	} else if !allowedRolesRequired && hasAllowedRoles {
 		resp.Diagnostics.AddError("Unexpected Resource Configuration",
 			fmt.Sprintf("The attribute allowed_roles must be empty or omitted when role_mode is set to %s", roleMode))
 	}
