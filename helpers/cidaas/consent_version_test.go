@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNewConsentVersion(t *testing.T) {
@@ -130,6 +131,66 @@ func TestConsentVersion_Upsert_Error(t *testing.T) {
 
 	if err == nil {
 		t.Error("Expected error for bad request, got nil")
+	}
+}
+
+func TestConsentVersion_Upsert_Retries30001ThenSucceeds(t *testing.T) {
+	prevDelay := consentVersionRetryDelay
+	consentVersionRetryDelay = func(int) time.Duration { return 0 }
+	defer func() { consentVersionRetryDelay = prevDelay }()
+
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if calls == 1 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":{"code":30001,"error":"consent version not found","type":"ConsentException"},"status":400,"success":false}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(ConsentVersionResponse{
+			Success: true,
+			Status:  201,
+			Data:    ConsentVersionModel{ID: "cv-1", ConsentID: "consent-1"},
+		})
+	}))
+	defer server.Close()
+
+	cv := NewConsentVersion(NewTestClientConfig(server.URL))
+	res, err := cv.Upsert(context.Background(), ConsentVersionModel{ConsentID: "consent-1", Version: 1})
+	if err != nil {
+		t.Fatalf("Upsert after 30001 retry: %v", err)
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2 (one 30001 then success)", calls)
+	}
+	if res == nil || res.Data.ID != "cv-1" {
+		t.Fatalf("unexpected result: %+v", res)
+	}
+}
+
+func TestConsentVersion_Upsert_Other400NotRetried(t *testing.T) {
+	prevDelay := consentVersionRetryDelay
+	consentVersionRetryDelay = func(int) time.Duration { return 0 }
+	defer func() { consentVersionRetryDelay = prevDelay }()
+
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error": "invalid consent version"}`))
+	}))
+	defer server.Close()
+
+	cv := NewConsentVersion(NewTestClientConfig(server.URL))
+	_, err := cv.Upsert(context.Background(), ConsentVersionModel{ConsentID: "invalid"})
+	if err == nil {
+		t.Fatal("expected error for non-30001 400")
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d, want 1 (no retry)", calls)
 	}
 }
 

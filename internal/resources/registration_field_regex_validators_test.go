@@ -10,6 +10,65 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
+func TestEnsureFieldDefinitionRegexKnown_UnknownWithoutRegexesBecomesNull(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	plan := RegFieldConfig{
+		fieldDefinition: &FieldDefinition{
+			MaxLength:       types.Int64Null(),
+			MinLength:       types.Int64Null(),
+			MinDate:         types.StringNull(),
+			MaxDate:         types.StringNull(),
+			InitialDateView: types.StringNull(),
+			InitialDate:     types.StringNull(),
+			Regex:           types.StringUnknown(),
+			Regexes:         types.ListNull(types.StringType),
+			MatchWith:       types.StringNull(),
+		},
+	}
+
+	diags := ensureFieldDefinitionRegexKnown(ctx, &plan)
+	if diags.HasError() {
+		t.Fatalf("ensure: %v", diags)
+	}
+	if plan.fieldDefinition.Regex.IsUnknown() {
+		t.Fatal("regex still unknown; want known null")
+	}
+	if !plan.fieldDefinition.Regex.IsNull() {
+		t.Fatalf("regex = %q, want null", plan.fieldDefinition.Regex.ValueString())
+	}
+	if plan.FieldDefinition.IsNull() || plan.FieldDefinition.IsUnknown() {
+		t.Fatal("expected FieldDefinition object to be known")
+	}
+	var fd FieldDefinition
+	if d := plan.FieldDefinition.As(ctx, &fd, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("as: %v", d)
+	}
+	if fd.Regex.IsUnknown() || !fd.Regex.IsNull() {
+		t.Fatalf("object regex unknown=%v null=%v, want known null", fd.Regex.IsUnknown(), fd.Regex.IsNull())
+	}
+}
+
+func TestEnsureFieldDefinitionRegexKnown_LeavesRegexesPathAlone(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	plan := RegFieldConfig{
+		fieldDefinition: &FieldDefinition{
+			Regex:   types.StringUnknown(),
+			Regexes: types.ListValueMust(types.StringType, []attr.Value{types.StringValue("^.{1,2}$")}),
+		},
+	}
+	diags := ensureFieldDefinitionRegexKnown(ctx, &plan)
+	if diags.HasError() {
+		t.Fatalf("ensure: %v", diags)
+	}
+	if !plan.fieldDefinition.Regex.IsUnknown() {
+		t.Fatal("regexes path should leave unknown regex for syncComposedRegexIntoPlan")
+	}
+}
+
 func TestSyncComposedRegexIntoPlan(t *testing.T) {
 	t.Parallel()
 

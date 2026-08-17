@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -108,7 +110,45 @@ func NewConsentVersion(clientConfig ClientConfig) *ConsentVersion {
 	return &ConsentVersion{clientConfig}
 }
 
-func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) { //nolint:dupl
+// ponytail: 5 attempts, 1+2+4+8s sleeps (~15s). Consent-management returns 400/30001 until the parent consent is indexed. Raise maxAttempts if that lag grows.
+const consentVersionUpsertMaxAttempts = 5
+
+var consentVersionRetryDelay = func(attempt int) time.Duration {
+	return time.Duration(1<<attempt) * time.Second
+}
+
+func isConsentVersionNotIndexed(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "status code 400") {
+		return false
+	}
+	return strings.Contains(msg, "30001") || strings.Contains(msg, "consent version not found")
+}
+
+func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
+	var lastErr error
+	for attempt := 0; attempt < consentVersionUpsertMaxAttempts; attempt++ {
+		res, err := c.upsertOnce(ctx, consentVersionConfig)
+		if err == nil {
+			return res, nil
+		}
+		lastErr = err
+		if !isConsentVersionNotIndexed(err) || attempt == consentVersionUpsertMaxAttempts-1 {
+			return nil, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(consentVersionRetryDelay(attempt)):
+		}
+	}
+	return nil, lastErr
+}
+
+func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
 	var response ConsentVersionResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/versions")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)

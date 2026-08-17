@@ -3,7 +3,6 @@ package resources_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -25,13 +24,11 @@ func TestConsentVersion_Basic(t *testing.T) {
 	consentResourceName := "cidaas_consent.sample"
 	consentGroupResourceName := "cidaas_consent_group.sample"
 
-	var consentID string
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Apply consent first; wait until instance + versions APIs both see it.
+			// Apply consent first; wait until the instance API sees it. Create retries 30001.
 			{
 				Config: testConsentVersionDepsConfig(groupName, consentName),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -41,24 +38,15 @@ func TestConsentVersion_Basic(t *testing.T) {
 						if !ok {
 							return fmt.Errorf("resource %s not found", consentResourceName)
 						}
-						consentID = rs.Primary.ID
 						groupRS, ok := s.RootModule().Resources[consentGroupResourceName]
 						if !ok {
 							return fmt.Errorf("resource %s not found", consentGroupResourceName)
 						}
-						return waitUntilConsentReadyForVersionCreate(groupRS.Primary.ID, consentID, consentName)
+						return waitUntilConsentReadyForVersionCreate(groupRS.Primary.ID, rs.Primary.ID, consentName)
 					},
 				),
 			},
 			{
-				PreConfig: func() {
-					// Re-check right before apply; versions API can lag after Check returns.
-					if consentID == "" {
-						return
-					}
-					_ = waitUntilVersionsAPIAcceptsConsent(consentID)
-					time.Sleep(3 * time.Second)
-				},
 				Config: testConsentVersionConfig("consent version in German", testResourceID, groupName, consentName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(testResourceName, "consent_type", "SCOPES"),
@@ -104,11 +92,6 @@ func waitUntilConsentReadyForVersionCreate(consentGroupID, consentID, consentNam
 		} else if res != nil {
 			for _, c := range res.Data {
 				if c.ID == consentID || c.ConsentName == consentName {
-					// Instance API sees it; versions API still needs its own settle window.
-					if err := waitUntilVersionsAPIAcceptsConsent(consentID); err != nil {
-						return err
-					}
-					time.Sleep(5 * time.Second)
 					return nil
 				}
 			}
@@ -117,39 +100,6 @@ func waitUntilConsentReadyForVersionCreate(consentGroupID, consentID, consentNam
 		time.Sleep(time.Duration(i+1) * time.Second)
 	}
 	return fmt.Errorf("consent not ready for version create after %d retries: %v", maxRetries, lastErr)
-}
-
-func waitUntilVersionsAPIAcceptsConsent(consentID string) error {
-	cv := cidaas.ConsentVersion{
-		ClientConfig: cidaas.ClientConfig{
-			BaseURL:     acctest.GetBaseURL(),
-			AccessToken: acctest.TestToken,
-		},
-	}
-
-	const maxRetries = 12
-	var lastErr error
-	for i := 0; i < maxRetries; i++ {
-		_, err := cv.Get(context.Background(), consentID)
-		if err == nil {
-			return nil
-		}
-		lastErr = err
-		msg := strings.ToLower(err.Error())
-		// New consent has no versions yet → versions list returns HTTP 204.
-		// That means the versions API accepted the consent_id (empty list), not a failure.
-		if strings.Contains(msg, "status code 204") || strings.Contains(msg, "no content") {
-			return nil
-		}
-		// Same flake as create: 400/30001 while versions service has not indexed the consent yet.
-		if strings.Contains(msg, "consent version not found") || strings.Contains(msg, "30001") {
-			time.Sleep(time.Duration(i+1) * time.Second)
-			continue
-		}
-		// Other errors: still retry a few times (transient), then fail.
-		time.Sleep(time.Duration(i+1) * time.Second)
-	}
-	return fmt.Errorf("versions API does not accept consent %s after %d retries: %w", consentID, maxRetries, lastErr)
 }
 
 func testConsentVersionDepsConfig(groupName, consentName string) string {

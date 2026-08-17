@@ -30,6 +30,33 @@ The Terraform provider for cidaas enables interaction with cidaas instances that
 * Ensure Terraform is installed on your local machine. Find installation instructions for different operating systems [here](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli).
 * [Go](https://go.dev/doc/install) (1.21)
 
+## Before you push
+
+Acceptance tests (`acceptance_test` in `.gitlab-ci.yml`) create real resources on a cidaas tenant. Run them locally against a **dedicated test tenant**, not production.
+
+Required environment variables (same as CI):
+
+```bash
+export TF_ACC=1
+export BASE_URL="https://your-test-tenant"
+export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID="your-non-interactive-client-id"
+export TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET="your-client-secret"
+```
+
+`terraform` must be on `PATH`. Client credentials come from a **Non-Interactive** app in the cidaas Admin UI.
+
+```bash
+# CI parity (all packages, coverage, 120m, parallel=4)
+make test-ci
+
+# Faster slice for registration-field + consent-version
+go test ./internal/resources -count=1 -timeout 30m -v \
+  -run 'TestRegistrationField_|TestConsentVersion_Basic'
+
+# Unit tests only (no tenant)
+go test ./internal/resources ./helpers/cidaas -count=1
+```
+
 ## Documentation
 
 Official documentation on how to use this provider can be found on the

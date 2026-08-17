@@ -71,6 +71,14 @@ func (r *RegFieldResource) ModifyPlan(ctx context.Context, req resource.ModifyPl
 		return
 	}
 	if !fieldDefinitionHasRegexes(plan.fieldDefinition) {
+		unknown := plan.fieldDefinition != nil && plan.fieldDefinition.Regex.IsUnknown()
+		resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if unknown {
+			resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+		}
 		return
 	}
 
@@ -736,6 +744,10 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 	}
+	resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if !registrationFieldOrderMatchesPlan(plan, res.Data.Order) {
 		regFieldOrderMutex.Lock()
@@ -1094,6 +1106,10 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 			return
 		}
 	}
+	resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Computed base_data_type must be known after apply (e.g. GROUPING has empty). Fallback to state or "".
 	if plan.BaseDataType.IsUnknown() {
@@ -1392,6 +1408,27 @@ type (
 	validateMatchWith                      struct{}
 	validateMatchWithMsg                   struct{}
 )
+
+func ensureFieldDefinitionRegexKnown(ctx context.Context, plan *RegFieldConfig) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if plan.fieldDefinition == nil {
+		return diags
+	}
+	if fieldDefinitionHasRegexes(plan.fieldDefinition) {
+		return diags
+	}
+	if !plan.fieldDefinition.Regex.IsUnknown() {
+		return diags
+	}
+	plan.fieldDefinition.Regex = types.StringNull()
+	obj, d := types.ObjectValueFrom(ctx, fieldDefinitionAttrTypes(), plan.fieldDefinition)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	plan.FieldDefinition = obj
+	return diags
+}
 
 func syncComposedRegexIntoPlan(ctx context.Context, plan *RegFieldConfig, regex string) diag.Diagnostics {
 	var diags diag.Diagnostics
