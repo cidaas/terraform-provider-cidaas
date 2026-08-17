@@ -8,6 +8,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -46,6 +47,45 @@ func NewRegFieldResource() resource.Resource {
 			},
 		),
 	}
+}
+
+var _ resource.ResourceWithModifyPlan = (*RegFieldResource)(nil)
+
+// ModifyPlan sets field_definition.regex to the RE2 shape-merged composition of
+// regexes so plan matches apply (avoids UseStateForUnknown keeping a stale regex).
+func (r *RegFieldResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan RegFieldConfig
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(plan.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !fieldDefinitionHasRegexes(plan.fieldDefinition) {
+		return
+	}
+
+	var patterns []string
+	resp.Diagnostics.Append(plan.fieldDefinition.Regexes.ElementsAs(ctx, &patterns, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	composed, err := composeANDRegexes(patterns)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid field_definition.regexes", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(syncComposedRegexIntoPlan(ctx, &plan, composed)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
 type RegFieldConfig struct {
@@ -156,7 +196,22 @@ type FieldDefinition struct {
 	InitialDateView types.String `tfsdk:"initial_date_view"`
 	InitialDate     types.String `tfsdk:"initial_date"`
 	Regex           types.String `tfsdk:"regex"`
+	Regexes         types.List   `tfsdk:"regexes"`
 	MatchWith       types.String `tfsdk:"match_with"`
+}
+
+func fieldDefinitionAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"max_length":        types.Int64Type,
+		"min_length":        types.Int64Type,
+		"min_date":          types.StringType,
+		"max_date":          types.StringType,
+		"initial_date_view": types.StringType,
+		"initial_date":      types.StringType,
+		"regex":             types.StringType,
+		"regexes":           types.ListType{ElemType: types.StringType},
+		"match_with":        types.StringType,
+	}
 }
 
 var regFieldSchema = schema.Schema{
@@ -431,10 +486,33 @@ var regFieldSchema = schema.Schema{
 					},
 				},
 				"regex": schema.StringAttribute{
-					Optional:            true,
-					MarkdownDescription: "The regex for max_length and min_length for the data types TEXT and URL.",
+					Optional: true,
+					Computed: true,
+					MarkdownDescription: "A single regular expression stored as `fieldDefinition.regex` in the API. " +
+						"Must be valid Go `regexp` (RE2) syntax — cidaas evaluates it in the backend. " +
+						"Only allowed for data types TEXT and URL. Mutually exclusive with `regexes`. " +
+						"When `regexes` is set, this attribute is the RE2 shape-merged result in plan and state.",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 					Validators: []validator.String{
 						&validateIsMaxMinMsgAvailableForRegex{},
+						&validateRegexExclusive{},
+					},
+				},
+				"regexes": schema.ListAttribute{
+					Optional:    true,
+					ElementType: types.StringType,
+					MarkdownDescription: "List of Go `regexp` (RE2) full-string patterns merged with AND into one `fieldDefinition.regex`. " +
+						"Supported shapes: length (`^.{m,n}$`), charset (`^[…]*$` / `^[…]+$`), contains (`^.*[…].*$`), no_leading (`^[^x].*$`). " +
+						"Not string concatenation and not JavaScript lookaheads — unknown or unmergable shapes fail closed. " +
+						"Equivalence holds for supported shapes (same accept/reject as matching every entry). " +
+						"Mutually exclusive with `regex`. Not a 1:1 for Zod ErrorKeys. " +
+						"Requires `min_length_msg` and `max_length_msg` in every `local_texts` entry, same as `regex`.",
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
+						&validateIsMaxMinMsgAvailableForRegexes{},
+						&validateRegexesExclusive{},
 					},
 				},
 				"match_with": schema.StringAttribute{
@@ -446,16 +524,7 @@ var regFieldSchema = schema.Schema{
 				},
 			},
 			Default: objectdefault.StaticValue(types.ObjectValueMust(
-				map[string]attr.Type{
-					"max_length":        types.Int64Type,
-					"min_length":        types.Int64Type,
-					"min_date":          types.StringType,
-					"max_date":          types.StringType,
-					"initial_date_view": types.StringType,
-					"initial_date":      types.StringType,
-					"regex":             types.StringType,
-					"match_with":        types.StringType,
-				},
+				fieldDefinitionAttrTypes(),
 				map[string]attr.Value{
 					"max_length":        types.Int64Null(),
 					"min_length":        types.Int64Null(),
@@ -464,6 +533,7 @@ var regFieldSchema = schema.Schema{
 					"initial_date_view": types.StringNull(),
 					"initial_date":      types.StringNull(),
 					"regex":             types.StringNull(),
+					"regexes":           types.ListNull(types.StringType),
 					"match_with":        types.StringNull(),
 				})),
 		},
@@ -575,7 +645,7 @@ func (rfc *RegFieldConfig) ExtractConfigs(ctx context.Context) diag.Diagnostics 
 
 const (
 	registrationFieldDefaultParentGroupID = "DEFAULT"
-	registrationFieldPasswordEchoKey        = "password_echo"
+	registrationFieldPasswordEchoKey      = "password_echo"
 )
 
 func registrationFieldParentGroupID(plan RegFieldConfig) string {
@@ -616,7 +686,7 @@ func (r *RegFieldResource) applyRegistrationFieldOrderChange(ctx context.Context
 	currentOrder := plan.Order.ValueInt64()
 	if previousOrder <= 0 || currentOrder <= 0 {
 		return fmt.Errorf("registration field %q order must be greater than 0 (previous=%d, current=%d)",
-			 plan.FieldKey.ValueString(), previousOrder, currentOrder)
+			plan.FieldKey.ValueString(), previousOrder, currentOrder)
 	}
 	return r.cidaasClient.RegFields.UpdateOrder(ctx, cidaas.RegistrationFieldOrder{
 		ParentGroupID: registrationFieldParentGroupID(plan),
@@ -654,6 +724,13 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 	plan.ID = types.StringValue(res.Data.ID)
 	plan.Order = types.Int64Value(res.Data.Order)
 	plan.BaseDataType = types.StringValue(res.Data.BaseDataType)
+
+	if rfModel.FieldDefinition != nil && rfModel.FieldDefinition.Regex != "" {
+		resp.Diagnostics.Append(syncComposedRegexIntoPlan(ctx, &plan, rfModel.FieldDefinition.Regex)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 
 	if !registrationFieldOrderMatchesPlan(plan, res.Data.Order) {
 		if err := r.applyRegistrationFieldOrderChange(ctx, plan, res.Data.Order); err != nil {
@@ -793,17 +870,20 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	if res.Data.FieldDefinition != nil {
+		priorRegexes := types.ListNull(types.StringType)
+		if !state.FieldDefinition.IsNull() && !state.FieldDefinition.IsUnknown() {
+			var priorFD FieldDefinition
+			diags := state.FieldDefinition.As(ctx, &priorFD, basetypes.ObjectAsOptions{})
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			if !priorFD.Regexes.IsNull() && !priorFD.Regexes.IsUnknown() {
+				priorRegexes = priorFD.Regexes
+			}
+		}
 		fd, diags := types.ObjectValue(
-			map[string]attr.Type{
-				"max_length":        types.Int64Type,
-				"min_length":        types.Int64Type,
-				"min_date":          types.StringType,
-				"max_date":          types.StringType,
-				"initial_date_view": types.StringType,
-				"initial_date":      types.StringType,
-				"regex":             types.StringType,
-				"match_with":        types.StringType,
-			},
+			fieldDefinitionAttrTypes(),
 			map[string]attr.Value{
 				"max_length": func() basetypes.Int64Value {
 					if util.Contains([]string{"TEXT", "URL"}, res.Data.DataType) {
@@ -822,6 +902,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"initial_date_view": util.StringValueOrNull(&res.Data.FieldDefinition.InitialDateView),
 				"initial_date":      util.TimeValueOrNull(res.Data.FieldDefinition.InitialDate),
 				"regex":             util.StringValueOrNull(&res.Data.FieldDefinition.Regex),
+				"regexes":           priorRegexes,
 				"match_with":        util.StringValueOrNull(&res.Data.FieldDefinition.MatchWith),
 			})
 		resp.Diagnostics.Append(diags...)
@@ -971,6 +1052,13 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 
 	plan.Order = types.Int64Value(res.Data.Order)
 
+	if fieldModel.FieldDefinition != nil && fieldModel.FieldDefinition.Regex != "" {
+		resp.Diagnostics.Append(syncComposedRegexIntoPlan(ctx, &plan, fieldModel.FieldDefinition.Regex)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Computed base_data_type must be known after apply (e.g. GROUPING has empty). Fallback to state or "".
 	if plan.BaseDataType.IsUnknown() {
 		if !state.BaseDataType.IsUnknown() {
@@ -1100,11 +1188,31 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 	}
 
 	if !plan.FieldDefinition.IsNull() {
+		regexValue := ""
+		if plan.fieldDefinition != nil && !plan.fieldDefinition.Regex.IsNull() && !plan.fieldDefinition.Regex.IsUnknown() {
+			regexValue = plan.fieldDefinition.Regex.ValueString()
+		}
+		if plan.fieldDefinition != nil && !plan.fieldDefinition.Regexes.IsNull() && !plan.fieldDefinition.Regexes.IsUnknown() {
+			var patterns []string
+			diags := plan.fieldDefinition.Regexes.ElementsAs(ctx, &patterns, false)
+			diag.Append(diags...)
+			if diag.HasError() {
+				return nil, diag
+			}
+			if len(patterns) > 0 {
+				composed, err := composeANDRegexes(patterns)
+				if err != nil {
+					diag.AddError("Validation Error", fmt.Sprintf("field_definition.regexes: %s", err.Error()))
+					return nil, diag
+				}
+				regexValue = composed
+			}
+		}
 		regConfig.FieldDefinition = &cidaas.FieldDefinition{
 			MinLength:       plan.fieldDefinition.MinLength.ValueInt64Pointer(),
 			MaxLength:       plan.fieldDefinition.MaxLength.ValueInt64Pointer(),
 			InitialDateView: plan.fieldDefinition.InitialDateView.ValueString(),
-			Regex:           plan.fieldDefinition.Regex.ValueString(),
+			Regex:           regexValue,
 			MatchWith:       plan.fieldDefinition.MatchWith.ValueString(),
 		}
 		if len(attrKeys) > 0 {
@@ -1227,24 +1335,82 @@ var (
 	_ validator.String    = dateValidator{}
 	_ validator.String    = dataTypeValidator{}
 	_ validator.String    = validateIsMaxMinMsgAvailableForRegex{}
+	_ validator.List      = validateIsMaxMinMsgAvailableForRegexes{}
+	_ validator.String    = validateRegexExclusive{}
+	_ validator.List      = validateRegexesExclusive{}
 	_ validator.String    = validateMatchWith{}
 	_ validator.String    = validateMatchWithMsg{}
 )
 
 type (
-	validateIsRequiredMsgAvailable       struct{}
-	validateIsMaxMinMsgAvailable         struct{}
-	fieldTypeModifier                    struct{}
-	dateTypeValidator                    struct{}
-	dateValidator                        struct{}
-	dataTypeValidator                    struct{}
-	validateIsMaxMinMsgAvailableForRegex struct{}
-	validateMatchWith                    struct{}
-	validateMatchWithMsg                 struct{}
+	validateIsRequiredMsgAvailable         struct{}
+	validateIsMaxMinMsgAvailable           struct{}
+	fieldTypeModifier                      struct{}
+	dateTypeValidator                      struct{}
+	dateValidator                          struct{}
+	dataTypeValidator                      struct{}
+	validateIsMaxMinMsgAvailableForRegex   struct{}
+	validateIsMaxMinMsgAvailableForRegexes struct{}
+	validateRegexExclusive                 struct{}
+	validateRegexesExclusive               struct{}
+	validateMatchWith                      struct{}
+	validateMatchWithMsg                   struct{}
 )
 
+func syncComposedRegexIntoPlan(ctx context.Context, plan *RegFieldConfig, regex string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if plan.fieldDefinition == nil || regex == "" {
+		return diags
+	}
+	if plan.fieldDefinition.Regexes.IsNull() || plan.fieldDefinition.Regexes.IsUnknown() || len(plan.fieldDefinition.Regexes.Elements()) == 0 {
+		return diags
+	}
+	plan.fieldDefinition.Regex = types.StringValue(regex)
+	obj, d := types.ObjectValueFrom(ctx, fieldDefinitionAttrTypes(), plan.fieldDefinition)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	plan.FieldDefinition = obj
+	return diags
+}
+
+func fieldDefinitionHasRegex(fd *FieldDefinition) bool {
+	return fd != nil && !fd.Regex.IsNull() && !fd.Regex.IsUnknown() && fd.Regex.ValueString() != ""
+}
+
+func fieldDefinitionHasRegexes(fd *FieldDefinition) bool {
+	return fd != nil && !fd.Regexes.IsNull() && !fd.Regexes.IsUnknown() && len(fd.Regexes.Elements()) > 0
+}
+
+func validateRegexDataTypeAndMessages(_ context.Context, config RegFieldConfig, attrPath string, respDiags *diag.Diagnostics) {
+	if !util.Contains([]string{"TEXT", "URL"}, config.DataType.ValueString()) {
+		respDiags.AddError(
+			"Validation Error",
+			fmt.Sprintf("The attribute %s is only allowed when data_type is TEXT or URL", attrPath),
+		)
+		return
+	}
+	for _, v := range config.localTexts {
+		if v.MinLengthMsg.IsNull() || v.MinLengthMsg.ValueString() == "" {
+			respDiags.AddError(
+				"Validation Error",
+				fmt.Sprintf("The attribute local_texts.min_length_msg can not be empty when %s is set", attrPath),
+			)
+			return
+		}
+		if v.MaxLengthMsg.IsNull() || v.MaxLengthMsg.ValueString() == "" {
+			respDiags.AddError(
+				"Validation Error",
+				fmt.Sprintf("The attribute local_texts.max_length_msg can not be empty when %s is set", attrPath),
+			)
+			return
+		}
+	}
+}
+
 func (v validateIsMaxMinMsgAvailableForRegex) Description(_ context.Context) string {
-	return "Checks min_date, max_date, initial_date_view and initiate_date"
+	return "Checks min_length_msg and max_length_msg when field_definition.regex is set"
 }
 
 func (v validateIsMaxMinMsgAvailableForRegex) MarkdownDescription(ctx context.Context) string {
@@ -1252,36 +1418,88 @@ func (v validateIsMaxMinMsgAvailableForRegex) MarkdownDescription(ctx context.Co
 }
 
 func (v validateIsMaxMinMsgAvailableForRegex) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
-	if !req.ConfigValue.IsNull() {
-		var config RegFieldConfig
-		resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
-		resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
-		if !util.Contains([]string{"TEXT", "URL"}, config.DataType.ValueString()) {
-			resp.Diagnostics.AddError(
-				"Validation Error",
-				fmt.Sprintf("The attribute %s is only allowed when data_type is TEXT or URL", req.Path.String()),
-			)
-			return
-		}
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || req.ConfigValue.ValueString() == "" {
+		return
+	}
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	validateRegexDataTypeAndMessages(ctx, config, req.Path.String(), &resp.Diagnostics)
+}
 
-		if req.Path.String() == "field_definition.regex" {
-			for _, v := range config.localTexts {
-				if v.MinLengthMsg.IsNull() || v.MinLengthMsg.ValueString() == "" {
-					resp.Diagnostics.AddError(
-						"Validation Error",
-						fmt.Sprintf("The attribute local_texts.min_length_msg can not be empty when %s is set", req.Path.String()),
-					)
-					return
-				}
-				if v.MaxLengthMsg.IsNull() || v.MaxLengthMsg.ValueString() == "" {
-					resp.Diagnostics.AddError(
-						"Validation Error",
-						fmt.Sprintf("The attribute local_texts.max_length_msg can not be empty when %s is set", req.Path.String()),
-					)
-					return
-				}
-			}
-		}
+func (v validateIsMaxMinMsgAvailableForRegexes) Description(_ context.Context) string {
+	return "Checks min_length_msg and max_length_msg when field_definition.regexes is set"
+}
+
+func (v validateIsMaxMinMsgAvailableForRegexes) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v validateIsMaxMinMsgAvailableForRegexes) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || len(req.ConfigValue.Elements()) == 0 {
+		return
+	}
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	validateRegexDataTypeAndMessages(ctx, config, req.Path.String(), &resp.Diagnostics)
+}
+
+func (v validateRegexExclusive) Description(_ context.Context) string {
+	return "regex and regexes are mutually exclusive"
+}
+
+func (v validateRegexExclusive) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v validateRegexExclusive) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || req.ConfigValue.ValueString() == "" {
+		return
+	}
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if fieldDefinitionHasRegexes(config.fieldDefinition) {
+		resp.Diagnostics.AddError(
+			"Validation Error",
+			"field_definition.regex and field_definition.regexes cannot be set together; use one or the other",
+		)
+	}
+}
+
+func (v validateRegexesExclusive) Description(_ context.Context) string {
+	return "regex and regexes are mutually exclusive"
+}
+
+func (v validateRegexesExclusive) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v validateRegexesExclusive) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || len(req.ConfigValue.Elements()) == 0 {
+		return
+	}
+	var config RegFieldConfig
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	resp.Diagnostics.Append(config.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if fieldDefinitionHasRegex(config.fieldDefinition) {
+		resp.Diagnostics.AddError(
+			"Validation Error",
+			"field_definition.regex and field_definition.regexes cannot be set together; use one or the other",
+		)
 	}
 }
 

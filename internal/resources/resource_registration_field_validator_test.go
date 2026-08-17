@@ -74,17 +74,7 @@ func buildValidatorTestConfig(ctx context.Context, t *testing.T, required bool, 
 	})
 	localTexts := types.ListValueMust(types.ObjectType{AttrTypes: localTextAttrs}, []attr.Value{localText})
 
-	fieldDefAttrTypes := map[string]attr.Type{
-		"max_length":        types.Int64Type,
-		"min_length":        types.Int64Type,
-		"min_date":          types.StringType,
-		"max_date":          types.StringType,
-		"initial_date_view": types.StringType,
-		"initial_date":      types.StringType,
-		"regex":             types.StringType,
-		"match_with":        types.StringType,
-	}
-	fieldDefinition := types.ObjectValueMust(fieldDefAttrTypes, map[string]attr.Value{
+	fieldDefinition := types.ObjectValueMust(fieldDefinitionAttrTypes(), map[string]attr.Value{
 		"max_length":        types.Int64Null(),
 		"min_length":        types.Int64Null(),
 		"min_date":          types.StringNull(),
@@ -92,6 +82,7 @@ func buildValidatorTestConfig(ctx context.Context, t *testing.T, required bool, 
 		"initial_date_view": types.StringNull(),
 		"initial_date":      types.StringNull(),
 		"regex":             types.StringNull(),
+		"regexes":           types.ListNull(types.StringType),
 		"match_with":        types.StringNull(),
 	})
 
@@ -220,17 +211,7 @@ func buildMatchWithValidatorTestConfig(ctx context.Context, t *testing.T, fieldK
 	})
 	localTexts := types.ListValueMust(types.ObjectType{AttrTypes: localTextAttrs}, []attr.Value{localText})
 
-	fieldDefAttrTypes := map[string]attr.Type{
-		"max_length":        types.Int64Type,
-		"min_length":        types.Int64Type,
-		"min_date":          types.StringType,
-		"max_date":          types.StringType,
-		"initial_date_view": types.StringType,
-		"initial_date":      types.StringType,
-		"regex":             types.StringType,
-		"match_with":        types.StringType,
-	}
-	fieldDefinition := types.ObjectValueMust(fieldDefAttrTypes, map[string]attr.Value{
+	fieldDefinition := types.ObjectValueMust(fieldDefinitionAttrTypes(), map[string]attr.Value{
 		"max_length":        types.Int64Null(),
 		"min_length":        types.Int64Null(),
 		"min_date":          types.StringNull(),
@@ -238,20 +219,21 @@ func buildMatchWithValidatorTestConfig(ctx context.Context, t *testing.T, fieldK
 		"initial_date_view": types.StringNull(),
 		"initial_date":      types.StringNull(),
 		"regex":             types.StringNull(),
+		"regexes":           types.ListNull(types.StringType),
 		"match_with":        types.StringValue(matchWith),
 	})
 
 	cfg := RegFieldConfig{
-		DataType:                            types.StringValue("PASSWORD"),
-		FieldKey:                            types.StringValue(fieldKey),
-		FieldType:                           types.StringValue("SYSTEM"),
-		ParentGroupID:                       types.StringValue("DEFAULT"),
-		Required:                            types.BoolValue(true),
-		Scopes:                              types.SetNull(types.StringType),
-		ConsentRefs:                         types.SetNull(types.StringType),
-		LocalTexts:                          localTexts,
-		FieldDefinition:                     fieldDefinition,
-		RemoteFieldSettings:                 types.ObjectNull(remoteFieldSettingsAttrTypes()),
+		DataType:            types.StringValue("PASSWORD"),
+		FieldKey:            types.StringValue(fieldKey),
+		FieldType:           types.StringValue("SYSTEM"),
+		ParentGroupID:       types.StringValue("DEFAULT"),
+		Required:            types.BoolValue(true),
+		Scopes:              types.SetNull(types.StringType),
+		ConsentRefs:         types.SetNull(types.StringType),
+		LocalTexts:          localTexts,
+		FieldDefinition:     fieldDefinition,
+		RemoteFieldSettings: types.ObjectNull(remoteFieldSettingsAttrTypes()),
 	}
 
 	objType, ok := regFieldSchema.Type().(types.ObjectType)
