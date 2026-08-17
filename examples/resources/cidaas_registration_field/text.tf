@@ -34,6 +34,14 @@ resource "cidaas_registration_field" "text" {
     }
   ]
   field_definition = {
-    regex = "^.{10,100}$"
+    # Either regex or regexes (not both). Must be valid Go regexp (RE2).
+    # Multiple regexes are AND-merged via supported shapes (length, charset,
+    # contains, no_leading) into one API regex — not concatenation / not JS lookaheads.
+    regexes = [
+      "^.*[A-Za-z]+.*$",              # at least one letter
+      "^.{1,40}$",                    # length 1–40
+      "^[ A-Za-z/,`'´\\-'.&()]*$",    # allowed chars
+      "^[^.].*$",                     # no leading period
+    ]
   }
 }

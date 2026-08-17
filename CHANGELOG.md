@@ -1,5 +1,11 @@
 ## Changelog
 
+### 3.5.19
+
+#### Enhancements
+
+- **`cidaas_registration_field`:** Added optional **`field_definition.regexes`** — list of Go `regexp` (RE2) patterns merged with AND into one API **`fieldDefinition.regex`** via supported validation shapes (length, charset, contains, no_leading), not concatenation or lookaheads. Unknown/unmergable shapes fail closed. Mutually exclusive with **`regex`**. Per-rule ErrorKeys are not supported. Same **`min_length_msg`** / **`max_length_msg`** requirements as **`regex`** (TEXT/URL only). Plan computes the composed **`regex`** so updates do not hit “inconsistent result after apply”.
+
 ### 3.5.18
 
 #### Enhancements

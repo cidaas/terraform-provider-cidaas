@@ -52,7 +52,16 @@ resource "cidaas_registration_field" "text" {
     }
   ]
   field_definition = {
-    regex = "^.{10,100}$"
+    # Either `regex` or `regexes` (not both). Entries must be valid Go regexp (RE2).
+    # Multiple regexes are AND-merged into one API regex via supported shapes
+    # (length, charset, contains, no_leading) — not concatenation / not JS lookaheads.
+    # Unmergable shapes fail closed; use a single regex then.
+    regexes = [
+      "^.*[A-Za-z]+.*$",           # at least one letter
+      "^.{1,40}$",                 # length 1–40
+      "^[ A-Za-z/,`'´\\-'.&()]*$", # allowed chars
+      "^[^.].*$",                  # no leading period
+    ]
   }
 }
 ```
@@ -138,7 +147,8 @@ Optional:
 - `max_length` (Number) The maximum length of a string type attribute.
 - `min_date` (String) The earliest date a user can select. Applicable only for DATE attributes. Example format: `2024-06-28T18:30:00Z`.
 - `min_length` (Number) The minimum length of a string type attribute
-- `regex` (String) The regex for max_length and min_length for the data types TEXT and URL.
+- `regex` (String) A single regular expression stored as `fieldDefinition.regex`. Must be valid Go `regexp` (RE2); cidaas evaluates it in the backend. Only for TEXT and URL. Mutually exclusive with `regexes`. When `regexes` is set, this is the RE2 shape-merged result in plan and state. Requires `min_length_msg` and `max_length_msg` in every `local_texts` entry.
+- `regexes` (List of String) Go `regexp` (RE2) patterns merged with AND into one API regex via supported shapes (length, charset, contains, no_leading) — not concatenation or JS lookaheads. Unknown/unmergable shapes fail closed. Equivalence: same accept/reject as matching every entry for supported shapes. Mutually exclusive with `regex`. Not a 1:1 for Zod ErrorKeys. Same message and data-type rules as `regex`.
 
 
 <a id="nestedblock--remote_field_settings"></a>
