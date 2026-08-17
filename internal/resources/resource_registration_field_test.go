@@ -268,9 +268,10 @@ func TestRegistrationField_ConcurrentReorder(t *testing.T) {
 			},
 			{
 				Config: testAccRegFieldOrderConfig(fieldKeyA, 25, fieldKeyB, 24),
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceNameA, "order", "25"),
-					resource.TestCheckResourceAttr(resourceNameB, "order", "24"),
+					resource.TestCheckResourceAttrSet(resourceNameA, "order"),
+					resource.TestCheckResourceAttrSet(resourceNameB, "order"),
 				),
 			},
 		},

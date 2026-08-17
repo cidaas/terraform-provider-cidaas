@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
@@ -32,6 +33,8 @@ var allowedDataTypes = []string{
 	"TEXT", "NUMBER", "SELECT", "MULTISELECT", "RADIO", "CHECKBOX", "PASSWORD", "DATE", "URL", "EMAIL",
 	"TEXTAREA", "MOBILE", "CONSENT", "JSON_STRING", "USERNAME", "ARRAY", "GROUPING", "DAYDATE",
 }
+
+var regFieldOrderMutex sync.Mutex
 
 type RegFieldResource struct {
 	BaseResource
@@ -652,21 +655,37 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 	})
 
 	plan.ID = types.StringValue(res.Data.ID)
-	plan.Order = types.Int64Value(res.Data.Order)
+	if plan.Order.IsNull() || plan.Order.IsUnknown() {
+		plan.Order = types.Int64Value(res.Data.Order)
+	}
 	plan.BaseDataType = types.StringValue(res.Data.BaseDataType)
 
 	if !registrationFieldOrderMatchesPlan(plan, res.Data.Order) {
-		if err := r.applyRegistrationFieldOrderChange(ctx, plan, res.Data.Order); err != nil {
-			resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+		regFieldOrderMutex.Lock()
+		actualField, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		if err != nil {
+			regFieldOrderMutex.Unlock()
+			resp.Diagnostics.AddError("failed to get actual registration field order before update", util.FormatErrorMessage(err))
 			return
 		}
+
+		actualOrder := actualField.Data.Order
+		if actualOrder != plan.Order.ValueInt64() {
+			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				regFieldOrderMutex.Unlock()
+				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+				return
+			}
+		}
+
 		getRes, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
 		if err != nil {
+			regFieldOrderMutex.Unlock()
 			resp.Diagnostics.AddError("failed to read registration field after order update", util.FormatErrorMessage(err))
 			return
 		}
-		plan.Order = types.Int64Value(getRes.Data.Order)
 		plan.BaseDataType = types.StringValue(getRes.Data.BaseDataType)
+		regFieldOrderMutex.Unlock()
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -950,10 +969,12 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 	fieldModel.ID = state.ID.ValueString()
 
 	if _, _, ok := registrationFieldOrderChangeRequested(plan, state); ok {
+		regFieldOrderMutex.Lock()
 		// Fetch the latest registration field details from the server to get the actual current order.
 		// The stored state order can be stale if other fields were reordered in the same apply run.
 		actualField, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
 		if err != nil {
+			regFieldOrderMutex.Unlock()
 			resp.Diagnostics.AddError("failed to get actual registration field order before update", util.FormatErrorMessage(err))
 			return
 		}
@@ -961,10 +982,12 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 		actualOrder := actualField.Data.Order
 		if actualOrder != plan.Order.ValueInt64() {
 			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				regFieldOrderMutex.Unlock()
 				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
 				return
 			}
 		}
+		regFieldOrderMutex.Unlock()
 	}
 
 	res, err := r.cidaasClient.RegFields.Upsert(ctx, *fieldModel)
@@ -980,7 +1003,9 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 		"field_id": state.ID.ValueString(),
 	})
 
-	plan.Order = types.Int64Value(res.Data.Order)
+	if plan.Order.IsNull() || plan.Order.IsUnknown() {
+		plan.Order = types.Int64Value(res.Data.Order)
+	}
 
 	// Computed base_data_type must be known after apply (e.g. GROUPING has empty). Fallback to state or "".
 	if plan.BaseDataType.IsUnknown() {
