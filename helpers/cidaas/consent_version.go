@@ -148,7 +148,7 @@ func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig Consen
 	return nil, lastErr
 }
 
-func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
+func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) { //nolint:dupl
 	var response ConsentVersionResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/versions")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
