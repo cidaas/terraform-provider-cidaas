@@ -6,6 +6,12 @@
 
 - **`cidaas_registration_field`:** Added optional **`field_definition.regexes`** — list of Go `regexp` (RE2) patterns merged with AND into one API **`fieldDefinition.regex`** via supported validation shapes (length, charset, contains, no_leading), not concatenation or lookaheads. Unknown/unmergable shapes fail closed. Mutually exclusive with **`regex`**. Per-rule ErrorKeys are not supported. Same **`min_length_msg`** / **`max_length_msg`** requirements as **`regex`** (TEXT/URL only). Plan computes the composed **`regex`** so updates do not hit “inconsistent result after apply”.
 
+#### Bug Fixes
+
+- **`cidaas_app`:** On read, empty list attributes cleared outside Terraform are now mapped to empty/null state correctly, preventing false drift ([4853](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4853)).
+- **`cidaas_notification_template_type`:** Prevent a null value-conversion crash when destroying a template type whose plan is null ([4852](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4852)).
+- **`cidaas_group_type`:** Filter null entries from **`allowed_roles`** and avoid a conversion crash when roles are referenced ([4893](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4893)).
+
 ### 3.5.18
 
 #### Enhancements
