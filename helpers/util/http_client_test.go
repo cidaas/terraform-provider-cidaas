@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -246,6 +247,42 @@ func TestHTTPClient_MakeRequest_ErrorStatusCodes(t *testing.T) {
 				resp.Body.Close()
 			}
 		})
+	}
+}
+
+func TestHTTPClient_MakeRequest_UnexpectedStatusError(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-Ref-Number", "ref-1")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"code":30001}}`))
+	}))
+	t.Cleanup(server.Close)
+
+	client, err := NewHTTPClient(server.URL, http.MethodPost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := client.MakeRequest(context.Background(), nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var statusErr *UnexpectedStatusError
+	if !errors.As(err, &statusErr) {
+		t.Fatalf("expected *UnexpectedStatusError, got %T: %v", err, err)
+	}
+	if statusErr.StatusCode != http.StatusBadRequest {
+		t.Fatalf("StatusCode = %d, want 400", statusErr.StatusCode)
+	}
+	if !strings.Contains(statusErr.Body, "30001") {
+		t.Fatalf("Body = %q, want 30001", statusErr.Body)
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "unexpected status code 400") || !strings.Contains(msg, "ref-1") {
+		t.Fatalf("Error() = %q, want status code 400 and X-Ref-Number", msg)
 	}
 }
 

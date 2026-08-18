@@ -22,6 +22,18 @@ type HTTPClientInterface interface {
 	MakeRequest(body interface{}) (*http.Response, error)
 }
 
+// UnexpectedStatusError is returned by HTTPClient when the status is not in the
+// expected set. 404 uses ErrResourceNotFound instead.
+type UnexpectedStatusError struct {
+	StatusCode int
+	Body       string
+	xRef       string
+}
+
+func (e *UnexpectedStatusError) Error() string {
+	return fmt.Sprintf("unexpected status code %d, response body: %s%s", e.StatusCode, e.Body, e.xRef)
+}
+
 // NewHTTPClient creates a new HTTP client with the specified URL and method.
 // Optional token parameter enables Bearer authentication.
 func NewHTTPClient(url, method string, token ...string) (*HTTPClient, error) {
@@ -155,7 +167,11 @@ func (h *HTTPClient) handleErrorResponse(resp *http.Response, expectedCodes []in
 	if resp.StatusCode == http.StatusNotFound {
 		return fmt.Errorf("%w: %s%s", ErrResourceNotFound, bodyStr, xRefNumberSuffix(resp))
 	}
-	return fmt.Errorf("unexpected status code %d, response body: %s%s", resp.StatusCode, bodyStr, xRefNumberSuffix(resp))
+	return &UnexpectedStatusError{
+		StatusCode: resp.StatusCode,
+		Body:       bodyStr,
+		xRef:       xRefNumberSuffix(resp),
+	}
 }
 
 // HTTP header name used by Cidaas for request correlation (support / tracing).

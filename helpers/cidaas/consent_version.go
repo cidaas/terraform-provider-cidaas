@@ -3,6 +3,7 @@ package cidaas
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -118,24 +119,20 @@ var consentVersionRetryDelay = func(attempt int) time.Duration {
 }
 
 func isConsentVersionNotIndexed(err error) bool {
-	if err == nil {
+	var statusErr *util.UnexpectedStatusError
+	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
 		return false
 	}
-	msg := strings.ToLower(err.Error())
-	if !strings.Contains(msg, "status code 400") {
-		return false
-	}
-	return strings.Contains(msg, "30001") || strings.Contains(msg, "consent version not found")
+	body := strings.ToLower(statusErr.Body)
+	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found")
 }
 
 func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
-	var lastErr error
-	for attempt := 0; attempt < consentVersionUpsertMaxAttempts; attempt++ {
+	for attempt := 0; ; attempt++ { // bound is the last-attempt return below; for{} so Go needs no dummy return
 		res, err := c.upsertOnce(ctx, consentVersionConfig)
 		if err == nil {
 			return res, nil
 		}
-		lastErr = err
 		if !isConsentVersionNotIndexed(err) || attempt == consentVersionUpsertMaxAttempts-1 {
 			return nil, err
 		}
@@ -145,7 +142,6 @@ func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig Consen
 		case <-time.After(consentVersionRetryDelay(attempt)):
 		}
 	}
-	return nil, lastErr
 }
 
 func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) { //nolint:dupl
