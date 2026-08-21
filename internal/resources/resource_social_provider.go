@@ -17,8 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -65,8 +65,8 @@ type SocialProviderConfig struct {
 	ClientSecretWOVersion types.String `tfsdk:"client_secret_wo_version"`
 	Claims                types.Object `tfsdk:"claims"`
 	EnabledForAdminPortal types.Bool   `tfsdk:"enabled_for_admin_portal"`
-	UserInfoFields        types.List   `tfsdk:"userinfo_fields"`
-	Scopes                types.Set    `tfsdk:"scopes"`
+	UserInfoFields        types.Set `tfsdk:"userinfo_fields"`
+	Scopes                types.Set `tfsdk:"scopes"`
 
 	claims         *Claims
 	userInfoFields []*UserInfoFields
@@ -284,10 +284,11 @@ var socialProviderSchema = schema.Schema{ //nolint:dupl
 				},
 			},
 		},
-		"userinfo_fields": schema.ListNestedAttribute{
-			Optional:            true,
-			Computed:            true,
-			MarkdownDescription: "A list of user info fields to be mapped between the social provider and Cidaas.",
+		"userinfo_fields": schema.SetNestedAttribute{
+			Optional: true,
+			Computed: true,
+			MarkdownDescription: "User info fields to map between the social provider and Cidaas. " +
+				"Order is not significant; Terraform treats this as a set.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"inner_key": schema.StringAttribute{
@@ -308,8 +309,8 @@ var socialProviderSchema = schema.Schema{ //nolint:dupl
 					},
 				},
 			},
-			Default: listdefault.StaticValue(
-				types.ListValueMust(
+			Default: setdefault.StaticValue(
+				types.SetValueMust(
 					userInfoFieldsType,
 					[]attr.Value{},
 				),
@@ -422,17 +423,13 @@ func (r *SocialProvider) Read(ctx context.Context, req resource.ReadRequest, res
 	setClaimsInfo(&state, res.Data.Claims)
 	tflog.Debug(ctx, "successfully set claims info")
 
-	if len(res.Data.UserInfoFields) > 0 {
-		tflog.Debug(ctx, "processing user info fields")
-		userInfoFields, diags := types.ListValueFrom(ctx, userInfoFieldsType, res.Data.UserInfoFields)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			tflog.Error(ctx, "failed to process user info fields", util.H{
-				"errors": resp.Diagnostics.Errors(),
-			})
-			return
-		}
-		state.UserInfoFields = userInfoFields
+	tflog.Debug(ctx, "processing user info fields")
+	resp.Diagnostics.Append(setUserInfoFields(&state, res.Data.UserInfoFields)...)
+	if resp.Diagnostics.HasError() {
+		tflog.Error(ctx, "failed to process user info fields", util.H{
+			"errors": resp.Diagnostics.Errors(),
+		})
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -751,29 +748,29 @@ func setUserInfoFields(state *SocialProviderConfig, ufs []cidaas.UserInfoFieldsM
 		},
 	}
 	if len(ufs) < 1 {
-		state.UserInfoFields = types.ListValueMust(
+		state.UserInfoFields = types.SetValueMust(
 			ufObjectType,
 			[]attr.Value{},
 		)
-	} else {
-		var ufObjectValues []attr.Value
-		for _, uf := range ufs {
-			innerKey := uf.InnerKey
-			externalKey := uf.ExternalKey
-			isCustomField := uf.IsCustomField
-			isSystemField := uf.IsSystemField
-			objValue := types.ObjectValueMust(
-				ufObjectType.AttrTypes,
-				map[string]attr.Value{
-					"inner_key":       util.StringValueOrNull(&innerKey),
-					"external_key":    util.StringValueOrNull(&externalKey),
-					"is_custom_field": util.BoolValueOrNull(&isCustomField),
-					"is_system_field": util.BoolValueOrNull(&isSystemField),
-				})
-			ufObjectValues = append(ufObjectValues, objValue)
-		}
-		state.UserInfoFields, diags = types.ListValue(ufObjectType, ufObjectValues)
+		return diags
 	}
+	var ufObjectValues []attr.Value
+	for _, uf := range ufs {
+		innerKey := uf.InnerKey
+		externalKey := uf.ExternalKey
+		isCustomField := uf.IsCustomField
+		isSystemField := uf.IsSystemField
+		objValue := types.ObjectValueMust(
+			ufObjectType.AttrTypes,
+			map[string]attr.Value{
+				"inner_key":       util.StringValueOrNull(&innerKey),
+				"external_key":    util.StringValueOrNull(&externalKey),
+				"is_custom_field": util.BoolValueOrNull(&isCustomField),
+				"is_system_field": util.BoolValueOrNull(&isSystemField),
+			})
+		ufObjectValues = append(ufObjectValues, objValue)
+	}
+	state.UserInfoFields, diags = types.SetValue(ufObjectType, ufObjectValues)
 	return diags
 }
 
