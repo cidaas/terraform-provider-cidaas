@@ -18,8 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -65,8 +65,8 @@ type SocialProviderConfig struct {
 	ClientSecretWOVersion types.String `tfsdk:"client_secret_wo_version"`
 	Claims                types.Object `tfsdk:"claims"`
 	EnabledForAdminPortal types.Bool   `tfsdk:"enabled_for_admin_portal"`
-	UserInfoFields        types.Set `tfsdk:"userinfo_fields"`
-	Scopes                types.Set `tfsdk:"scopes"`
+	UserInfoFields        types.Set    `tfsdk:"userinfo_fields"`
+	Scopes                types.Set    `tfsdk:"scopes"`
 
 	claims         *Claims
 	userInfoFields []*UserInfoFields
