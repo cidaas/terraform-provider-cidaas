@@ -46,7 +46,7 @@ func NewScope(clientConfig ClientConfig) *Scope {
 	return &Scope{clientConfig}
 }
 
-func (c *Scope) Upsert(ctx context.Context, sc ScopeModel) (*ScopeResponse, error) {
+func (c *Scope) Upsert(ctx context.Context, sc ScopeModel) (*ScopeResponse, error) { //nolint:dupl
 	var response ScopeResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "scopes-srv/scope")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -54,18 +54,18 @@ func (c *Scope) Upsert(ctx context.Context, sc ScopeModel) (*ScopeResponse, erro
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, sc)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *Scope) Get(ctx context.Context, scopeKey string) (*ScopeResponse, error) {
+func (c *Scope) Get(ctx context.Context, scopeKey string) (*ScopeResponse, error) { //nolint:dupl
 	var response ScopeResponse
 	url := fmt.Sprintf("%s/%s?scopekey=%s", c.BaseURL, "scopes-srv/scope", scopeKey)
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -73,12 +73,12 @@ func (c *Scope) Get(ctx context.Context, scopeKey string) (*ScopeResponse, error
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -91,14 +91,14 @@ func (c *Scope) Delete(ctx context.Context, scopeKey string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (c *Scope) GetAll(ctx context.Context) ([]ScopeModel, error) {
+func (c *Scope) GetAll(ctx context.Context) ([]ScopeModel, error) { //nolint:dupl
 	var response AllScopeResp
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "scopes-srv/scope/list")
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -106,12 +106,12 @@ func (c *Scope) GetAll(ctx context.Context) ([]ScopeModel, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

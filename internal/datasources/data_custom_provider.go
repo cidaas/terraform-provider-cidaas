@@ -83,7 +83,7 @@ var customProviderSchema = schema.Schema{
 	},
 }
 
-func (d *CustomProviderDataSource) Read(
+func (d *CustomProviderDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -132,10 +132,11 @@ func listCustomProviders(ctx context.Context, client *cidaas.Client) ([]any, err
 	return TypedSliceToAny(cps), nil
 }
 
-func parseCustomProvider(cp cidaas.CustomProviderModel) (result CustomProvider) {
-	result.ID = types.StringValue(cp.ID)
-	result.ProviderName = types.StringValue(cp.ProviderName)
-	result.Domains = util.SetValueOrNull(cp.Domains)
-	result.StandardType = types.StringValue(cp.StandardType)
-	return result
+func parseCustomProvider(cp cidaas.CustomProviderModel) CustomProvider {
+	return CustomProvider{
+		ID:           types.StringValue(cp.ID),
+		ProviderName: types.StringValue(cp.ProviderName),
+		Domains:      util.SetValueOrNull(cp.Domains),
+		StandardType: types.StringValue(cp.StandardType),
+	}
 }

@@ -54,23 +54,6 @@ func composeANDRegexes(patterns []string) (string, error) {
 	return composed, nil
 }
 
-// matchAllRegexes reports whether s matches every pattern (AND), using Go's regexp.
-func matchAllRegexes(patterns []string, s string) (matched bool, err error) {
-	if len(patterns) == 0 {
-		return false, fmt.Errorf("no patterns")
-	}
-	for i, p := range patterns {
-		re, compileErr := regexp.Compile(strings.TrimSpace(p))
-		if compileErr != nil {
-			return false, fmt.Errorf("regexes[%d]: %w", i, compileErr)
-		}
-		if !re.MatchString(s) {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 type shapeKind int
 
 const (

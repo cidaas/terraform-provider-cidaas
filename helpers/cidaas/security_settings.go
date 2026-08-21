@@ -88,11 +88,11 @@ func (s *SecuritySettings) Get(ctx context.Context) (*SecuritySettingsGetRespons
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	if !response.Success {
@@ -109,7 +109,7 @@ func (s *SecuritySettings) Patch(ctx context.Context, patch SecuritySettingsPatc
 		return err
 	}
 	res, err := client.MakeRequest(ctx, patch)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

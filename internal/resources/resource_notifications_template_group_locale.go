@@ -25,7 +25,7 @@ func NewNotificationsTemplateGroupLocaleResource() resource.Resource {
 	return &NotificationsTemplateGroupLocaleResource{
 		BaseResource: NewBaseResource(
 			BaseResourceConfig{
-				Name:   RESOURCE_NOTIFICATIONS_TEMPLATE_GROUP_LOCALE, // nolint:stylecheck
+				Name:   RESOURCE_NOTIFICATIONS_TEMPLATE_GROUP_LOCALE, //nolint:revive
 				Schema: &notificationsTemplateGroupLocaleSchema,
 			},
 		),
@@ -258,7 +258,7 @@ func localeModelFromPlan(m notificationsTemplateGroupLocaleModel) notificationsT
 	}
 }
 
-func parseNotificationsTemplateGroupLocaleImportID(id string) (groupID, locale string, ok bool) {
+func parseNotificationsTemplateGroupLocaleImportID(id string) (string, string, bool) {
 	parts := strings.SplitN(strings.TrimSpace(id), "/", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return "", "", false

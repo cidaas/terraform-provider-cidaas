@@ -84,7 +84,7 @@ func (w *Webhook) Upsert(ctx context.Context, wb WebhookModel) (*WebhookResponse
 	defer res.Body.Close()
 
 	var response WebhookResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -102,7 +102,7 @@ func (w *Webhook) Get(ctx context.Context, id string) (*WebhookResponse, error) 
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil

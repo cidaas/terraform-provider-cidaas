@@ -358,7 +358,7 @@ func (r *PasswordPolicy) Update(ctx context.Context, req resource.UpdateRequest,
 	})
 }
 
-func (r *PasswordPolicy) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *PasswordPolicy) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state PasswordPolicyConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {

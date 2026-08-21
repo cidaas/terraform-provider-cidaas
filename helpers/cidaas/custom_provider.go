@@ -93,7 +93,7 @@ func NewCustomProvider(clientConfig ClientConfig) *CustomProvider {
 	return &CustomProvider{clientConfig}
 }
 
-func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomProviderModel) (*CustomProviderResponse, error) {
+func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomProviderModel) (*CustomProviderResponse, error) { //nolint:dupl
 	var response CustomProviderResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "providers-srv/custom")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -101,12 +101,12 @@ func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomPro
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, cp)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -119,14 +119,14 @@ func (c *CustomProvider) UpdateCustomProvider(ctx context.Context, cp *CustomPro
 		return err
 	}
 	res, err := client.MakeRequest(ctx, cp)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (c *CustomProvider) GetCustomProvider(ctx context.Context, providerName string) (*CustomProviderResponse, error) {
+func (c *CustomProvider) GetCustomProvider(ctx context.Context, providerName string) (*CustomProviderResponse, error) { //nolint:dupl
 	var response CustomProviderResponse
 	url := fmt.Sprintf("%s/%s/%s", c.BaseURL, "providers-srv/custom", providerName)
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -134,12 +134,12 @@ func (c *CustomProvider) GetCustomProvider(ctx context.Context, providerName str
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -152,14 +152,14 @@ func (c *CustomProvider) DeleteCustomProvider(ctx context.Context, providerName 
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (c *CustomProvider) GetAll(ctx context.Context) ([]CustomProviderModel, error) {
+func (c *CustomProvider) GetAll(ctx context.Context) ([]CustomProviderModel, error) { //nolint:dupl
 	var response AllCustomProviderResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "providers-srv/custom")
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -167,12 +167,12 @@ func (c *CustomProvider) GetAll(ctx context.Context) ([]CustomProviderModel, err
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

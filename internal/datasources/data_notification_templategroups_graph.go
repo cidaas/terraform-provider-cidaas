@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const NOTIFICATION_TEMPLATEGROUPS_GRAPH_DATASOURCE = "cidaas_notification_template_groups" // nolint:stylecheck
+const notificationTemplateGroupsGraphDataSourceName = "cidaas_notification_template_groups"
 
 type notificationTemplateGroupsGraphDataSource struct {
 	BaseDataSource
@@ -23,7 +23,7 @@ type notificationTemplateGroupsGraphDataSource struct {
 func NewNotificationTemplateGroupsGraph() datasource.DataSource {
 	return &notificationTemplateGroupsGraphDataSource{
 		BaseDataSource: NewBaseDataSource(BaseDataSourceConfig{
-			Name:   NOTIFICATION_TEMPLATEGROUPS_GRAPH_DATASOURCE,
+			Name:   notificationTemplateGroupsGraphDataSourceName,
 			Schema: &notificationTemplateGroupsGraphSchema,
 		}),
 	}

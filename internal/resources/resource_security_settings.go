@@ -327,7 +327,7 @@ func isEmptyPatch(p cidaas.SecuritySettingsPatch) bool {
 		p.RuleConfiguration == nil
 }
 
-func dataToModel(ctx context.Context, data *cidaas.SecuritySettingsData) (securitySettingsModel, diag.Diagnostics) {
+func dataToModel(_ context.Context, data *cidaas.SecuritySettingsData) (securitySettingsModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var m securitySettingsModel
 	if data == nil {
@@ -408,7 +408,7 @@ func priorSecuritySettingsIsBare(prior securitySettingsModel) bool {
 		prior.RuleConfiguration.IsNull()
 }
 
-func mergeStringSet(ctx context.Context, mask, api types.Set, diags *diag.Diagnostics) types.Set {
+func mergeStringSet(_ context.Context, mask, api types.Set, _ *diag.Diagnostics) types.Set {
 	if mask.IsNull() {
 		return types.SetNull(types.StringType)
 	}
@@ -452,7 +452,7 @@ func mergeBlockingSettingState(ctx context.Context, mask, api blockingSettingMod
 	}
 }
 
-func blockingModelToObject(ctx context.Context, m blockingSettingModel, diags *diag.Diagnostics) types.Object {
+func blockingModelToObject(_ context.Context, m blockingSettingModel, diags *diag.Diagnostics) types.Object {
 	obj, d := types.ObjectValue(blockingSettingAttrTypes(), map[string]attr.Value{
 		"enabled":                         m.Enabled,
 		"black_listed_email_domains":      m.BlackListedEmailDomains,
@@ -694,7 +694,7 @@ func (r *securitySettingsResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *securitySettingsResource) Delete(ctx context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *securitySettingsResource) Delete(ctx context.Context, _ resource.DeleteRequest, _ *resource.DeleteResponse) {
 	tflog.Info(ctx, "cidaas_security_settings destroy: removing from Terraform state only; fraud-detection settings in Cidaas are unchanged")
 }
 

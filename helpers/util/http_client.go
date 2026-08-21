@@ -22,6 +22,18 @@ type HTTPClientInterface interface {
 	MakeRequest(body interface{}) (*http.Response, error)
 }
 
+// UnexpectedStatusError is returned by HTTPClient when the status is not in the
+// expected set. 404 uses ErrResourceNotFound instead.
+type UnexpectedStatusError struct {
+	StatusCode int
+	Body       string
+	xRef       string
+}
+
+func (e *UnexpectedStatusError) Error() string {
+	return fmt.Sprintf("unexpected status code %d, response body: %s%s", e.StatusCode, e.Body, e.xRef)
+}
+
 // NewHTTPClient creates a new HTTP client with the specified URL and method.
 // Optional token parameter enables Bearer authentication.
 func NewHTTPClient(url, method string, token ...string) (*HTTPClient, error) {
@@ -100,7 +112,7 @@ func (h *HTTPClient) MakeRequest(ctx context.Context, requestBody interface{}) (
 // MakeRequestReadBody executes the request, reads the full response body, and returns the HTTP status code
 // and response headers (for correlation, e.g. X-Ref-Number). Only transport/body-read errors are returned as err;
 // non-2xx status codes are not treated as errors.
-func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interface{}) (statusCode int, body []byte, respHeader http.Header, err error) {
+func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interface{}) (int, []byte, http.Header, error) {
 	var reqBodyByte io.Reader
 	if requestBody == nil {
 		reqBodyByte = nil
@@ -129,9 +141,9 @@ func (h *HTTPClient) MakeRequestReadBody(ctx context.Context, requestBody interf
 		return 0, nil, nil, fmt.Errorf("request failed, %w", err)
 	}
 	defer resp.Body.Close()
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, nil, resp.Header, fmt.Errorf("failed to read response body, %w", err)
+	body, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return resp.StatusCode, nil, resp.Header, fmt.Errorf("failed to read response body, %w", readErr)
 	}
 	return resp.StatusCode, body, resp.Header, nil
 }
@@ -155,7 +167,11 @@ func (h *HTTPClient) handleErrorResponse(resp *http.Response, expectedCodes []in
 	if resp.StatusCode == http.StatusNotFound {
 		return fmt.Errorf("%w: %s%s", ErrResourceNotFound, bodyStr, xRefNumberSuffix(resp))
 	}
-	return fmt.Errorf("unexpected status code %d, response body: %s%s", resp.StatusCode, bodyStr, xRefNumberSuffix(resp))
+	return &UnexpectedStatusError{
+		StatusCode: resp.StatusCode,
+		Body:       bodyStr,
+		xRef:       xRefNumberSuffix(resp),
+	}
 }
 
 // HTTP header name used by Cidaas for request correlation (support / tracing).

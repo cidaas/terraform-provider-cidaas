@@ -108,7 +108,7 @@ resource "cidaas_app" "app_sample" {
 - `enabled` (Boolean) A flag to enable or disable the social provider configuration. Set to `true` to enable and `false` to disable.
 - `enabled_for_admin_portal` (Boolean) A flag to enable or disable the social provider for the admin portal. Set to `true` to enable and `false` to disable.
 - `scopes` (Set of String) A list of scopes of the social provider.
-- `userinfo_fields` (Attributes List) A list of user info fields to be mapped between the social provider and cidaas. (see [below for nested schema](#nestedatt--userinfo_fields))
+- `userinfo_fields` (Attributes Set) User info fields to map between the social provider and Cidaas. Order is not significant; Terraform treats this as a set. (see [below for nested schema](#nestedatt--userinfo_fields))
 
 ### Read-Only
 

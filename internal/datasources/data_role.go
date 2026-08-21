@@ -78,7 +78,7 @@ var roleDataSourceSchema = schema.Schema{
 	},
 }
 
-func (d *RoleDataSource) Read(
+func (d *RoleDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -124,9 +124,10 @@ func listRoles(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	return TypedSliceToAny(roles), nil
 }
 
-func parseRole(role cidaas.RoleModel) (result Role) {
-	result.Name = types.StringValue(role.Name)
-	result.Role = types.StringValue(role.Role)
-	result.Description = types.StringValue(role.Description)
-	return result
+func parseRole(role cidaas.RoleModel) Role {
+	return Role{
+		Name:        types.StringValue(role.Name),
+		Role:        types.StringValue(role.Role),
+		Description: types.StringValue(role.Description),
+	}
 }

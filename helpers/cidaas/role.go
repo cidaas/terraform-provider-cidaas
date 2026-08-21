@@ -44,13 +44,13 @@ func (r *Role) UpsertRole(ctx context.Context, role RoleModel) (*RoleResponse, e
 	defer res.Body.Close()
 
 	var response RoleResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (r *Role) GetRole(ctx context.Context, role string) (*RoleResponse, error) {
+func (r *Role) GetRole(ctx context.Context, role string) (*RoleResponse, error) { //nolint:dupl
 	if role == "" {
 		return nil, fmt.Errorf("role cannot be empty")
 	}
@@ -62,7 +62,7 @@ func (r *Role) GetRole(ctx context.Context, role string) (*RoleResponse, error) 
 	defer res.Body.Close()
 
 	var response RoleResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -90,7 +90,7 @@ func (r *Role) GetAll(ctx context.Context) ([]RoleModel, error) {
 	defer res.Body.Close()
 
 	var response AllRoleResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

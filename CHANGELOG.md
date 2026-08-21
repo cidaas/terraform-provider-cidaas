@@ -8,6 +8,8 @@
 
 #### Bug Fixes
 
+- **`cidaas_registration_field`:** `field_definition.regex` is set to known null after apply when neither `regex` nor `regexes` is configured, so Terraform no longer rejects the apply result as unknown.
+- **`cidaas_consent_version`:** Create retries while consent-management returns `400` / `30001` (`consent version not found`) until the parent consent is indexed.
 - **`cidaas_app`:** On read, empty list attributes cleared outside Terraform are now mapped to empty/null state correctly, preventing false drift ([4853](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4853)).
 - **`cidaas_notification_template_type`:** Prevent a null value-conversion crash when destroying a template type whose plan is null ([4852](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4852)).
 - **`cidaas_group_type`:** Filter null entries from **`allowed_roles`** and avoid a conversion crash when roles are referenced ([4893](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4893)).

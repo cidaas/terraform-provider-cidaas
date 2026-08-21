@@ -55,7 +55,7 @@ type NotificationsSrvTemplateModel struct {
 }
 
 // Get returns a template by document id (GET /templates/:id).
-func (t *NotificationsSrvTemplate) Get(ctx context.Context, id string) (*NotificationsSrvTemplateModel, error) {
+func (t *NotificationsSrvTemplate) Get(ctx context.Context, id string) (*NotificationsSrvTemplateModel, error) { //nolint:dupl
 	escaped := url.PathEscape(id)
 	urlStr := t.segmentURL("templates", escaped)
 	client, err := util.NewHTTPClient(urlStr, http.MethodGet, t.AccessToken)
@@ -147,7 +147,7 @@ const notificationSrvCodeTemplateCannotDelete = "35013"
 // Delete DELETE /templates/:id.
 // If the server refuses deletion (HTTP 400, code 35013), returns privilegedNoOp=true and err=nil so Terraform
 // can still remove the resource from state (e.g. tainted replace); the remote template remains.
-func (t *NotificationsSrvTemplate) Delete(ctx context.Context, id string) (privilegedNoOp bool, err error) {
+func (t *NotificationsSrvTemplate) Delete(ctx context.Context, id string) (bool, error) {
 	escaped := url.PathEscape(id)
 	urlStr := t.segmentURL("templates", escaped)
 	client, err := util.NewHTTPClient(urlStr, http.MethodDelete, t.AccessToken)
@@ -219,7 +219,7 @@ func (t *NotificationsSrvTemplate) DeleteByGroupAndLocales(ctx context.Context, 
 }
 
 // FindGraph POST /graph/templates/ with a graph filter JSON body (GenericGraphFilter).
-func (t *NotificationsSrvTemplate) FindGraph(ctx context.Context, filter json.RawMessage) ([]NotificationsSrvTemplateModel, error) {
+func (t *NotificationsSrvTemplate) FindGraph(ctx context.Context, filter json.RawMessage) ([]NotificationsSrvTemplateModel, error) { //nolint:dupl
 	urlStr := t.segmentURL("graph", "templates")
 	client, err := util.NewHTTPClient(urlStr, http.MethodPost, t.AccessToken)
 	if err != nil {
