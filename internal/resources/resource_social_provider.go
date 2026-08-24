@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
@@ -345,24 +346,42 @@ var socialProviderSchema = schema.Schema{ //nolint:dupl
 	},
 }
 
+// socialProviderSchemaV0 is a frozen snapshot of schema version 0.
+// Do not derive from socialProviderSchema in a loop — new v1 attributes must not appear here.
 func socialProviderSchemaV0() schema.Schema {
-	attrs := make(map[string]schema.Attribute, len(socialProviderSchema.Attributes))
-	for k, v := range socialProviderSchema.Attributes {
-		attrs[k] = v
-	}
-	attrs["userinfo_fields"] = schema.ListNestedAttribute{
-		Optional: true,
-		Computed: true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"inner_key":       schema.StringAttribute{Required: true},
-				"external_key":    schema.StringAttribute{Required: true},
-				"is_custom_field": schema.BoolAttribute{Required: true},
-				"is_system_field": schema.BoolAttribute{Required: true},
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id":                       socialProviderSchema.Attributes["id"],
+			"name":                     socialProviderSchema.Attributes["name"],
+			"provider_name":            socialProviderSchema.Attributes["provider_name"],
+			"enabled":                  socialProviderSchema.Attributes["enabled"],
+			"client_id":                socialProviderSchema.Attributes["client_id"],
+			"client_secret":            socialProviderSchema.Attributes["client_secret"],
+			"client_secret_wo":         socialProviderSchema.Attributes["client_secret_wo"],
+			"client_secret_wo_version": socialProviderSchema.Attributes["client_secret_wo_version"],
+			"scopes":                   socialProviderSchema.Attributes["scopes"],
+			"claims":                   socialProviderSchema.Attributes["claims"],
+			"enabled_for_admin_portal": socialProviderSchema.Attributes["enabled_for_admin_portal"],
+			"userinfo_fields": schema.ListNestedAttribute{
+				Optional: true,
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"inner_key":       schema.StringAttribute{Required: true},
+						"external_key":    schema.StringAttribute{Required: true},
+						"is_custom_field": schema.BoolAttribute{Required: true},
+						"is_system_field": schema.BoolAttribute{Required: true},
+					},
+				},
+				Default: listdefault.StaticValue(
+					types.ListValueMust(
+						userInfoFieldsType,
+						[]attr.Value{},
+					),
+				),
 			},
 		},
 	}
-	return schema.Schema{Attributes: attrs}
 }
 
 func (r *SocialProvider) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {

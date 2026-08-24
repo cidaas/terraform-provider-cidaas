@@ -114,3 +114,25 @@ func TestSocialProviderUpgradeState_HasV0(t *testing.T) {
 		t.Fatalf("expected Schema.Version 1, got %d", socialProviderSchema.Version)
 	}
 }
+
+func TestSocialProviderSchemaV0_FrozenSnapshot(t *testing.T) {
+	v0 := socialProviderSchemaV0()
+	wantKeys := []string{
+		"id", "name", "provider_name", "enabled", "client_id", "client_secret",
+		"client_secret_wo", "client_secret_wo_version", "scopes", "claims",
+		"userinfo_fields", "enabled_for_admin_portal",
+	}
+	if len(v0.Attributes) != len(wantKeys) {
+		t.Fatalf("v0 attribute count = %d, want %d (frozen snapshot must not pick up new v1 attrs)",
+			len(v0.Attributes), len(wantKeys))
+	}
+	for _, k := range wantKeys {
+		if _, ok := v0.Attributes[k]; !ok {
+			t.Fatalf("v0 missing attribute %q", k)
+		}
+	}
+	if len(socialProviderSchema.Attributes) != len(wantKeys) {
+		t.Fatalf("unexpected: v1 attribute count %d differs from v0 snapshot %d",
+			len(socialProviderSchema.Attributes), len(wantKeys))
+	}
+}
