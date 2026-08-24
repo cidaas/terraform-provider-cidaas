@@ -43,6 +43,8 @@ type SocialProvider struct {
 	BaseResource
 }
 
+var _ resource.ResourceWithUpgradeState = (*SocialProvider)(nil)
+
 func NewSocialProvider() resource.Resource {
 	return &SocialProvider{
 		BaseResource: NewBaseResource(
@@ -70,6 +72,22 @@ type SocialProviderConfig struct {
 
 	claims         *Claims
 	userInfoFields []*UserInfoFields
+}
+
+// socialProviderConfigV0 is the state shape before Schema.Version 1 (userinfo_fields as List).
+type socialProviderConfigV0 struct {
+	ID                    types.String `tfsdk:"id"`
+	Name                  types.String `tfsdk:"name"`
+	ProviderName          types.String `tfsdk:"provider_name"`
+	Enabled               types.Bool   `tfsdk:"enabled"`
+	ClientID              types.String `tfsdk:"client_id"`
+	ClientSecret          types.String `tfsdk:"client_secret"`
+	ClientSecretWO        types.String `tfsdk:"client_secret_wo"`
+	ClientSecretWOVersion types.String `tfsdk:"client_secret_wo_version"`
+	Claims                types.Object `tfsdk:"claims"`
+	EnabledForAdminPortal types.Bool   `tfsdk:"enabled_for_admin_portal"`
+	UserInfoFields        types.List   `tfsdk:"userinfo_fields"`
+	Scopes                types.Set    `tfsdk:"scopes"`
 }
 
 type Claims struct {
@@ -173,6 +191,8 @@ func emptyClaimsNestedDefault() defaults.Object {
 }
 
 var socialProviderSchema = schema.Schema{ //nolint:dupl
+	// Version 1: userinfo_fields changed from ListNestedAttribute to SetNestedAttribute.
+	Version: 1,
 	MarkdownDescription: "The `cidaas_social_provider` resource allows you to configure and manage social login providers within Cidaas." +
 		"\n Social login providers enable users to authenticate using their existing accounts from popular social platforms such as Google, Facebook, LinkedIn and others." +
 		"\n\n Ensure that the below scopes are assigned to the client:" +
@@ -323,6 +343,77 @@ var socialProviderSchema = schema.Schema{ //nolint:dupl
 			MarkdownDescription: "A flag to enable or disable the social provider for the admin portal. Set to `true` to enable and `false` to disable.",
 		},
 	},
+}
+
+func socialProviderSchemaV0() schema.Schema {
+	attrs := make(map[string]schema.Attribute, len(socialProviderSchema.Attributes))
+	for k, v := range socialProviderSchema.Attributes {
+		attrs[k] = v
+	}
+	attrs["userinfo_fields"] = schema.ListNestedAttribute{
+		Optional: true,
+		Computed: true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"inner_key":       schema.StringAttribute{Required: true},
+				"external_key":    schema.StringAttribute{Required: true},
+				"is_custom_field": schema.BoolAttribute{Required: true},
+				"is_system_field": schema.BoolAttribute{Required: true},
+			},
+		},
+	}
+	return schema.Schema{Attributes: attrs}
+}
+
+func (r *SocialProvider) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	prior := socialProviderSchemaV0()
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema:   &prior,
+			StateUpgrader: upgradeSocialProviderStateV0,
+		},
+	}
+}
+
+func upgradeSocialProviderStateV0(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+	var prior socialProviderConfigV0
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	upgraded := SocialProviderConfig{
+		ID:                    prior.ID,
+		Name:                  prior.Name,
+		ProviderName:          prior.ProviderName,
+		Enabled:               prior.Enabled,
+		ClientID:              prior.ClientID,
+		ClientSecret:          prior.ClientSecret,
+		ClientSecretWO:        prior.ClientSecretWO,
+		ClientSecretWOVersion: prior.ClientSecretWOVersion,
+		Claims:                prior.Claims,
+		EnabledForAdminPortal: prior.EnabledForAdminPortal,
+		Scopes:                prior.Scopes,
+	}
+
+	var diags diag.Diagnostics
+	upgraded.UserInfoFields, diags = userInfoFieldsListToSet(prior.UserInfoFields)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &upgraded)...)
+}
+
+func userInfoFieldsListToSet(list types.List) (types.Set, diag.Diagnostics) {
+	if list.IsNull() {
+		return types.SetValueMust(userInfoFieldsType, []attr.Value{}), nil
+	}
+	if list.IsUnknown() {
+		return types.SetUnknown(userInfoFieldsType), nil
+	}
+	return types.SetValue(userInfoFieldsType, list.Elements())
 }
 
 func (r *SocialProvider) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
