@@ -1,0 +1,39 @@
+include:
+  - project: "widas/software-quality/gitlab-template-projects/widas-customer-ci-templates"
+    file: "golang/go-lib.yml"
+
+stages:
+  - prepare
+  - test
+  - release
+
+acceptance_test:
+  image: golang:1.25.8
+  stage: test
+  before_script:
+    - echo "machine gitlab.widas.de login $GITLAB_LOGIN password $GITLAB_TOKEN" > ~/.netrc
+  script:
+    - export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID=$CI_ID TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET=$CI_SECRET BASE_URL=$BASE_URL
+    - make test-ci
+  coverage: '/total:\s+\(statements\)\s+(\d+(?:\.\d+)?%)/'
+  artifacts:
+    paths:
+      - coverage.html
+
+dependency_scanning:
+  image: golang:1.25.8
+
+get_version:
+  stage: prepare
+  only:
+    - never
+
+release:
+  stage: release
+  only:
+    - never
+
+lint:
+  allow_failure: true
+lint:diff:
+  allow_failure: true

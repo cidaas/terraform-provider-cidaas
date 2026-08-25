@@ -1,0 +1,31 @@
+# Binaries
+terraform-provider-cidaas
+terraform-provider-cidaas_*
+bin/
+dist/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Coverage / test
+.coverage.txt
+coverage.html
+coverage.out
+*.test
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Go
+vendor/
