@@ -25,7 +25,7 @@ func NewHTTPClient(url, method, token string) *HTTPClient {
 		Method:     method,
 		Token:      token,
 		Headers:    map[string]string{},
-		HTTPClient: http.DefaultClient,
+		HTTPClient: authClient(),
 	}
 }
 
@@ -93,3 +93,20 @@ func ExpectStatus(resp *http.Response, codes ...int) error {
 
 // ErrNotFound indicates a 404 from the API.
 var ErrNotFound = fmt.Errorf("resource not found")
+
+// requestJSON performs a Bearer JSON call, checks status, and optionally decodes into dest.
+func requestJSON(ctx context.Context, cfg Config, method, endpoint string, body, dest any, ok ...int) error {
+	httpClient := NewHTTPClient(endpoint, method, cfg.AccessToken)
+	resp, err := httpClient.DoJSON(ctx, body)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if err := ExpectStatus(resp, ok...); err != nil {
+		return err
+	}
+	if dest == nil {
+		return nil
+	}
+	return DecodeJSON(resp, dest)
+}

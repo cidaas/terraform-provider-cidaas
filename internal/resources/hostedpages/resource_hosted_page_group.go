@@ -143,7 +143,7 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
-func (r *hostedPageGroupResource) fromAPI(ctx context.Context, data client.HostedPageGroupModel, state *hostedPageGroupModel) error {
+func (r *hostedPageGroupResource) fromAPI(_ context.Context, data client.HostedPageGroupModel, state *hostedPageGroupModel) error {
 	state.ID = types.StringValue(data.ID)
 	state.Name = types.StringValue(data.ID)
 	state.GroupOwner = types.StringValue(data.GroupOwner)
@@ -173,24 +173,26 @@ func (r *hostedPageGroupResource) fromAPI(ctx context.Context, data client.Hoste
 	return nil
 }
 
+func (r *hostedPageGroupResource) upsert(ctx context.Context, plan *hostedPageGroupModel) error {
+	apiModel, err := r.toAPI(ctx, *plan)
+	if err != nil {
+		return fmt.Errorf("invalid hosted pages: %w", err)
+	}
+	out, err := r.client.HostedPages.Upsert(ctx, apiModel)
+	if err != nil {
+		return err
+	}
+	return r.fromAPI(ctx, out.Data, plan)
+}
+
 func (r *hostedPageGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan hostedPageGroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiModel, err := r.toAPI(ctx, plan)
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid hosted pages", err.Error())
-		return
-	}
-	out, err := r.client.HostedPages.Upsert(ctx, apiModel)
-	if err != nil {
+	if err := r.upsert(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Create hosted page group failed", err.Error())
-		return
-	}
-	if err := r.fromAPI(ctx, out.Data, &plan); err != nil {
-		resp.Diagnostics.AddError("Map response", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -220,18 +222,8 @@ func (r *hostedPageGroupResource) Update(ctx context.Context, req resource.Updat
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiModel, err := r.toAPI(ctx, plan)
-	if err != nil {
-		resp.Diagnostics.AddError("Invalid hosted pages", err.Error())
-		return
-	}
-	out, err := r.client.HostedPages.Upsert(ctx, apiModel)
-	if err != nil {
+	if err := r.upsert(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Update hosted page group failed", err.Error())
-		return
-	}
-	if err := r.fromAPI(ctx, out.Data, &plan); err != nil {
-		resp.Diagnostics.AddError("Map response", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

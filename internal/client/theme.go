@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 )
 
 type ThemeService struct {
@@ -25,9 +26,39 @@ type ThemeListResponse struct {
 	Data    []string `json:"data"`
 }
 
+// authClient preserves Authorization across same-host redirects.
+// Go's default client strips Authorization on redirect, which turns
+// POST /themes → 301 /themes/ into a 401 Unauthorized.
+func authClient() *http.Client {
+	return &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("too many redirects")
+			}
+			if len(via) > 0 {
+				if auth := via[0].Header.Get("Authorization"); auth != "" && req.Header.Get("Authorization") == "" {
+					req.Header.Set("Authorization", auth)
+				}
+			}
+			return nil
+		},
+	}
+}
+
+func themesCollectionURL(base string) (string, error) {
+	endpoint, err := url.JoinPath(base, "hostedpages-srv/themes")
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasSuffix(endpoint, "/") {
+		endpoint += "/"
+	}
+	return endpoint, nil
+}
+
 // Upload posts multipart form field "theme" with the given filename and CSS content.
 func (s *ThemeService) Upload(ctx context.Context, filename, cssContent string) error {
-	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/themes/")
+	endpoint, err := themesCollectionURL(s.cfg.BaseURL)
 	if err != nil {
 		return err
 	}
@@ -49,12 +80,18 @@ func (s *ThemeService) Upload(ctx context.Context, filename, cssContent string) 
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+s.cfg.AccessToken)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := authClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("upload theme: %w", err)
 	}
-	defer resp.Body.Close()
-	return ExpectStatus(resp, http.StatusOK, http.StatusCreated)
+	defer func() { _ = resp.Body.Close() }()
+	if err := ExpectStatus(resp, http.StatusOK, http.StatusCreated); err != nil {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return fmt.Errorf("%w (check cidaas:themes_write on the OAuth client)", err)
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *ThemeService) Get(ctx context.Context, filename string) ([]byte, error) {
@@ -67,7 +104,7 @@ func (s *ThemeService) Get(ctx context.Context, filename string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if err := ExpectStatus(resp, http.StatusOK); err != nil {
 		return nil, err
 	}
@@ -75,7 +112,7 @@ func (s *ThemeService) Get(ctx context.Context, filename string) ([]byte, error)
 }
 
 func (s *ThemeService) List(ctx context.Context) ([]string, error) {
-	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/themes/")
+	endpoint, err := themesCollectionURL(s.cfg.BaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +121,7 @@ func (s *ThemeService) List(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if err := ExpectStatus(resp, http.StatusOK); err != nil {
 		return nil, err
 	}
@@ -105,6 +142,6 @@ func (s *ThemeService) Delete(ctx context.Context, filename string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	return ExpectStatus(resp, http.StatusOK, http.StatusNoContent)
 }

@@ -102,7 +102,7 @@ func (r *translationsResource) toAPI(ctx context.Context, m translationsModel) (
 	return out, nil
 }
 
-func (r *translationsResource) fromAPI(ctx context.Context, locale string, enabled bool, translation map[string]any, state *translationsModel) error {
+func (r *translationsResource) fromAPI(_ context.Context, locale string, enabled bool, translation map[string]any, state *translationsModel) error {
 	state.ID = types.StringValue(locale)
 	state.LocaleID = types.StringValue(locale)
 	state.Enabled = types.BoolValue(enabled)

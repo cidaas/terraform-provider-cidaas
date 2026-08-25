@@ -1,8 +1,10 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -95,9 +97,10 @@ func TestProbeCapabilities_NotFoundAssumesV4(t *testing.T) {
 
 func TestThemeUpload(t *testing.T) {
 	t.Parallel()
-	var gotCT string
+	var gotCT, gotAuth string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotCT = r.Header.Get("Content-Type")
+		gotAuth = r.Header.Get("Authorization")
 		if err := r.ParseMultipartForm(1 << 20); err != nil {
 			t.Errorf("parse multipart: %v", err)
 			http.Error(w, err.Error(), 400)
@@ -109,7 +112,7 @@ func TestThemeUpload(t *testing.T) {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if hdr.Filename != "x.css" {
 			t.Errorf("filename %q", hdr.Filename)
 		}
@@ -124,6 +127,53 @@ func TestThemeUpload(t *testing.T) {
 	}
 	if gotCT == "" || gotCT[:19] != "multipart/form-data" {
 		t.Fatalf("content-type %q", gotCT)
+	}
+	if gotAuth != "Bearer tok" {
+		t.Fatalf("auth %q", gotAuth)
+	}
+}
+
+func TestThemeUpload_PreservesAuthOnRedirect(t *testing.T) {
+	t.Parallel()
+	var sawAuthOnFinal bool
+	mux := http.NewServeMux()
+	mux.HandleFunc("/hostedpages-srv/themes", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/hostedpages-srv/themes/", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("/hostedpages-srv/themes/", func(w http.ResponseWriter, r *http.Request) {
+		sawAuthOnFinal = r.Header.Get("Authorization") == "Bearer tok"
+		if !sawAuthOnFinal {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	// Force a no-trailing-slash URL so the server redirects (simulates gateway behavior).
+	endpoint := srv.URL + "/hostedpages-srv/themes" // no trailing slash
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("theme", "x.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = part.Write([]byte("body{}"))
+	_ = writer.Close()
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, endpoint, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer tok")
+	resp, err := authClient().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d authKept=%v", resp.StatusCode, sawAuthOnFinal)
 	}
 }
 

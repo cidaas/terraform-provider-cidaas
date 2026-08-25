@@ -34,17 +34,8 @@ func (s *TranslationsService) Create(ctx context.Context, model TranslationModel
 	if err != nil {
 		return nil, err
 	}
-	httpClient := NewHTTPClient(endpoint, http.MethodPost, s.cfg.AccessToken)
-	resp, err := httpClient.DoJSON(ctx, model)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err := ExpectStatus(resp, http.StatusCreated, http.StatusOK); err != nil {
-		return nil, err
-	}
 	var out TranslationResponse
-	if err := DecodeJSON(resp, &out); err != nil {
+	if err := requestJSON(ctx, s.cfg, http.MethodPost, endpoint, model, &out, http.StatusCreated, http.StatusOK); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -55,17 +46,8 @@ func (s *TranslationsService) Get(ctx context.Context, localeID string) (*Transl
 	if err != nil {
 		return nil, err
 	}
-	httpClient := NewHTTPClient(endpoint, http.MethodGet, s.cfg.AccessToken)
-	resp, err := httpClient.DoJSON(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err := ExpectStatus(resp, http.StatusOK); err != nil {
-		return nil, err
-	}
 	var out TranslationResponse
-	if err := DecodeJSON(resp, &out); err != nil {
+	if err := requestJSON(ctx, s.cfg, http.MethodGet, endpoint, nil, &out, http.StatusOK); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -79,17 +61,8 @@ func (s *TranslationsService) Update(ctx context.Context, localeID string, model
 	if model.Locale == "" {
 		model.Locale = localeID
 	}
-	httpClient := NewHTTPClient(endpoint, http.MethodPut, s.cfg.AccessToken)
-	resp, err := httpClient.DoJSON(ctx, model)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err := ExpectStatus(resp, http.StatusOK); err != nil {
-		return nil, err
-	}
 	var out TranslationResponse
-	if err := DecodeJSON(resp, &out); err != nil {
+	if err := requestJSON(ctx, s.cfg, http.MethodPut, endpoint, model, &out, http.StatusOK); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -100,13 +73,7 @@ func (s *TranslationsService) Delete(ctx context.Context, localeID string) error
 	if err != nil {
 		return err
 	}
-	httpClient := NewHTTPClient(endpoint, http.MethodDelete, s.cfg.AccessToken)
-	resp, err := httpClient.DoJSON(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if err := ExpectStatus(resp, http.StatusOK, http.StatusNoContent); err != nil {
+	if err := requestJSON(ctx, s.cfg, http.MethodDelete, endpoint, nil, nil, http.StatusOK, http.StatusNoContent); err != nil {
 		return fmt.Errorf("delete translation: %w", err)
 	}
 	return nil

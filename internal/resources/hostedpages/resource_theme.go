@@ -88,18 +88,25 @@ func cssHash(content string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func (r *themeResource) write(ctx context.Context, plan *themeModel) error {
+	if err := r.client.Themes.Upload(ctx, plan.Filename.ValueString(), plan.CSSContent.ValueString()); err != nil {
+		return err
+	}
+	plan.ID = plan.Filename
+	plan.CSSHash = types.StringValue(cssHash(plan.CSSContent.ValueString()))
+	return nil
+}
+
 func (r *themeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan themeModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.Themes.Upload(ctx, plan.Filename.ValueString(), plan.CSSContent.ValueString()); err != nil {
+	if err := r.write(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Theme upload failed", err.Error())
 		return
 	}
-	plan.ID = plan.Filename
-	plan.CSSHash = types.StringValue(cssHash(plan.CSSContent.ValueString()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -128,12 +135,10 @@ func (r *themeResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.Themes.Upload(ctx, plan.Filename.ValueString(), plan.CSSContent.ValueString()); err != nil {
+	if err := r.write(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Theme update failed", err.Error())
 		return
 	}
-	plan.ID = plan.Filename
-	plan.CSSHash = types.StringValue(cssHash(plan.CSSContent.ValueString()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 

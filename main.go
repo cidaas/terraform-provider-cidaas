@@ -22,6 +22,10 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "enable debugger support")
 	flag.Parse()
 
+	if debug {
+		log.Printf("cidaas provider version=%s commit=%s", version, commit)
+	}
+
 	opts := providerserver.ServeOpts{
 		Address: "registry.terraform.io/Cidaas/cidaas",
 		Debug:   debug,
