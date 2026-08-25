@@ -378,5 +378,5 @@ func removeLiteralRuneFromClassBody(body string, forbid rune) (string, bool) {
 		b.WriteString(body[i : i+size])
 		i += size
 	}
-	return b.String(), true
+	return b.String(), true // NOTE: ranges are kept intact; if forbid appears only inside a range it is not removed
 }
