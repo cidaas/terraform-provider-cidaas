@@ -235,8 +235,8 @@ func (c *mergedConstraints) build() (string, error) {
 		if maxLen < 0 {
 			return "", fmt.Errorf("regexes: contains+charset merge requires a bounded max length (e.g. ^.{1,40}$); provide a single field_definition.regex")
 		}
-		if maxLen > 256 {
-			return "", fmt.Errorf("regexes: max length %d too large for contains merge", maxLen)
+		if maxLen > 64 {
+			return "", fmt.Errorf("regexes: max length %d too large for contains merge (limit 64 to keep composed regex size reasonable)", maxLen)
 		}
 		return buildContainsCharset(c.charset, c.contains[0], minLen, maxLen, c.hasNoLeading, c.forbid)
 	default:
