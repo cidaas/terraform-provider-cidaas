@@ -7,6 +7,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/usersetup"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/verification"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -93,6 +94,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewHostedPageGroupResource,
 		hostedpages.NewHostedPageLayoutResource,
 		usersetup.NewUserSetupResource,
+		verification.NewSuggestVerificationMethodResource,
+		verification.NewVerificationOptionsResource,
 	}
 }
 

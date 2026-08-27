@@ -1,6 +1,6 @@
 # Terraform Provider for cidaas (v4)
 
-Greenfield Terraform provider for **cidaas v4 (Trustdesk)**. Hosted pages (#2415) and user setup (#2414).
+Greenfield Terraform provider for **cidaas v4 (Trustdesk)**. Hosted pages (#2415), user setup (#2414), verification (#2416).
 
 ## Requirements
 
@@ -32,6 +32,8 @@ provider "cidaas" {
 | `cidaas_hosted_page_group` | `/hostedpages-srv/hpgroup` |
 | `cidaas_hosted_page_layout` | `/hostedpages-srv/hosted-page-layouts` |
 | `cidaas_user_setup` | `/user-srv/usersetup` (PATCH update; writes require admin roles) |
+| `cidaas_suggest_verification_method` | `/verification-actions-srv/suggest-verification-configs` |
+| `cidaas_verification_options` | `/verification-actions-srv/verification-options` |
 
 See [docs/](docs/) and [CHANGELOG.md](CHANGELOG.md).
 

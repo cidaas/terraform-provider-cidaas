@@ -18,8 +18,10 @@ type Client struct {
 	Themes       *ThemeService
 	Translations *TranslationsService
 	Layouts      *HostedPageLayoutService
-	UserSetup    *UserSetupService
-	FieldSetup   *FieldSetupService
+	UserSetup                   *UserSetupService
+	FieldSetup                  *FieldSetupService
+	SuggestVerificationMethod   *SuggestVerificationMethodService
+	VerificationOptions         *VerificationOptionsService
 }
 
 type Config struct {
@@ -96,6 +98,8 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.Layouts = NewHostedPageLayoutService(cfg)
 	c.UserSetup = NewUserSetupService(cfg)
 	c.FieldSetup = NewFieldSetupService(cfg)
+	c.SuggestVerificationMethod = NewSuggestVerificationMethodService(cfg)
+	c.VerificationOptions = NewVerificationOptionsService(cfg)
 	return c, nil
 }
 
