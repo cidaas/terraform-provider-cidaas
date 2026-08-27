@@ -56,6 +56,7 @@ func TestAccAppConfiguration_Basic(t *testing.T) {
 				},
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "client_id",
+				ImportStateVerifyIgnore:              []string{"created_time", "updated_time"},
 			},
 			{
 				Config: testAccAppConfigurationConfig(name, []string{"openid", "profile"}, []string{"openid"}),
