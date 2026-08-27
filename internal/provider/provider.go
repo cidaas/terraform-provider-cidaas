@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/app"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/usersetup"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/verification"
@@ -94,6 +95,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewHostedPageGroupResource,
 		hostedpages.NewHostedPageLayoutResource,
 		usersetup.NewUserSetupResource,
+		app.NewAppConfigurationResource,
+		app.NewLegacyAppResource,
 		verification.NewSuggestVerificationMethodResource,
 		verification.NewVerificationOptionsResource,
 	}
