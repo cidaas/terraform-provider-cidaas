@@ -7,10 +7,12 @@ import (
 	"net/url"
 )
 
+// UserSetupService calls user-srv user setup APIs (/user-srv/usersetup).
 type UserSetupService struct {
 	cfg Config
 }
 
+// NewUserSetupService returns a UserSetupService bound to cfg.
 func NewUserSetupService(cfg Config) *UserSetupService {
 	return &UserSetupService{cfg: cfg}
 }
@@ -52,12 +54,14 @@ type AllowedGroup struct {
 	DefaultRoles []string `json:"default_roles,omitempty"`
 }
 
+// UserAppSetupResponse is the standard {success,status,data} envelope for user setup.
 type UserAppSetupResponse struct {
 	Success bool              `json:"success"`
 	Status  int               `json:"status"`
 	Data    UserAppSetupModel `json:"data"`
 }
 
+// Create POSTs /user-srv/usersetup.
 func (s *UserSetupService) Create(ctx context.Context, model UserAppSetupModel) (*UserAppSetupResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "user-srv/usersetup")
 	if err != nil {
@@ -70,6 +74,7 @@ func (s *UserSetupService) Create(ctx context.Context, model UserAppSetupModel) 
 	return &out, nil
 }
 
+// Get GETs /user-srv/usersetup/{id}.
 func (s *UserSetupService) Get(ctx context.Context, id string) (*UserAppSetupResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "user-srv/usersetup", id)
 	if err != nil {
@@ -95,6 +100,7 @@ func (s *UserSetupService) Update(ctx context.Context, id string, model UserAppS
 	return &out, nil
 }
 
+// Delete DELETEs /user-srv/usersetup/{id}.
 func (s *UserSetupService) Delete(ctx context.Context, id string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "user-srv/usersetup", id)
 	if err != nil {

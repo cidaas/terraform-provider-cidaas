@@ -12,16 +12,16 @@ import (
 
 // Client is the root API client for the cidaas v4 Terraform provider.
 type Client struct {
-	Config       Config
-	Capabilities Capabilities
-	HostedPages  *HostedPageGroupService
-	Themes       *ThemeService
-	Translations *TranslationsService
-	Layouts      *HostedPageLayoutService
-	UserSetup                   *UserSetupService
-	FieldSetup                  *FieldSetupService
-	SuggestVerificationMethod   *SuggestVerificationMethodService
-	VerificationOptions         *VerificationOptionsService
+	Config                    Config
+	Capabilities              Capabilities
+	HostedPages               *HostedPageGroupService
+	Themes                    *ThemeService
+	Translations              *TranslationsService
+	Layouts                   *HostedPageLayoutService
+	UserSetup                 *UserSetupService
+	FieldSetup                *FieldSetupService
+	SuggestVerificationMethod *SuggestVerificationMethodService
+	VerificationOptions       *VerificationOptionsService
 }
 
 type Config struct {

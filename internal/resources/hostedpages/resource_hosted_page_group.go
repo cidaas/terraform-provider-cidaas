@@ -21,10 +21,12 @@ var (
 	_ resource.ResourceWithImportState = &hostedPageGroupResource{}
 )
 
+// hostedPageGroupResource implements cidaas_hosted_page_group.
 type hostedPageGroupResource struct {
 	client *client.Client
 }
 
+// hostedPageGroupModel is the Terraform state/plan model for cidaas_hosted_page_group.
 type hostedPageGroupModel struct {
 	ID            types.String `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
@@ -35,6 +37,7 @@ type hostedPageGroupModel struct {
 	UpdatedTime   types.String `tfsdk:"updated_time"`
 }
 
+// hostedPageNested is one hosted_pages set element.
 type hostedPageNested struct {
 	HostedPageID types.String `tfsdk:"hosted_page_id"`
 	Locale       types.String `tfsdk:"locale"`
@@ -42,10 +45,12 @@ type hostedPageNested struct {
 	Content      types.String `tfsdk:"content"`
 }
 
+// NewHostedPageGroupResource returns the cidaas_hosted_page_group resource.
 func NewHostedPageGroupResource() resource.Resource {
 	return &hostedPageGroupResource{}
 }
 
+// Metadata sets the resource type name to cidaas_hosted_page_group.
 func (r *hostedPageGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_hosted_page_group"
 }
@@ -59,6 +64,7 @@ func hostedPageAttrTypes() map[string]attr.Type {
 	}
 }
 
+// Schema defines the Terraform schema for cidaas_hosted_page_group.
 func (r *hostedPageGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a hosted page group via `POST/GET/DELETE /hostedpages-srv/hpgroup`. " +
@@ -102,6 +108,7 @@ func (r *hostedPageGroupResource) Schema(_ context.Context, _ resource.SchemaReq
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *hostedPageGroupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -173,6 +180,7 @@ func (r *hostedPageGroupResource) fromAPI(_ context.Context, data client.HostedP
 	return nil
 }
 
+// upsert creates or updates via POST /hostedpages-srv/hpgroup (srv upsert).
 func (r *hostedPageGroupResource) upsert(ctx context.Context, plan *hostedPageGroupModel) error {
 	apiModel, err := r.toAPI(ctx, *plan)
 	if err != nil {
@@ -185,6 +193,7 @@ func (r *hostedPageGroupResource) upsert(ctx context.Context, plan *hostedPageGr
 	return r.fromAPI(ctx, out.Data, plan)
 }
 
+// Create upserts the hosted page group via POST /hostedpages-srv/hpgroup.
 func (r *hostedPageGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan hostedPageGroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -198,7 +207,8 @@ func (r *hostedPageGroupResource) Create(ctx context.Context, req resource.Creat
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *hostedPageGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read refreshes state via GET /hostedpages-srv/hpgroup/{name}.
+func (r *hostedPageGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) { //nolint:dupl // matches sibling hostedpages Read
 	var state hostedPageGroupModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -216,6 +226,7 @@ func (r *hostedPageGroupResource) Read(ctx context.Context, req resource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Update upserts changes via POST /hostedpages-srv/hpgroup.
 func (r *hostedPageGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan hostedPageGroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -229,6 +240,7 @@ func (r *hostedPageGroupResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Delete removes via DELETE /hostedpages-srv/hpgroup/{name}.
 func (r *hostedPageGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state hostedPageGroupModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -241,6 +253,7 @@ func (r *hostedPageGroupResource) Delete(ctx context.Context, req resource.Delet
 	}
 }
 
+// ImportState imports by group name (_id).
 func (r *hostedPageGroupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("name"), req, resp)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)

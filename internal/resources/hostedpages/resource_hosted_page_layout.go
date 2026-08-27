@@ -21,10 +21,12 @@ var (
 	_ resource.ResourceWithImportState = &hostedPageLayoutResource{}
 )
 
+// hostedPageLayoutResource implements cidaas_hosted_page_layout.
 type hostedPageLayoutResource struct {
 	client *client.Client
 }
 
+// hostedPageLayoutModel is the Terraform state/plan model for cidaas_hosted_page_layout.
 type hostedPageLayoutModel struct {
 	ID          types.String `tfsdk:"id"`
 	Description types.String `tfsdk:"description"`
@@ -37,6 +39,7 @@ type hostedPageLayoutModel struct {
 	UpdatedTime types.String `tfsdk:"updated_time"`
 }
 
+// layoutNested is the nested layout branding block.
 type layoutNested struct {
 	HostedPageGroup types.String `tfsdk:"hosted_page_group"`
 	Theme           types.String `tfsdk:"theme"`
@@ -54,16 +57,19 @@ type layoutNested struct {
 	FavIcon         types.String `tfsdk:"fav_icon"`
 }
 
+// layoutResourceNested is one resources map value (per-webapp overrides).
 type layoutResourceNested struct {
 	TranslationSet types.String `tfsdk:"translation_set"`
 	Theme          types.String `tfsdk:"theme"`
 	Layout         types.String `tfsdk:"layout"`
 }
 
+// NewHostedPageLayoutResource returns the cidaas_hosted_page_layout resource.
 func NewHostedPageLayoutResource() resource.Resource {
 	return &hostedPageLayoutResource{}
 }
 
+// Metadata sets the resource type name to cidaas_hosted_page_layout.
 func (r *hostedPageLayoutResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_hosted_page_layout"
 }
@@ -95,6 +101,7 @@ func layoutResourceAttrTypes() map[string]attr.Type {
 	}
 }
 
+// Schema defines the Terraform schema for cidaas_hosted_page_layout.
 func (r *hostedPageLayoutResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a hosted page layout via `/hostedpages-srv/hosted-page-layouts`. " +
@@ -119,19 +126,19 @@ func (r *hostedPageLayoutResource) Schema(_ context.Context, _ resource.SchemaRe
 						Required:            true,
 						MarkdownDescription: "Hosted page group id (`_id` from `cidaas_hosted_page_group`).",
 					},
-					"theme":           schema.StringAttribute{Optional: true},
-					"logo_uri":        schema.StringAttribute{Optional: true},
-					"policy_uri":      schema.StringAttribute{Optional: true},
-					"tos_uri":         schema.StringAttribute{Optional: true},
-					"imprint_uri":     schema.StringAttribute{Optional: true},
-					"primary_color":   schema.StringAttribute{Optional: true},
-					"accent_color":    schema.StringAttribute{Optional: true},
-					"background_uri":  schema.StringAttribute{Optional: true},
-					"content_align":   schema.StringAttribute{Optional: true},
-					"logo_align":      schema.StringAttribute{Optional: true},
-					"media_type":      schema.StringAttribute{Optional: true},
-					"video_url":       schema.StringAttribute{Optional: true},
-					"fav_icon":        schema.StringAttribute{Optional: true},
+					"theme":          schema.StringAttribute{Optional: true},
+					"logo_uri":       schema.StringAttribute{Optional: true},
+					"policy_uri":     schema.StringAttribute{Optional: true},
+					"tos_uri":        schema.StringAttribute{Optional: true},
+					"imprint_uri":    schema.StringAttribute{Optional: true},
+					"primary_color":  schema.StringAttribute{Optional: true},
+					"accent_color":   schema.StringAttribute{Optional: true},
+					"background_uri": schema.StringAttribute{Optional: true},
+					"content_align":  schema.StringAttribute{Optional: true},
+					"logo_align":     schema.StringAttribute{Optional: true},
+					"media_type":     schema.StringAttribute{Optional: true},
+					"video_url":      schema.StringAttribute{Optional: true},
+					"fav_icon":       schema.StringAttribute{Optional: true},
 				},
 			},
 			"resources": schema.MapNestedAttribute{
@@ -160,6 +167,7 @@ func (r *hostedPageLayoutResource) Schema(_ context.Context, _ resource.SchemaRe
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *hostedPageLayoutResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -251,8 +259,8 @@ func resourcesFromAPI(resources map[string]client.LayoutResourceConfig) (types.M
 	for k, v := range resources {
 		obj, diags := types.ObjectValue(layoutResourceAttrTypes(), map[string]attr.Value{
 			"translation_set": types.StringValue(v.TranslationSet),
-			"theme":             stringOrNull(v.Theme),
-			"layout":            stringOrNull(v.Layout),
+			"theme":           stringOrNull(v.Theme),
+			"layout":          stringOrNull(v.Layout),
 		})
 		if diags.HasError() {
 			return types.MapNull(types.ObjectType{AttrTypes: layoutResourceAttrTypes()}), fmt.Errorf("%s", diags.Errors())
@@ -287,6 +295,7 @@ func (r *hostedPageLayoutResource) fromAPI(_ context.Context, data client.Hosted
 	return nil
 }
 
+// Create creates via POST /hostedpages-srv/hosted-page-layouts.
 func (r *hostedPageLayoutResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan hostedPageLayoutModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -310,7 +319,8 @@ func (r *hostedPageLayoutResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *hostedPageLayoutResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read refreshes state via GET .../hosted-page-layouts/{id}.
+func (r *hostedPageLayoutResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) { //nolint:dupl // matches sibling hostedpages Read
 	var state hostedPageLayoutModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -328,6 +338,7 @@ func (r *hostedPageLayoutResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Update applies changes via PUT .../hosted-page-layouts/{id}.
 func (r *hostedPageLayoutResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan hostedPageLayoutModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -351,6 +362,7 @@ func (r *hostedPageLayoutResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Delete removes via DELETE .../hosted-page-layouts/{id}.
 func (r *hostedPageLayoutResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state hostedPageLayoutModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -363,6 +375,7 @@ func (r *hostedPageLayoutResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
+// ImportState imports by server-assigned UUID (id).
 func (r *hostedPageLayoutResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

@@ -1,3 +1,5 @@
+// Package hostedpages implements Terraform resources for hostedpages-srv:
+// cidaas_theme, cidaas_translations, cidaas_hosted_page_group, and cidaas_hosted_page_layout.
 package hostedpages
 
 import (
@@ -21,10 +23,12 @@ var (
 	_ resource.ResourceWithImportState = &themeResource{}
 )
 
+// themeResource implements cidaas_theme (CSS upload to hostedpages-srv).
 type themeResource struct {
 	client *client.Client
 }
 
+// themeModel is the Terraform state/plan model for cidaas_theme.
 type themeModel struct {
 	ID         types.String `tfsdk:"id"`
 	Filename   types.String `tfsdk:"filename"`
@@ -32,14 +36,17 @@ type themeModel struct {
 	CSSHash    types.String `tfsdk:"css_hash"`
 }
 
+// NewThemeResource returns the cidaas_theme resource.
 func NewThemeResource() resource.Resource {
 	return &themeResource{}
 }
 
+// Metadata sets the resource type name to cidaas_theme.
 func (r *themeResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_theme"
 }
 
+// Schema defines the Terraform schema for cidaas_theme.
 func (r *themeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Uploads a custom CSS theme to hostedpages-srv (`POST /hostedpages-srv/themes`). " +
@@ -71,6 +78,7 @@ func (r *themeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *themeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -88,6 +96,7 @@ func cssHash(content string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// write uploads CSS via multipart POST and sets id/css_hash on the plan.
 func (r *themeResource) write(ctx context.Context, plan *themeModel) error {
 	if err := r.client.Themes.Upload(ctx, plan.Filename.ValueString(), plan.CSSContent.ValueString()); err != nil {
 		return err
@@ -97,6 +106,7 @@ func (r *themeResource) write(ctx context.Context, plan *themeModel) error {
 	return nil
 }
 
+// Create uploads the theme via POST /hostedpages-srv/themes.
 func (r *themeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan themeModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -110,6 +120,7 @@ func (r *themeResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Read checks the theme exists via GET; keeps HCL css_content as source of truth.
 func (r *themeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state themeModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -129,6 +140,7 @@ func (r *themeResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Update re-uploads CSS (same multipart upload path as create).
 func (r *themeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan themeModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -142,6 +154,7 @@ func (r *themeResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Delete removes the theme file via DELETE /hostedpages-srv/themes/{filename}.
 func (r *themeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state themeModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -154,6 +167,7 @@ func (r *themeResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 }
 
+// ImportState imports by filename (also used as id).
 func (r *themeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("filename"), req, resp)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)

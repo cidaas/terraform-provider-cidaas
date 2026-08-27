@@ -7,10 +7,12 @@ import (
 	"net/url"
 )
 
+// VerificationOptionsService calls verification-actions-srv verification-options APIs.
 type VerificationOptionsService struct {
 	cfg Config
 }
 
+// NewVerificationOptionsService returns a VerificationOptionsService bound to cfg.
 func NewVerificationOptionsService(cfg Config) *VerificationOptionsService {
 	return &VerificationOptionsService{cfg: cfg}
 }
@@ -26,6 +28,7 @@ type VerificationOptionsModel struct {
 	UpdatedTime         string               `json:"updatedTime,omitempty"`
 }
 
+// VerificationOptions is the nested verification_options payload.
 type VerificationOptions struct {
 	Setting                     string          `json:"setting,omitempty"`
 	TimeIntervalInSeconds       *int            `json:"time_interval_in_seconds,omitempty"`
@@ -36,11 +39,13 @@ type VerificationOptions struct {
 	AppAttest                   *AppAttestEntry `json:"app_attest,omitempty"`
 }
 
+// AppAttestEntry holds optional Android/iOS app attestation config.
 type AppAttestEntry struct {
 	Android *AppAttestAndroidEntry `json:"android,omitempty"`
 	IOS     *AppAttestIOSEntry     `json:"ios,omitempty"`
 }
 
+// AppAttestAndroidEntry is Android app_attest settings.
 type AppAttestAndroidEntry struct {
 	Provider            string   `json:"provider"`
 	RelaxAppRecognition bool     `json:"relax_app_recognition,omitempty"`
@@ -51,6 +56,7 @@ type AppAttestAndroidEntry struct {
 	AndroidAppID        string   `json:"android_app_id,omitempty"`
 }
 
+// AppAttestIOSEntry is iOS app_attest settings.
 type AppAttestIOSEntry struct {
 	Provider          string `json:"provider"`
 	AppleRootCert     string `json:"apple_root_cert,omitempty"`
@@ -60,12 +66,14 @@ type AppAttestIOSEntry struct {
 	AndroidAppID      string `json:"android_app_id,omitempty"`
 }
 
+// VerificationOptionsResponse is the standard {success,status,data} envelope.
 type VerificationOptionsResponse struct {
 	Success bool                     `json:"success"`
 	Status  int                      `json:"status"`
 	Data    VerificationOptionsModel `json:"data"`
 }
 
+// Create POSTs /verification-actions-srv/verification-options/.
 func (s *VerificationOptionsService) Create(ctx context.Context, model VerificationOptionsModel) (*VerificationOptionsResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/verification-options")
 	if err != nil {
@@ -79,6 +87,7 @@ func (s *VerificationOptionsService) Create(ctx context.Context, model Verificat
 	return &out, nil
 }
 
+// Get GETs /verification-actions-srv/verification-options/{id}.
 func (s *VerificationOptionsService) Get(ctx context.Context, id string) (*VerificationOptionsResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/verification-options", id)
 	if err != nil {
@@ -104,6 +113,7 @@ func (s *VerificationOptionsService) Update(ctx context.Context, id string, mode
 	return &out, nil
 }
 
+// Delete DELETEs /verification-actions-srv/verification-options/{id}.
 func (s *VerificationOptionsService) Delete(ctx context.Context, id string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/verification-options", id)
 	if err != nil {

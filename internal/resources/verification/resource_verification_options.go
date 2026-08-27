@@ -32,10 +32,12 @@ var (
 	settingValues = []string{"OFF", "ALWAYS", "SMART", "TIME_BASED", "SMART_PLUS_TIME_BASED"}
 )
 
+// verificationOptionsResource implements cidaas_verification_options.
 type verificationOptionsResource struct {
 	client *client.Client
 }
 
+// verificationOptionsConfig is the Terraform state/plan model.
 type verificationOptionsConfig struct {
 	ID                  types.String `tfsdk:"id"`
 	Name                types.String `tfsdk:"name"`
@@ -46,6 +48,7 @@ type verificationOptionsConfig struct {
 	options *verificationOptionsDetailConfig
 }
 
+// verificationOptionsDetailConfig is the nested verification_options block.
 type verificationOptionsDetailConfig struct {
 	Setting                     types.String `tfsdk:"setting"`
 	TimeIntervalInSeconds       types.Int64  `tfsdk:"time_interval_in_seconds"`
@@ -58,6 +61,7 @@ type verificationOptionsDetailConfig struct {
 	appAttest *appAttestConfig
 }
 
+// appAttestConfig is optional nested app_attest.
 type appAttestConfig struct {
 	Android types.Object `tfsdk:"android"`
 	IOS     types.Object `tfsdk:"ios"`
@@ -66,6 +70,7 @@ type appAttestConfig struct {
 	ios     *appAttestIOSConfig
 }
 
+// appAttestAndroidConfig is app_attest.android.
 type appAttestAndroidConfig struct {
 	Provider            types.String `tfsdk:"provider"`
 	RelaxAppRecognition types.Bool   `tfsdk:"relax_app_recognition"`
@@ -76,6 +81,7 @@ type appAttestAndroidConfig struct {
 	AndroidAppID        types.String `tfsdk:"android_app_id"`
 }
 
+// appAttestIOSConfig is app_attest.ios.
 type appAttestIOSConfig struct {
 	Provider          types.String `tfsdk:"provider"`
 	AppleRootCert     types.String `tfsdk:"apple_root_cert"`
@@ -85,10 +91,12 @@ type appAttestIOSConfig struct {
 	AndroidAppID      types.String `tfsdk:"android_app_id"`
 }
 
+// NewVerificationOptionsResource returns the cidaas_verification_options resource.
 func NewVerificationOptionsResource() resource.Resource {
 	return &verificationOptionsResource{}
 }
 
+// Metadata sets the resource type name to cidaas_verification_options.
 func (r *verificationOptionsResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_verification_options"
 }
@@ -139,6 +147,7 @@ func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
 }
 
+// Schema defines the Terraform schema for cidaas_verification_options.
 func (r *verificationOptionsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages verification options via `verification-actions-srv/verification-options`. " +
@@ -249,6 +258,7 @@ func (r *verificationOptionsResource) Schema(_ context.Context, _ resource.Schem
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *verificationOptionsResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -289,6 +299,7 @@ func (c *verificationOptionsConfig) extract(ctx context.Context) diag.Diagnostic
 	return diags
 }
 
+// ValidateConfig enforces setting-dependent rules (time_interval, allowed_methods).
 func (r *verificationOptionsResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var config verificationOptionsConfig
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -457,7 +468,8 @@ func flattenVerificationOptions(model client.VerificationOptionsModel) (verifica
 	return cfg, diags
 }
 
-func (r *verificationOptionsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates via POST /verification-actions-srv/verification-options/.
+func (r *verificationOptionsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) { //nolint:dupl // mirrors suggest_verification_method CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -487,7 +499,8 @@ func (r *verificationOptionsResource) Create(ctx context.Context, req resource.C
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *verificationOptionsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read refreshes state via GET .../verification-options/{id}. Removes from state on 404.
+func (r *verificationOptionsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) { //nolint:dupl // mirrors suggest_verification_method CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -514,7 +527,8 @@ func (r *verificationOptionsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
-func (r *verificationOptionsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update applies changes via PUT .../verification-options/{id} (srv verb).
+func (r *verificationOptionsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) { //nolint:dupl // mirrors suggest_verification_method CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -543,7 +557,8 @@ func (r *verificationOptionsResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *verificationOptionsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete removes via DELETE .../verification-options/{id}.
+func (r *verificationOptionsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl // mirrors suggest_verification_method CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -558,6 +573,7 @@ func (r *verificationOptionsResource) Delete(ctx context.Context, req resource.D
 	}
 }
 
+// ImportState imports by server-assigned UUID (id).
 func (r *verificationOptionsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

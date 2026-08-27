@@ -7,10 +7,12 @@ import (
 	"net/url"
 )
 
+// HostedPageLayoutService calls hostedpages-srv hosted-page-layouts APIs.
 type HostedPageLayoutService struct {
 	cfg Config
 }
 
+// NewHostedPageLayoutService returns a HostedPageLayoutService bound to cfg.
 func NewHostedPageLayoutService(cfg Config) *HostedPageLayoutService {
 	return &HostedPageLayoutService{cfg: cfg}
 }
@@ -60,12 +62,14 @@ type HostedPageLayoutWrite struct {
 	Resources   map[string]LayoutResourceConfig `json:"resources,omitempty"`
 }
 
+// HostedPageLayoutResponse is the standard {success,status,data} envelope.
 type HostedPageLayoutResponse struct {
 	Success bool                  `json:"success"`
 	Status  int                   `json:"status"`
 	Data    HostedPageLayoutModel `json:"data"`
 }
 
+// Create POSTs /hostedpages-srv/hosted-page-layouts.
 func (s *HostedPageLayoutService) Create(ctx context.Context, model HostedPageLayoutWrite) (*HostedPageLayoutResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hosted-page-layouts")
 	if err != nil {
@@ -78,6 +82,7 @@ func (s *HostedPageLayoutService) Create(ctx context.Context, model HostedPageLa
 	return &out, nil
 }
 
+// Get GETs /hostedpages-srv/hosted-page-layouts/{id}.
 func (s *HostedPageLayoutService) Get(ctx context.Context, id string) (*HostedPageLayoutResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hosted-page-layouts", id)
 	if err != nil {
@@ -90,6 +95,7 @@ func (s *HostedPageLayoutService) Get(ctx context.Context, id string) (*HostedPa
 	return &out, nil
 }
 
+// Update PUTs /hostedpages-srv/hosted-page-layouts/{id}.
 func (s *HostedPageLayoutService) Update(ctx context.Context, id string, model HostedPageLayoutWrite) (*HostedPageLayoutResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hosted-page-layouts", id)
 	if err != nil {
@@ -102,6 +108,7 @@ func (s *HostedPageLayoutService) Update(ctx context.Context, id string, model H
 	return &out, nil
 }
 
+// Delete DELETEs /hostedpages-srv/hosted-page-layouts/{id}.
 func (s *HostedPageLayoutService) Delete(ctx context.Context, id string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hosted-page-layouts", id)
 	if err != nil {

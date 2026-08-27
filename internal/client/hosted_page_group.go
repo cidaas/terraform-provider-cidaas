@@ -7,14 +7,17 @@ import (
 	"net/url"
 )
 
+// HostedPageGroupService calls hostedpages-srv hpgroup APIs.
 type HostedPageGroupService struct {
 	cfg Config
 }
 
+// NewHostedPageGroupService returns a HostedPageGroupService bound to cfg.
 func NewHostedPageGroupService(cfg Config) *HostedPageGroupService {
 	return &HostedPageGroupService{cfg: cfg}
 }
 
+// HostedPageData is one hosted_pages entry in a group.
 type HostedPageData struct {
 	HostedPageID string `json:"hosted_page_id"`
 	Locale       string `json:"locale"`
@@ -22,6 +25,7 @@ type HostedPageData struct {
 	Content      string `json:"content,omitempty"`
 }
 
+// HostedPageGroupModel matches hostedpages-srv hpgroup JSON (_id is the group name).
 type HostedPageGroupModel struct {
 	ID            string           `json:"_id,omitempty"`
 	GroupOwner    string           `json:"groupOwner,omitempty"`
@@ -31,12 +35,14 @@ type HostedPageGroupModel struct {
 	UpdatedTime   string           `json:"updatedTime,omitempty"`
 }
 
+// HostedPageGroupResponse is the standard {success,status,data} envelope.
 type HostedPageGroupResponse struct {
 	Success bool                 `json:"success"`
 	Status  int                  `json:"status"`
 	Data    HostedPageGroupModel `json:"data"`
 }
 
+// Upsert POSTs /hostedpages-srv/hpgroup (create or update).
 func (s *HostedPageGroupService) Upsert(ctx context.Context, model HostedPageGroupModel) (*HostedPageGroupResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hpgroup")
 	if err != nil {
@@ -49,6 +55,7 @@ func (s *HostedPageGroupService) Upsert(ctx context.Context, model HostedPageGro
 	return &out, nil
 }
 
+// Get GETs /hostedpages-srv/hpgroup/{id}.
 func (s *HostedPageGroupService) Get(ctx context.Context, id string) (*HostedPageGroupResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hpgroup", id)
 	if err != nil {
@@ -61,6 +68,7 @@ func (s *HostedPageGroupService) Get(ctx context.Context, id string) (*HostedPag
 	return &out, nil
 }
 
+// Delete DELETEs /hostedpages-srv/hpgroup/{id}.
 func (s *HostedPageGroupService) Delete(ctx context.Context, id string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/hpgroup", id)
 	if err != nil {

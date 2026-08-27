@@ -12,14 +12,17 @@ import (
 	"strings"
 )
 
+// ThemeService calls hostedpages-srv theme APIs (multipart upload).
 type ThemeService struct {
 	cfg Config
 }
 
+// NewThemeService returns a ThemeService bound to cfg.
 func NewThemeService(cfg Config) *ThemeService {
 	return &ThemeService{cfg: cfg}
 }
 
+// ThemeListResponse is the list themes envelope.
 type ThemeListResponse struct {
 	Success bool     `json:"success"`
 	Status  int      `json:"status"`
@@ -94,6 +97,7 @@ func (s *ThemeService) Upload(ctx context.Context, filename, cssContent string) 
 	return nil
 }
 
+// Get GETs /hostedpages-srv/themes/{filename} and returns raw body bytes.
 func (s *ThemeService) Get(ctx context.Context, filename string) ([]byte, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/themes", filename)
 	if err != nil {
@@ -111,6 +115,7 @@ func (s *ThemeService) Get(ctx context.Context, filename string) ([]byte, error)
 	return io.ReadAll(resp.Body)
 }
 
+// List GETs /hostedpages-srv/themes/ and returns theme filenames.
 func (s *ThemeService) List(ctx context.Context) ([]string, error) {
 	endpoint, err := themesCollectionURL(s.cfg.BaseURL)
 	if err != nil {
@@ -132,6 +137,7 @@ func (s *ThemeService) List(ctx context.Context) ([]string, error) {
 	return out.Data, nil
 }
 
+// Delete DELETEs /hostedpages-srv/themes/{filename}.
 func (s *ThemeService) Delete(ctx context.Context, filename string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "hostedpages-srv/themes", filename)
 	if err != nil {

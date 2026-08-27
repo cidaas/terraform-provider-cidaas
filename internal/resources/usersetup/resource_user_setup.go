@@ -1,3 +1,5 @@
+// Package usersetup implements the cidaas_user_setup Terraform resource
+// against user-srv (/user-srv/usersetup).
 package usersetup
 
 import (
@@ -25,10 +27,10 @@ import (
 )
 
 var (
-	_ resource.Resource                      = &userSetupResource{}
-	_ resource.ResourceWithConfigure         = &userSetupResource{}
-	_ resource.ResourceWithImportState       = &userSetupResource{}
-	_ resource.ResourceWithValidateConfig    = &userSetupResource{}
+	_ resource.Resource                   = &userSetupResource{}
+	_ resource.ResourceWithConfigure      = &userSetupResource{}
+	_ resource.ResourceWithImportState    = &userSetupResource{}
+	_ resource.ResourceWithValidateConfig = &userSetupResource{}
 
 	communicationMediumVerificationValues = []string{
 		"none",
@@ -43,10 +45,12 @@ var (
 	invalidNameRunes          = []string{"/", `\`, "<", ">", "$", "+", "{", "}"}
 )
 
+// userSetupResource implements the Terraform resource for cidaas_user_setup.
 type userSetupResource struct {
 	client *client.Client
 }
 
+// setupConfig is the Terraform state/plan model for cidaas_user_setup.
 type setupConfig struct {
 	ID          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
@@ -57,6 +61,7 @@ type setupConfig struct {
 	userSetup *userSetupDetailConfig
 }
 
+// userSetupDetailConfig is the nested user_setup block in Terraform state.
 type userSetupDetailConfig struct {
 	AllowedFields                   types.List   `tfsdk:"allowed_fields"`
 	RequiredFields                  types.List   `tfsdk:"required_fields"`
@@ -77,16 +82,19 @@ type userSetupDetailConfig struct {
 	operationsAllowedGroups []*allowedGroupConfig
 }
 
+// allowedGroupConfig is one operations_allowed_groups element.
 type allowedGroupConfig struct {
 	GroupID      types.String `tfsdk:"group_id"`
 	Roles        types.List   `tfsdk:"roles"`
 	DefaultRoles types.List   `tfsdk:"default_roles"`
 }
 
+// NewUserSetupResource returns the cidaas_user_setup resource implementation.
 func NewUserSetupResource() resource.Resource {
 	return &userSetupResource{}
 }
 
+// Metadata sets the resource type name to cidaas_user_setup.
 func (r *userSetupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_user_setup"
 }
@@ -123,6 +131,7 @@ func userSetupAttrTypes() map[string]attr.Type {
 	}
 }
 
+// Schema defines the Terraform schema for cidaas_user_setup.
 func (r *userSetupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages reusable User Setup profiles on cidaas v4 (Trustdesk) via `user-srv/usersetup`. " +
@@ -280,6 +289,7 @@ func (r *userSetupResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *userSetupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -306,6 +316,7 @@ func (c *setupConfig) extract(ctx context.Context) diag.Diagnostics {
 	return diags
 }
 
+// ValidateConfig ensures required_fields is a subset of allowed_fields (plan-time, no API call).
 func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var config setupConfig
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -513,6 +524,7 @@ func flattenUserSetup(model client.UserAppSetupModel) (setupConfig, diag.Diagnos
 	return cfg, diags
 }
 
+// Create creates a user setup profile via POST /user-srv/usersetup.
 func (r *userSetupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
@@ -547,6 +559,7 @@ func (r *userSetupResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Read refreshes state via GET /user-srv/usersetup/{id}. Removes from state on 404.
 func (r *userSetupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
@@ -574,6 +587,7 @@ func (r *userSetupResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
+// Update applies changes via PATCH /user-srv/usersetup/{id} (user-srv verb).
 func (r *userSetupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
@@ -607,6 +621,7 @@ func (r *userSetupResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Delete removes the profile via DELETE /user-srv/usersetup/{id}.
 func (r *userSetupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
@@ -622,10 +637,12 @@ func (r *userSetupResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 }
 
+// ImportState imports by server-assigned UUID (id).
 func (r *userSetupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// validateFieldSetupKeys ensures allowed/required/custom login keys exist and are enabled in Field Setup.
 func (r *userSetupResource) validateFieldSetupKeys(ctx context.Context, model client.UserAppSetupModel, diags *diag.Diagnostics) bool {
 	fields, err := r.client.FieldSetup.List(ctx)
 	if err != nil {

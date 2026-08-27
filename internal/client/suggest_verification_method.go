@@ -7,10 +7,12 @@ import (
 	"net/url"
 )
 
+// SuggestVerificationMethodService calls verification-actions-srv suggest-verification-configs APIs.
 type SuggestVerificationMethodService struct {
 	cfg Config
 }
 
+// NewSuggestVerificationMethodService returns a SuggestVerificationMethodService bound to cfg.
 func NewSuggestVerificationMethodService(cfg Config) *SuggestVerificationMethodService {
 	return &SuggestVerificationMethodService{cfg: cfg}
 }
@@ -26,28 +28,33 @@ type SuggestVerificationMethodModel struct {
 	UpdatedTime               string                          `json:"updatedTime,omitempty"`
 }
 
+// SuggestVerificationMethodSetup is the nested suggest_verification_method payload.
 type SuggestVerificationMethodSetup struct {
 	MandatoryConfig    *SuggestVerificationMandatoryConfig `json:"mandatoryConfig,omitempty"`
 	OptionalConfig     *SuggestVerificationOptionalConfig  `json:"optionalConfig,omitempty"`
 	SkipDurationInDays int                                 `json:"skipDurationInDays"`
 }
 
+// SuggestVerificationMandatoryConfig is mandatoryConfig (methods + range).
 type SuggestVerificationMandatoryConfig struct {
 	Methods   []string `json:"methods"`
 	Range     string   `json:"range"`
 	SkipUntil string   `json:"skipUntil,omitempty"`
 }
 
+// SuggestVerificationOptionalConfig is optionalConfig (methods only).
 type SuggestVerificationOptionalConfig struct {
 	Methods []string `json:"methods"`
 }
 
+// SuggestVerificationMethodResponse is the standard {success,status,data} envelope.
 type SuggestVerificationMethodResponse struct {
-	Success bool                          `json:"success"`
-	Status  int                           `json:"status"`
+	Success bool                           `json:"success"`
+	Status  int                            `json:"status"`
 	Data    SuggestVerificationMethodModel `json:"data"`
 }
 
+// Create POSTs /verification-actions-srv/suggest-verification-configs/.
 func (s *SuggestVerificationMethodService) Create(ctx context.Context, model SuggestVerificationMethodModel) (*SuggestVerificationMethodResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/suggest-verification-configs")
 	if err != nil {
@@ -61,6 +68,7 @@ func (s *SuggestVerificationMethodService) Create(ctx context.Context, model Sug
 	return &out, nil
 }
 
+// Get GETs /verification-actions-srv/suggest-verification-configs/{id}.
 func (s *SuggestVerificationMethodService) Get(ctx context.Context, id string) (*SuggestVerificationMethodResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/suggest-verification-configs", id)
 	if err != nil {
@@ -86,6 +94,7 @@ func (s *SuggestVerificationMethodService) Update(ctx context.Context, id string
 	return &out, nil
 }
 
+// Delete DELETEs /verification-actions-srv/suggest-verification-configs/{id}.
 func (s *SuggestVerificationMethodService) Delete(ctx context.Context, id string) error {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/suggest-verification-configs", id)
 	if err != nil {

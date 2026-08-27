@@ -22,10 +22,12 @@ var (
 	_ resource.ResourceWithImportState = &translationsResource{}
 )
 
+// translationsResource implements cidaas_translations.
 type translationsResource struct {
 	client *client.Client
 }
 
+// translationsModel is the Terraform state/plan model for cidaas_translations.
 type translationsModel struct {
 	ID           types.String `tfsdk:"id"`
 	LocaleID     types.String `tfsdk:"locale_id"`
@@ -33,14 +35,17 @@ type translationsModel struct {
 	Translations types.Map    `tfsdk:"translations"`
 }
 
+// NewTranslationsResource returns the cidaas_translations resource.
 func NewTranslationsResource() resource.Resource {
 	return &translationsResource{}
 }
 
+// Metadata sets the resource type name to cidaas_translations.
 func (r *translationsResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_translations"
 }
 
+// Schema defines the Terraform schema for cidaas_translations.
 func (r *translationsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages custom locale translations via hostedpages-srv (`/hostedpages-srv/translations`). " +
@@ -73,6 +78,7 @@ func (r *translationsResource) Schema(_ context.Context, _ resource.SchemaReques
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *translationsResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -118,6 +124,7 @@ func (r *translationsResource) fromAPI(_ context.Context, locale string, enabled
 	return nil
 }
 
+// Create creates via POST /hostedpages-srv/translations (falls back to PUT on 409).
 func (r *translationsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan translationsModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -149,6 +156,7 @@ func (r *translationsResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Read refreshes state via GET /hostedpages-srv/translations/{locale}.
 func (r *translationsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state translationsModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -167,6 +175,7 @@ func (r *translationsResource) Read(ctx context.Context, req resource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Update applies changes via PUT /hostedpages-srv/translations/{locale}.
 func (r *translationsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan translationsModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -190,6 +199,7 @@ func (r *translationsResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Delete removes via DELETE /hostedpages-srv/translations/{locale}.
 func (r *translationsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state translationsModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -202,6 +212,7 @@ func (r *translationsResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
+// ImportState imports by locale_id.
 func (r *translationsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("locale_id"), req, resp)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)

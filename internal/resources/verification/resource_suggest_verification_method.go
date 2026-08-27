@@ -1,3 +1,5 @@
+// Package verification implements Terraform resources for verification-actions-srv:
+// cidaas_suggest_verification_method and cidaas_verification_options.
 package verification
 
 import (
@@ -30,14 +32,16 @@ var (
 	_ resource.ResourceWithImportState    = &suggestVerificationMethodResource{}
 	_ resource.ResourceWithValidateConfig = &suggestVerificationMethodResource{}
 
-	entityNameRE   = regexp.MustCompile(`^[a-zA-Z0-9:_.-]+$`)
-	rangeValues    = []string{"ALLOF", "ONEOF"}
+	entityNameRE = regexp.MustCompile(`^[a-zA-Z0-9:_.-]+$`)
+	rangeValues  = []string{"ALLOF", "ONEOF"}
 )
 
+// suggestVerificationMethodResource implements cidaas_suggest_verification_method.
 type suggestVerificationMethodResource struct {
 	client *client.Client
 }
 
+// suggestVerificationMethodConfig is the Terraform state/plan model.
 type suggestVerificationMethodConfig struct {
 	ID                        types.String `tfsdk:"id"`
 	Name                      types.String `tfsdk:"name"`
@@ -48,6 +52,7 @@ type suggestVerificationMethodConfig struct {
 	setup *suggestVerificationMethodSetupConfig
 }
 
+// suggestVerificationMethodSetupConfig is the nested suggest_verification_method block.
 type suggestVerificationMethodSetupConfig struct {
 	MandatoryConfig    types.Object `tfsdk:"mandatory_config"`
 	OptionalConfig     types.Object `tfsdk:"optional_config"`
@@ -57,20 +62,24 @@ type suggestVerificationMethodSetupConfig struct {
 	optional  *optionalConfigModel
 }
 
+// mandatoryConfigModel is mandatory_config (methods + range).
 type mandatoryConfigModel struct {
 	Methods   types.List   `tfsdk:"methods"`
 	Range     types.String `tfsdk:"range"`
 	SkipUntil types.String `tfsdk:"skip_until"`
 }
 
+// optionalConfigModel is optional_config (methods only).
 type optionalConfigModel struct {
 	Methods types.List `tfsdk:"methods"`
 }
 
+// NewSuggestVerificationMethodResource returns the cidaas_suggest_verification_method resource.
 func NewSuggestVerificationMethodResource() resource.Resource {
 	return &suggestVerificationMethodResource{}
 }
 
+// Metadata sets the resource type name to cidaas_suggest_verification_method.
 func (r *suggestVerificationMethodResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_suggest_verification_method"
 }
@@ -97,6 +106,7 @@ func setupAttrTypes() map[string]attr.Type {
 	}
 }
 
+// Schema defines the Terraform schema for cidaas_suggest_verification_method.
 func (r *suggestVerificationMethodResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a Suggest Verification method via `verification-actions-srv/suggest-verification-configs`. " +
@@ -180,6 +190,7 @@ func (r *suggestVerificationMethodResource) Schema(_ context.Context, _ resource
 	}
 }
 
+// Configure injects the shared cidaas API client from the provider.
 func (r *suggestVerificationMethodResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -213,6 +224,7 @@ func (c *suggestVerificationMethodConfig) extract(ctx context.Context) diag.Diag
 	return diags
 }
 
+// ValidateConfig enforces mandatory/optional presence and no overlapping methods.
 func (r *suggestVerificationMethodResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var config suggestVerificationMethodConfig
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -336,7 +348,8 @@ func flattenSuggestVerificationMethod(model client.SuggestVerificationMethodMode
 	return cfg, diags
 }
 
-func (r *suggestVerificationMethodResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates via POST /verification-actions-srv/suggest-verification-configs/.
+func (r *suggestVerificationMethodResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) { //nolint:dupl // mirrors verification_options CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -366,7 +379,8 @@ func (r *suggestVerificationMethodResource) Create(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *suggestVerificationMethodResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read refreshes state via GET .../suggest-verification-configs/{id}. Removes from state on 404.
+func (r *suggestVerificationMethodResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) { //nolint:dupl // mirrors verification_options CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -393,7 +407,8 @@ func (r *suggestVerificationMethodResource) Read(ctx context.Context, req resour
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
-func (r *suggestVerificationMethodResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update applies changes via PUT .../suggest-verification-configs/{id} (srv verb).
+func (r *suggestVerificationMethodResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) { //nolint:dupl // mirrors verification_options CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -422,7 +437,8 @@ func (r *suggestVerificationMethodResource) Update(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *suggestVerificationMethodResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete removes via DELETE .../suggest-verification-configs/{id}.
+func (r *suggestVerificationMethodResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl // mirrors verification_options CRUD
 	if r.client == nil {
 		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
 		return
@@ -437,6 +453,7 @@ func (r *suggestVerificationMethodResource) Delete(ctx context.Context, req reso
 	}
 }
 
+// ImportState imports by server-assigned UUID (id).
 func (r *suggestVerificationMethodResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
