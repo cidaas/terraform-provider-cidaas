@@ -17,6 +17,7 @@ type Client struct {
 	HostedPages  *HostedPageGroupService
 	Themes       *ThemeService
 	Translations *TranslationsService
+	Layouts      *HostedPageLayoutService
 }
 
 type Config struct {
@@ -90,6 +91,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.HostedPages = NewHostedPageGroupService(cfg)
 	c.Themes = NewThemeService(cfg)
 	c.Translations = NewTranslationsService(cfg)
+	c.Layouts = NewHostedPageLayoutService(cfg)
 	return c, nil
 }
 

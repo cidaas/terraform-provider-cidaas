@@ -1,6 +1,6 @@
 # Terraform Provider for cidaas (v4)
 
-Greenfield Terraform provider for **cidaas v4 (Trustdesk)**. First release line focuses on hosted pages Phase 1 (#2415).
+Greenfield Terraform provider for **cidaas v4 (Trustdesk)**. Hosted pages Phase 1 + Phase 2 layout (#2415).
 
 ## Requirements
 
@@ -23,13 +23,14 @@ provider "cidaas" {
 }
 ```
 
-## Resources (Phase 1)
+## Resources
 
 | Resource | API |
 |----------|-----|
 | `cidaas_theme` | `/hostedpages-srv/themes` |
 | `cidaas_translations` | `/hostedpages-srv/translations` |
 | `cidaas_hosted_page_group` | `/hostedpages-srv/hpgroup` |
+| `cidaas_hosted_page_layout` | `/hostedpages-srv/hosted-page-layouts` |
 
 See [docs/](docs/) and [CHANGELOG.md](CHANGELOG.md).
 

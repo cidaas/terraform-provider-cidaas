@@ -90,6 +90,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewThemeResource,
 		hostedpages.NewTranslationsResource,
 		hostedpages.NewHostedPageGroupResource,
+		hostedpages.NewHostedPageLayoutResource,
 	}
 }
 
