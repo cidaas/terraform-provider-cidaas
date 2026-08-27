@@ -41,9 +41,21 @@ func TestAccAppConfiguration_Basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName: resourceName,
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok {
+						return "", fmt.Errorf("resource %s not found in state", resourceName)
+					}
+					id := rs.Primary.Attributes["client_id"]
+					if id == "" {
+						return "", fmt.Errorf("client_id not in state for %s", resourceName)
+					}
+					return id, nil
+				},
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "client_id",
 			},
 			{
 				Config: testAccAppConfigurationConfig(name, []string{"openid", "profile"}, []string{"openid"}),
