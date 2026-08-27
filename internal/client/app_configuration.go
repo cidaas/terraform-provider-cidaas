@@ -37,7 +37,7 @@ type AppConfigurationModel struct {
 	HostedPagesLayoutID string                     `json:"hosted_pages_layout_id,omitempty"`
 	UserSetupID         string                     `json:"user_setup_id,omitempty"`
 	OwnershipDetails    *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
-	ClientAuthConfig    *ClientAuthConfig          `json:"client_auth_config,omitempty"`
+	ClientAuthConfig    *AuthConfig                `json:"client_auth_config,omitempty"`
 	SigningKeyConfig    *SigningKeyConfig          `json:"signing_key_config,omitempty"`
 	CreatedTime         string                     `json:"created_time,omitempty"`
 	UpdatedTime         string                     `json:"updated_time,omitempty"`
@@ -61,7 +61,7 @@ type ScopesConfig struct {
 type TokenLifetimesConfig struct {
 	TokenLifetimeInSeconds        *int64 `json:"token_lifetime_in_seconds,omitempty"`
 	RefreshTokenLifetimeInSeconds *int64 `json:"refresh_token_lifetime_in_seconds,omitempty"`
-	IDTokenLifetimeInSeconds    *int64 `json:"id_token_lifetime_in_seconds,omitempty"`
+	IDTokenLifetimeInSeconds      *int64 `json:"id_token_lifetime_in_seconds,omitempty"`
 	CodeLifetimeInSeconds         *int64 `json:"code_lifetime_in_seconds,omitempty"`
 	DefaultMaxAge                 *int64 `json:"default_max_age,omitempty"`
 }
@@ -87,8 +87,8 @@ type OwnershipDetailsConfig struct {
 	GroupIDs       []string `json:"groupIds,omitempty"`
 }
 
-// ClientAuthConfig maps client_auth_config (OAuth client authentication).
-type ClientAuthConfig struct {
+// AuthConfig maps client_auth_config (OAuth client authentication).
+type AuthConfig struct {
 	TokenEndpointAuthMethod string `json:"token_endpoint_auth_method,omitempty"`
 }
 

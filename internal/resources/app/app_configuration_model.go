@@ -62,7 +62,7 @@ type scopesConfig struct {
 type tokenLifetimesConfig struct {
 	TokenLifetimeInSeconds        types.Int64 `tfsdk:"token_lifetime_in_seconds"`
 	RefreshTokenLifetimeInSeconds types.Int64 `tfsdk:"refresh_token_lifetime_in_seconds"`
-	IDTokenLifetimeInSeconds    types.Int64 `tfsdk:"id_token_lifetime_in_seconds"`
+	IDTokenLifetimeInSeconds      types.Int64 `tfsdk:"id_token_lifetime_in_seconds"`
 	CodeLifetimeInSeconds         types.Int64 `tfsdk:"code_lifetime_in_seconds"`
 	DefaultMaxAge                 types.Int64 `tfsdk:"default_max_age"`
 }
@@ -121,9 +121,9 @@ func (c *appConfigurationConfig) extract(ctx context.Context) diag.Diagnostics {
 func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigurationModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	model := client.AppConfigurationModel{
-		ClientID:            c.ClientID.ValueString(),
-		ClientName:          c.ClientName.ValueString(),
-		ClientType:          c.ClientType.ValueString(),
+		ClientID:   c.ClientID.ValueString(),
+		ClientName: c.ClientName.ValueString(),
+		ClientType: c.ClientType.ValueString(),
 		// ponytail: always owner=client — app-srv checkAppAccess and Trust Desk search require it; omitting yields 403 APP10023 and hides the app from UI.
 		Owner:               client.OwnerClient,
 		Enabled:             boolPtr(c.Enabled),
@@ -160,7 +160,7 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 		}
 	}
 	if c.clientAuthConfig != nil && !c.clientAuthConfig.TokenEndpointAuthMethod.IsNull() && !c.clientAuthConfig.TokenEndpointAuthMethod.IsUnknown() {
-		model.ClientAuthConfig = &client.ClientAuthConfig{
+		model.ClientAuthConfig = &client.AuthConfig{
 			TokenEndpointAuthMethod: c.clientAuthConfig.TokenEndpointAuthMethod.ValueString(),
 		}
 	}
@@ -200,7 +200,7 @@ func tokenLifetimesToClient(cfg *tokenLifetimesConfig) *client.TokenLifetimesCon
 	return &client.TokenLifetimesConfig{
 		TokenLifetimeInSeconds:        int64Ptr(cfg.TokenLifetimeInSeconds),
 		RefreshTokenLifetimeInSeconds: int64Ptr(cfg.RefreshTokenLifetimeInSeconds),
-		IDTokenLifetimeInSeconds:    int64Ptr(cfg.IDTokenLifetimeInSeconds),
+		IDTokenLifetimeInSeconds:      int64Ptr(cfg.IDTokenLifetimeInSeconds),
 		CodeLifetimeInSeconds:         int64Ptr(cfg.CodeLifetimeInSeconds),
 		DefaultMaxAge:                 int64Ptr(cfg.DefaultMaxAge),
 	}

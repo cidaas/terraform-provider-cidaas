@@ -65,10 +65,10 @@ func int64ValueOrNull(v *int64) types.Int64 {
 
 func redirectURIsAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"redirect_uris":              types.ListType{ElemType: types.StringType},
-		"allowed_logout_urls":        types.ListType{ElemType: types.StringType},
-		"post_logout_redirect_uris":  types.ListType{ElemType: types.StringType},
-		"allowed_web_origins":        types.ListType{ElemType: types.StringType},
+		"redirect_uris":             types.ListType{ElemType: types.StringType},
+		"allowed_logout_urls":       types.ListType{ElemType: types.StringType},
+		"post_logout_redirect_uris": types.ListType{ElemType: types.StringType},
+		"allowed_web_origins":       types.ListType{ElemType: types.StringType},
 	}
 }
 
