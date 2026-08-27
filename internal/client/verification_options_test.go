@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -130,5 +131,23 @@ func TestVerificationOptionsPutDelete(t *testing.T) {
 	}
 	if err := svc.Delete(context.Background(), id); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestVerificationOptionsGetMissingAsNotFound(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"success":false,"status":400,"error":"no verificationOptions found","code":"VAC1158"}`))
+	}))
+	defer srv.Close()
+
+	svc := NewVerificationOptionsService(Config{BaseURL: srv.URL, AccessToken: "tok"})
+	_, err := svc.Get(context.Background(), "missing-id")
+	if err == nil || !strings.Contains(err.Error(), "resource not found") {
+		t.Fatalf("err=%v", err)
+	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
 	}
 }

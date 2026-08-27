@@ -91,7 +91,7 @@ func ExpectStatus(resp *http.Response, codes ...int) error {
 	return fmt.Errorf("%s", msg)
 }
 
-// ErrNotFound indicates a 404 from the API.
+// ErrNotFound indicates a 404 from the API (or a service-specific missing mapping).
 var ErrNotFound = fmt.Errorf("resource not found")
 
 // requestJSON performs a Bearer JSON call, checks status, and optionally decodes into dest.

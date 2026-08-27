@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // VerificationOptionsService calls verification-actions-srv verification-options APIs.
@@ -88,6 +90,7 @@ func (s *VerificationOptionsService) Create(ctx context.Context, model Verificat
 }
 
 // Get GETs /verification-actions-srv/verification-options/{id}.
+// ponytail: srv returns 400+VAC1158 ("no verificationOptions found") when missing, not 404 — map only here.
 func (s *VerificationOptionsService) Get(ctx context.Context, id string) (*VerificationOptionsResponse, error) {
 	endpoint, err := url.JoinPath(s.cfg.BaseURL, "verification-actions-srv/verification-options", id)
 	if err != nil {
@@ -95,9 +98,19 @@ func (s *VerificationOptionsService) Get(ctx context.Context, id string) (*Verif
 	}
 	var out VerificationOptionsResponse
 	if err := requestJSON(ctx, s.cfg, http.MethodGet, endpoint, nil, &out, http.StatusOK); err != nil {
+		if isVerificationOptionsMissing(err) {
+			return nil, fmt.Errorf("%w: %v", ErrNotFound, err)
+		}
 		return nil, err
 	}
 	return &out, nil
+}
+
+func isVerificationOptionsMissing(err error) bool {
+	if err == nil || errors.Is(err, ErrNotFound) {
+		return false
+	}
+	return strings.Contains(err.Error(), "no verificationOptions found")
 }
 
 // Update uses PUT — what verification-actions-srv exposes.
