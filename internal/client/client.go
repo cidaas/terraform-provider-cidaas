@@ -18,6 +18,8 @@ type Client struct {
 	Themes       *ThemeService
 	Translations *TranslationsService
 	Layouts      *HostedPageLayoutService
+	UserSetup    *UserSetupService
+	FieldSetup   *FieldSetupService
 }
 
 type Config struct {
@@ -92,6 +94,8 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.Themes = NewThemeService(cfg)
 	c.Translations = NewTranslationsService(cfg)
 	c.Layouts = NewHostedPageLayoutService(cfg)
+	c.UserSetup = NewUserSetupService(cfg)
+	c.FieldSetup = NewFieldSetupService(cfg)
 	return c, nil
 }
 

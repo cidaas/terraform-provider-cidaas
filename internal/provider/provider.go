@@ -6,6 +6,7 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/usersetup"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -91,6 +92,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewTranslationsResource,
 		hostedpages.NewHostedPageGroupResource,
 		hostedpages.NewHostedPageLayoutResource,
+		usersetup.NewUserSetupResource,
 	}
 }
 
