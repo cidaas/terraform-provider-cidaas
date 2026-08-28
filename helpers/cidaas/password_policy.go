@@ -46,7 +46,7 @@ func NewPasswordPolicy(clientConfig ClientConfig) *PasswordPolicy {
 	return &PasswordPolicy{clientConfig}
 }
 
-func (p *PasswordPolicy) Get(ctx context.Context, id string) (*PasswordPolicyResponse, error) {
+func (p *PasswordPolicy) Get(ctx context.Context, id string) (*PasswordPolicyResponse, error) { //nolint:dupl
 	var response PasswordPolicyResponse
 	url := fmt.Sprintf("%s/%s/%s", p.BaseURL, "verification-actions-srv/policies", id)
 	client, err := util.NewHTTPClient(url, http.MethodGet, p.AccessToken)
@@ -54,18 +54,18 @@ func (p *PasswordPolicy) Get(ctx context.Context, id string) (*PasswordPolicyRes
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (p *PasswordPolicy) Create(ctx context.Context, payload PasswordPolicyModel) (*PasswordPolicyResponse, error) {
+func (p *PasswordPolicy) Create(ctx context.Context, payload PasswordPolicyModel) (*PasswordPolicyResponse, error) { //nolint:dupl
 	var response PasswordPolicyResponse
 	url := fmt.Sprintf("%s/%s", p.BaseURL, "verification-actions-srv/policies")
 	client, err := util.NewHTTPClient(url, http.MethodPost, p.AccessToken)
@@ -73,17 +73,17 @@ func (p *PasswordPolicy) Create(ctx context.Context, payload PasswordPolicyModel
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, payload)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (p *PasswordPolicy) Update(ctx context.Context, payload PasswordPolicyModel) (*PasswordPolicyUpdateResponse, error) {
+func (p *PasswordPolicy) Update(ctx context.Context, payload PasswordPolicyModel) (*PasswordPolicyUpdateResponse, error) { //nolint:dupl
 	var response PasswordPolicyUpdateResponse
 	url := fmt.Sprintf("%s/%s", p.BaseURL, "verification-actions-srv/policies")
 	client, err := util.NewHTTPClient(url, http.MethodPut, p.AccessToken)
@@ -91,11 +91,11 @@ func (p *PasswordPolicy) Update(ctx context.Context, payload PasswordPolicyModel
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, payload)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -108,7 +108,7 @@ func (p *PasswordPolicy) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

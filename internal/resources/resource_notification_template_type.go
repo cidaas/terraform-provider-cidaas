@@ -520,9 +520,9 @@ func updateStateFromModel(ctx context.Context, state *TemplateTypeConfig, model 
 		}
 	}
 	if model.TemplateGroupIDs != nil {
-		tgIds, diags := types.SetValueFrom(ctx, types.StringType, model.TemplateGroupIDs)
+		tgIDs, diags := types.SetValueFrom(ctx, types.StringType, model.TemplateGroupIDs)
 		if !diags.HasError() {
-			state.TemplateGroupIDs = tgIds
+			state.TemplateGroupIDs = tgIDs
 		}
 	}
 	if model.MsgFormats != nil {

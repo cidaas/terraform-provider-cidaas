@@ -32,7 +32,7 @@ func NewNotificationsTemplateGroupResource() resource.Resource {
 	return &NotificationsTemplateGroupResource{
 		BaseResource: NewBaseResource(
 			BaseResourceConfig{
-				Name:   RESOURCE_NOTIFICATIONS_TEMPLATE_GROUP, // nolint:stylecheck
+				Name:   RESOURCE_NOTIFICATIONS_TEMPLATE_GROUP, //nolint:revive
 				Schema: &notificationsTemplateGroupSchema,
 			},
 		),
@@ -139,16 +139,16 @@ var notificationsTemplateGroupSchema = schema.Schema{
 }
 
 type notificationsTemplateGroupModel struct {
-	ID                 types.String `tfsdk:"id"`
-	GroupID            types.String `tfsdk:"group_id"`
-	TGType             types.String `tfsdk:"tg_type"`
-	Description        types.String `tfsdk:"description"`
-	DefaultLocale      types.String `tfsdk:"default_locale"`
+	ID               types.String `tfsdk:"id"`
+	GroupID          types.String `tfsdk:"group_id"`
+	TGType           types.String `tfsdk:"tg_type"`
+	Description      types.String `tfsdk:"description"`
+	DefaultLocale    types.String `tfsdk:"default_locale"`
 	Owner            types.String `tfsdk:"owner"`
 	CommSettingEmail types.Object `tfsdk:"comm_setting_email"`
-	CommSettingSMS     types.Object `tfsdk:"comm_setting_sms"`
-	CommSettingIVR     types.Object `tfsdk:"comm_setting_ivr"`
-	CommSettingPush    types.Object `tfsdk:"comm_setting_push"`
+	CommSettingSMS   types.Object `tfsdk:"comm_setting_sms"`
+	CommSettingIVR   types.Object `tfsdk:"comm_setting_ivr"`
+	CommSettingPush  types.Object `tfsdk:"comm_setting_push"`
 }
 
 type commSettingModel struct {
@@ -171,14 +171,14 @@ func (r *NotificationsTemplateGroupResource) Create(ctx context.Context, req res
 		return
 	}
 
-	res, err := r.cidaasClient.NotificationsSrvTemplateGroup.Create(ctx, apiReq)
+	_, err := r.cidaasClient.NotificationsSrvTemplateGroup.Create(ctx, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notifications template group", util.FormatErrorMessage(err))
 		return
 	}
 	tflog.Info(ctx, "created notifications template group", util.H{"group_id": plan.GroupID.ValueString()})
 
-	res, err = r.cidaasClient.NotificationsSrvTemplateGroup.Get(ctx, plan.GroupID.ValueString())
+	res, err := r.cidaasClient.NotificationsSrvTemplateGroup.Get(ctx, plan.GroupID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notifications template group after create", util.FormatErrorMessage(err))
 		return
@@ -324,7 +324,7 @@ func commSettingsFromModel(ctx context.Context, m notificationsTemplateGroupMode
 	return out, diags
 }
 
-func notificationsDataToModel(data *cidaas.NotificationsSrvTemplateGroupData, cfg notificationsTemplateGroupModel) notificationsTemplateGroupModel {
+func notificationsDataToModel(data *cidaas.NotificationsSrvTemplateGroupData, _ notificationsTemplateGroupModel) notificationsTemplateGroupModel {
 	m := notificationsTemplateGroupModel{
 		ID:            util.StringValueOrNull(&data.ID),
 		GroupID:       util.StringValueOrNull(&data.ID),

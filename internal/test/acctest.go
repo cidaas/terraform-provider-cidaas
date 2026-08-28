@@ -58,12 +58,12 @@ func TestAccPreCheck(t *testing.T) {
 		"grant_type":    "client_credentials",
 	}
 	res, err := client.MakeRequest(context.Background(), payload)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		t.Fatalf("failed to generate access token %s", err.Error())
 	}
 	defer res.Body.Close()
 	var response cidaas.TokenResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		t.Fatalf("failed to generate access token %s", err.Error())
 	}
 	TestToken = response.AccessToken

@@ -84,7 +84,7 @@ type NotificationsSrvDeleteServiceSetupRequest struct {
 }
 
 // Get returns a service setup by id (GET /servicesetups/:id).
-func (s *NotificationsSrvServiceSetup) Get(ctx context.Context, id string) (*NotificationsSrvServiceSetupModel, error) {
+func (s *NotificationsSrvServiceSetup) Get(ctx context.Context, id string) (*NotificationsSrvServiceSetupModel, error) { //nolint:dupl
 	escaped := url.PathEscape(id)
 	urlStr := s.segmentURL("servicesetups", escaped)
 	client, err := util.NewHTTPClient(urlStr, http.MethodGet, s.AccessToken)

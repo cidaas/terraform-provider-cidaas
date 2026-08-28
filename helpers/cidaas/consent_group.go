@@ -1,4 +1,3 @@
-//nolint:dupl
 package cidaas
 
 import (
@@ -31,7 +30,7 @@ func NewConsentGroup(clientConfig ClientConfig) *ConsentGroup {
 	return &ConsentGroup{clientConfig}
 }
 
-func (c *ConsentGroup) Upsert(ctx context.Context, cg ConsentGroupConfig) (*ConsentGroupResponse, error) {
+func (c *ConsentGroup) Upsert(ctx context.Context, cg ConsentGroupConfig) (*ConsentGroupResponse, error) { //nolint:dupl
 	var response ConsentGroupResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/groups")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -39,18 +38,18 @@ func (c *ConsentGroup) Upsert(ctx context.Context, cg ConsentGroupConfig) (*Cons
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, cg)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *ConsentGroup) Get(ctx context.Context, consentGroupID string) (*ConsentGroupResponse, error) {
+func (c *ConsentGroup) Get(ctx context.Context, consentGroupID string) (*ConsentGroupResponse, error) { //nolint:dupl
 	var response ConsentGroupResponse
 	url := fmt.Sprintf("%s/%s/%s", c.BaseURL, "consent-management-srv/v2/groups", consentGroupID)
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -58,12 +57,12 @@ func (c *ConsentGroup) Get(ctx context.Context, consentGroupID string) (*Consent
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -76,7 +75,7 @@ func (c *ConsentGroup) Delete(ctx context.Context, consentGroupID string) error 
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

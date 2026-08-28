@@ -73,10 +73,12 @@ func TestAccCustomProviderResource_Basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     providerName,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           providerName,
+				// API fills userinfo_source=USERINFOENDPOINT when unset; create state omits it.
+				ImportStateVerifyIgnore: []string{"userinfo_source"},
 			},
 			{
 				Config: fmt.Sprintf(`
@@ -232,8 +234,9 @@ func TestAccCustomProviderResource_InvalidStandardType(t *testing.T) {
 func TestAccCustomProviderResource_MissingRequired(t *testing.T) {
 	t.Parallel()
 
+	// client_secret is Optional (ExactlyOneOf with client_secret_wo); not schema-Required.
 	requiredParams := []string{
-		"provider_name", "display_name", "client_id", "client_secret",
+		"provider_name", "display_name", "client_id",
 		"authorization_endpoint", "token_endpoint", "userinfo_endpoint",
 	}
 

@@ -121,7 +121,7 @@ func NewRegistrationField() datasource.DataSource {
 	}
 }
 
-func (d *RegistrationFieldsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *RegistrationFieldsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { //nolint:dupl
 	var data RegistrationFieldsFilterModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -166,15 +166,16 @@ func listRegistrationFieldss(ctx context.Context, client *cidaas.Client) ([]any,
 	return TypedSliceToAny(rfs), nil
 }
 
-func parseRegistrationField(rf cidaas.RegistrationFieldConfig) (result RegistrationField) {
-	result.ID = types.StringValue(rf.ID)
-	result.FieldKey = types.StringValue(rf.FieldKey)
-	result.DataType = types.StringValue(rf.DataType)
-	result.FieldType = types.StringValue(rf.FieldType)
-	result.Required = types.BoolValue(rf.Required)
-	result.ReadOnly = types.BoolValue(rf.ReadOnly)
-	result.Internal = types.BoolValue(rf.Internal)
-	result.ParentGroupID = types.StringValue(rf.ParentGroupID)
-	result.Order = types.Int64Value(rf.Order)
-	return result
+func parseRegistrationField(rf cidaas.RegistrationFieldConfig) RegistrationField {
+	return RegistrationField{
+		ID:            types.StringValue(rf.ID),
+		FieldKey:      types.StringValue(rf.FieldKey),
+		DataType:      types.StringValue(rf.DataType),
+		FieldType:     types.StringValue(rf.FieldType),
+		Required:      types.BoolValue(rf.Required),
+		ReadOnly:      types.BoolValue(rf.ReadOnly),
+		Internal:      types.BoolValue(rf.Internal),
+		ParentGroupID: types.StringValue(rf.ParentGroupID),
+		Order:         types.Int64Value(rf.Order),
+	}
 }

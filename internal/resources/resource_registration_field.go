@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
@@ -33,6 +34,8 @@ var allowedDataTypes = []string{
 	"TEXT", "NUMBER", "SELECT", "MULTISELECT", "RADIO", "CHECKBOX", "PASSWORD", "DATE", "URL", "EMAIL",
 	"TEXTAREA", "MOBILE", "CONSENT", "JSON_STRING", "USERNAME", "ARRAY", "GROUPING", "DAYDATE",
 }
+
+var regFieldOrderMutex sync.Mutex
 
 type RegFieldResource struct {
 	BaseResource
@@ -68,6 +71,14 @@ func (r *RegFieldResource) ModifyPlan(ctx context.Context, req resource.ModifyPl
 		return
 	}
 	if !fieldDefinitionHasRegexes(plan.fieldDefinition) {
+		unknown := plan.fieldDefinition != nil && plan.fieldDefinition.Regex.IsUnknown()
+		resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if unknown {
+			resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+		}
 		return
 	}
 
@@ -119,12 +130,12 @@ type RegFieldConfig struct {
 // RemoteFieldSettingsConfig holds Terraform config for remote_field_settings (GROUPING only).
 type RemoteFieldSettingsConfig struct {
 	CallOnce       types.Bool   `tfsdk:"call_once"`
-	ApiClientSetup types.Object `tfsdk:"api_client_setup"`
+	ApiClientSetup types.Object `tfsdk:"api_client_setup"` //nolint:revive // API/json field names
 	apiClientSetup *ApiClientSetupConfig
 }
 
 // ApiClientSetupConfig holds Terraform config for api_client_setup.
-type ApiClientSetupConfig struct {
+type ApiClientSetupConfig struct { //nolint:revive // API/json field names
 	CommunicationEP    types.String `tfsdk:"communication_ep"`
 	HTTPMethod         types.String `tfsdk:"http_method"`
 	APIAccessType      types.String `tfsdk:"api_access_type"`
@@ -657,15 +668,15 @@ func registrationFieldParentGroupID(plan RegFieldConfig) string {
 	return registrationFieldDefaultParentGroupID
 }
 
-func registrationFieldOrderChangeRequested(plan, state RegFieldConfig) (current, previous int64, ok bool) {
+func registrationFieldOrderChangeRequested(plan, state RegFieldConfig) (int64, int64, bool) {
 	if plan.Order.IsNull() || plan.Order.IsUnknown() {
 		return 0, 0, false
 	}
 	if state.Order.IsNull() || state.Order.IsUnknown() {
 		return 0, 0, false
 	}
-	current = plan.Order.ValueInt64()
-	previous = state.Order.ValueInt64()
+	current := plan.Order.ValueInt64()
+	previous := state.Order.ValueInt64()
 	if current == previous {
 		return 0, 0, false
 	}
@@ -722,7 +733,9 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 	})
 
 	plan.ID = types.StringValue(res.Data.ID)
-	plan.Order = types.Int64Value(res.Data.Order)
+	if plan.Order.IsNull() || plan.Order.IsUnknown() {
+		plan.Order = types.Int64Value(res.Data.Order)
+	}
 	plan.BaseDataType = types.StringValue(res.Data.BaseDataType)
 
 	if rfModel.FieldDefinition != nil && rfModel.FieldDefinition.Regex != "" {
@@ -731,19 +744,37 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 	}
+	resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if !registrationFieldOrderMatchesPlan(plan, res.Data.Order) {
-		if err := r.applyRegistrationFieldOrderChange(ctx, plan, res.Data.Order); err != nil {
-			resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+		regFieldOrderMutex.Lock()
+		actualField, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		if err != nil {
+			regFieldOrderMutex.Unlock()
+			resp.Diagnostics.AddError("failed to get actual registration field order before update", util.FormatErrorMessage(err))
 			return
 		}
+
+		actualOrder := actualField.Data.Order
+		if actualOrder != plan.Order.ValueInt64() {
+			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				regFieldOrderMutex.Unlock()
+				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+				return
+			}
+		}
+
 		getRes, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
 		if err != nil {
+			regFieldOrderMutex.Unlock()
 			resp.Diagnostics.AddError("failed to read registration field after order update", util.FormatErrorMessage(err))
 			return
 		}
-		plan.Order = types.Int64Value(getRes.Data.Order)
 		plan.BaseDataType = types.StringValue(getRes.Data.BaseDataType)
+		regFieldOrderMutex.Unlock()
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -839,7 +870,7 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 				"required_msg":   util.StringValueOrNull(&lt.RequiredMsg),
 				"match_with_msg": util.StringValueOrNull(&lt.MatchWithMsg),
 				"attributes": func() types.List {
-					if !(len(lt.Attributes) > 0) {
+					if len(lt.Attributes) == 0 {
 						return types.ListNull(types.ObjectType{AttrTypes: typesOfAttribute})
 					}
 					return types.ListValueMust(
@@ -943,7 +974,7 @@ func remoteFieldSettingsAttrTypes() map[string]attr.Type {
 }
 
 // remoteFieldSettingsToState converts API RemoteFieldSettings to state object (sensitive values may be masked by API).
-func remoteFieldSettingsToState(ctx context.Context, rs *cidaas.RemoteFieldSettings) (types.Object, diag.Diagnostics) {
+func remoteFieldSettingsToState(_ context.Context, rs *cidaas.RemoteFieldSettings) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	attrTypes := remoteFieldSettingsAttrTypes()
 	callOnce := types.BoolNull()
@@ -1030,11 +1061,26 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 
 	fieldModel.ID = state.ID.ValueString()
 
-	if _, previous, ok := registrationFieldOrderChangeRequested(plan, state); ok {
-		if err := r.applyRegistrationFieldOrderChange(ctx, plan, previous); err != nil {
-			resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+	if _, _, ok := registrationFieldOrderChangeRequested(plan, state); ok {
+		regFieldOrderMutex.Lock()
+		// Fetch the latest registration field details from the server to get the actual current order.
+		// The stored state order can be stale if other fields were reordered in the same apply run.
+		actualField, err := r.cidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		if err != nil {
+			regFieldOrderMutex.Unlock()
+			resp.Diagnostics.AddError("failed to get actual registration field order before update", util.FormatErrorMessage(err))
 			return
 		}
+
+		actualOrder := actualField.Data.Order
+		if actualOrder != plan.Order.ValueInt64() {
+			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				regFieldOrderMutex.Unlock()
+				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+				return
+			}
+		}
+		regFieldOrderMutex.Unlock()
 	}
 
 	res, err := r.cidaasClient.RegFields.Upsert(ctx, *fieldModel)
@@ -1050,13 +1096,19 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 		"field_id": state.ID.ValueString(),
 	})
 
-	plan.Order = types.Int64Value(res.Data.Order)
+	if plan.Order.IsNull() || plan.Order.IsUnknown() {
+		plan.Order = types.Int64Value(res.Data.Order)
+	}
 
 	if fieldModel.FieldDefinition != nil && fieldModel.FieldDefinition.Regex != "" {
 		resp.Diagnostics.Append(syncComposedRegexIntoPlan(ctx, &plan, fieldModel.FieldDefinition.Regex)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+	}
+	resp.Diagnostics.Append(ensureFieldDefinitionRegexKnown(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Computed base_data_type must be known after apply (e.g. GROUPING has empty). Fallback to state or "".
@@ -1085,7 +1137,7 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 	})
 }
 
-func (r *RegFieldResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *RegFieldResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state RegFieldConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -1356,6 +1408,27 @@ type (
 	validateMatchWith                      struct{}
 	validateMatchWithMsg                   struct{}
 )
+
+func ensureFieldDefinitionRegexKnown(ctx context.Context, plan *RegFieldConfig) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if plan.fieldDefinition == nil {
+		return diags
+	}
+	if fieldDefinitionHasRegexes(plan.fieldDefinition) {
+		return diags
+	}
+	if !plan.fieldDefinition.Regex.IsUnknown() {
+		return diags
+	}
+	plan.fieldDefinition.Regex = types.StringNull()
+	obj, d := types.ObjectValueFrom(ctx, fieldDefinitionAttrTypes(), plan.fieldDefinition)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	plan.FieldDefinition = obj
+	return diags
+}
 
 func syncComposedRegexIntoPlan(ctx context.Context, plan *RegFieldConfig, regex string) diag.Diagnostics {
 	var diags diag.Diagnostics
@@ -1691,7 +1764,7 @@ func (v dataTypeValidator) ValidateString(ctx context.Context, req validator.Str
 	attrKeysRequiredDataTypes := []string{"SELECT", "RADIO", "MULTISELECT"}
 	if util.Contains(attrKeysRequiredDataTypes, req.ConfigValue.ValueString()) {
 		for _, s := range config.localTexts {
-			if !s.Attributes.IsNull() && !s.Attributes.IsUnknown() && !(len(s.attributes) > 0) {
+			if !s.Attributes.IsNull() && !s.Attributes.IsUnknown() && len(s.attributes) == 0 {
 				resp.Diagnostics.AddError(
 					"Unexpected Resource Configuration",
 					fmt.Sprintf("Attributes local_texts[i].attributes can not be empty when data_type is %s.", req.ConfigValue.ValueString()),

@@ -278,7 +278,7 @@ func NewApp(clientConfig ClientConfig) *App {
 	return &App{clientConfig}
 }
 
-func (a *App) Create(ctx context.Context, app AppModel) (*AppResponse, error) {
+func (a *App) Create(ctx context.Context, app AppModel) (*AppResponse, error) { //nolint:dupl
 	var response AppResponse
 	url := fmt.Sprintf("%s/%s", a.BaseURL, "apps-srv/clients")
 	client, err := util.NewHTTPClient(url, http.MethodPost, a.AccessToken)
@@ -286,18 +286,18 @@ func (a *App) Create(ctx context.Context, app AppModel) (*AppResponse, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, app)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (a *App) Get(ctx context.Context, clientID string) (*AppResponse, error) {
+func (a *App) Get(ctx context.Context, clientID string) (*AppResponse, error) { //nolint:dupl
 	var response AppResponse
 	url := fmt.Sprintf("%s/%s/%s", a.BaseURL, "apps-srv/clients", clientID)
 	client, err := util.NewHTTPClient(url, http.MethodGet, a.AccessToken)
@@ -305,18 +305,18 @@ func (a *App) Get(ctx context.Context, clientID string) (*AppResponse, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (a *App) Update(ctx context.Context, app AppModel) (*AppResponse, error) {
+func (a *App) Update(ctx context.Context, app AppModel) (*AppResponse, error) { //nolint:dupl
 	var response AppResponse
 	url := fmt.Sprintf("%s/%s", a.BaseURL, "apps-srv/clients")
 	client, err := util.NewHTTPClient(url, http.MethodPut, a.AccessToken)
@@ -324,12 +324,12 @@ func (a *App) Update(ctx context.Context, app AppModel) (*AppResponse, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, app)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -342,7 +342,7 @@ func (a *App) Delete(ctx context.Context, clientID string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

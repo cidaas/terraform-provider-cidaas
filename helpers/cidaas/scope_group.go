@@ -47,7 +47,7 @@ func (c *ScopeGroup) Upsert(ctx context.Context, sg ScopeGroupConfig) (*ScopeGro
 	defer res.Body.Close()
 
 	var response ScopeGroupResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -65,7 +65,7 @@ func (c *ScopeGroup) Get(ctx context.Context, scopeGroupName string) (*ScopeGrou
 	defer res.Body.Close()
 
 	var response ScopeGroupResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -93,7 +93,7 @@ func (c *ScopeGroup) GetAll(ctx context.Context) ([]ScopeGroupConfig, error) {
 	defer res.Body.Close()
 
 	var response AllScopeGroupResp
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

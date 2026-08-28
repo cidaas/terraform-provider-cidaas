@@ -58,13 +58,13 @@ func (c *UserGroup) Create(ctx context.Context, ug UserGroupData) (*UserGroupRes
 	defer res.Body.Close()
 
 	var response UserGroupResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *UserGroup) Get(ctx context.Context, groupID string) (*UserGroupResponse, error) {
+func (c *UserGroup) Get(ctx context.Context, groupID string) (*UserGroupResponse, error) { //nolint:dupl
 	if groupID == "" {
 		return nil, fmt.Errorf("groupID cannot be empty")
 	}
@@ -76,7 +76,7 @@ func (c *UserGroup) Get(ctx context.Context, groupID string) (*UserGroupResponse
 	defer res.Body.Close()
 
 	var response UserGroupResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -90,7 +90,7 @@ func (c *UserGroup) Update(ctx context.Context, ug UserGroupData) (*UserGroupRes
 	defer res.Body.Close()
 
 	var response UserGroupResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -107,7 +107,7 @@ func (c *UserGroup) Delete(ctx context.Context, groupID string) error {
 	}
 	defer res.Body.Close()
 
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	return nil

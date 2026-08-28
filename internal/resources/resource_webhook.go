@@ -1,3 +1,4 @@
+//nolint:dupl // apikey/totp auth schema blocks mirror resource_custom_provider
 package resources
 
 import (
@@ -81,7 +82,22 @@ func (w *WebhookConfig) extractAuthConfigs(ctx context.Context) diag.Diagnostics
 	return diags
 }
 
-var webhookSchema = schema.Schema{
+func authConfigObject(placeholder, placement, key *string) (types.Object, diag.Diagnostics) {
+	authConfig := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"placeholder": types.StringType,
+			"placement":   types.StringType,
+			"key":         types.StringType,
+		},
+	}
+	return types.ObjectValue(authConfig.AttrTypes, map[string]attr.Value{
+		"placeholder": util.StringValueOrNull(placeholder),
+		"placement":   util.StringValueOrNull(placement),
+		"key":         util.StringValueOrNull(key),
+	})
+}
+
+var webhookSchema = schema.Schema{ //nolint:dupl
 	MarkdownDescription: "The Webhook resource in the provider facilitates integration of webhooks in the Cidaas system." +
 		" This resource allows you to configure webhooks with different authentication options." +
 		"\n\n Ensure that the below scopes are assigned to the client with the specified `client_id`:" +
@@ -283,7 +299,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 	})
 }
 
-func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) { //nolint:dupl
 	var state WebhookConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -314,20 +330,12 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.UpdatedAt = util.StringValueOrNull(&res.Data.UpdatedTime)
 	state.Events = util.SetValueOrNull(res.Data.Events)
 
-	authConfig := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"placeholder": types.StringType,
-			"placement":   types.StringType,
-			"key":         types.StringType,
-		},
-	}
-
 	if res.Data.APIKeyDetails.Apikey != "" {
-		apiKeyConfig, diags := types.ObjectValue(authConfig.AttrTypes, map[string]attr.Value{
-			"placeholder": util.StringValueOrNull(&res.Data.APIKeyDetails.ApikeyPlaceholder),
-			"placement":   util.StringValueOrNull(&res.Data.APIKeyDetails.ApikeyPlacement),
-			"key":         util.StringValueOrNull(&res.Data.APIKeyDetails.Apikey),
-		})
+		apiKeyConfig, diags := authConfigObject(
+			&res.Data.APIKeyDetails.ApikeyPlaceholder,
+			&res.Data.APIKeyDetails.ApikeyPlacement,
+			&res.Data.APIKeyDetails.Apikey,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			tflog.Error(ctx, "failed to create API key config object", util.H{
@@ -339,11 +347,11 @@ func (r *WebhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	if res.Data.TotpDetails.TotpKey != "" {
-		totpConfig, diags := types.ObjectValue(authConfig.AttrTypes, map[string]attr.Value{
-			"placeholder": util.StringValueOrNull(&res.Data.TotpDetails.TotpPlaceholder),
-			"placement":   util.StringValueOrNull(&res.Data.TotpDetails.TotpPlacement),
-			"key":         util.StringValueOrNull(&res.Data.TotpDetails.TotpKey),
-		})
+		totpConfig, diags := authConfigObject(
+			&res.Data.TotpDetails.TotpPlaceholder,
+			&res.Data.TotpDetails.TotpPlacement,
+			&res.Data.TotpDetails.TotpKey,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			tflog.Error(ctx, "failed to create TOTP config object", util.H{

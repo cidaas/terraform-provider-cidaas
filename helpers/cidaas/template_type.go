@@ -68,7 +68,7 @@ func (t *TemplateTypeServiceImpl) Upsert(templateType TemplateTypeModel) (*Templ
 	}
 
 	res, err := httpClient.MakeRequest(context.Background(), templateType)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -99,7 +99,7 @@ func (t *TemplateTypeServiceImpl) Get(id string) (*TemplateTypeResponse, error) 
 	}
 
 	res, err := httpClient.MakeRequest(context.Background(), nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -134,7 +134,7 @@ func (t *TemplateTypeServiceImpl) Patch(patch TemplateTypePatchModel) (*Template
 	}
 
 	res, err := httpClient.MakeRequest(context.Background(), patch)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -164,7 +164,7 @@ func (t *TemplateTypeServiceImpl) Delete(id string) error {
 	}
 
 	res, err := httpClient.MakeRequest(context.Background(), nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()

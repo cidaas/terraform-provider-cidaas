@@ -75,7 +75,7 @@ func NewTemplate(clientConfig ClientConfig) *Template {
 	return &Template{clientConfig}
 }
 
-func (t *Template) Upsert(ctx context.Context, template TemplateModel, isSystemTemplate bool) (response *TemplateResponse, err error) {
+func (t *Template) Upsert(ctx context.Context, template TemplateModel, isSystemTemplate bool) (*TemplateResponse, error) {
 	url := fmt.Sprintf("%s/%s", t.BaseURL, "templates-srv/template")
 	if !isSystemTemplate {
 		url += "/custom"
@@ -98,6 +98,7 @@ func (t *Template) Upsert(ctx context.Context, template TemplateModel, isSystemT
 	if bodyString == "" {
 		return nil, fmt.Errorf("response code %+v with empty response body", res.StatusCode)
 	}
+	var response *TemplateResponse
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal json body %s, status code %+v, error %s", bodyString, res.StatusCode, err.Error())
@@ -105,7 +106,7 @@ func (t *Template) Upsert(ctx context.Context, template TemplateModel, isSystemT
 	return response, nil
 }
 
-func (t *Template) Get(ctx context.Context, template TemplateModel, isSystemTemplate bool) (response *TemplateResponse, err error) {
+func (t *Template) Get(ctx context.Context, template TemplateModel, isSystemTemplate bool) (*TemplateResponse, error) {
 	url := fmt.Sprintf("%s/%s", t.BaseURL, "templates-srv/template")
 	if isSystemTemplate {
 		url += "/find"
@@ -117,7 +118,7 @@ func (t *Template) Get(ctx context.Context, template TemplateModel, isSystemTemp
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, template)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -133,6 +134,7 @@ func (t *Template) Get(ctx context.Context, template TemplateModel, isSystemTemp
 	if bodyString == "" {
 		return nil, fmt.Errorf("response code %+v with empty response body", res.StatusCode)
 	}
+	var response *TemplateResponse
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal json body %s, status code %+v, error %s", bodyString, res.StatusCode, err.Error())
@@ -147,14 +149,14 @@ func (t *Template) Delete(ctx context.Context, templateKey string, templateType 
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (t *Template) GetMasterList(ctx context.Context, groupID string) (*MasterListResponse, error) {
+func (t *Template) GetMasterList(ctx context.Context, groupID string) (*MasterListResponse, error) { //nolint:dupl
 	var response MasterListResponse
 	url := fmt.Sprintf("%s/%s/%s", t.BaseURL, "templates-srv/master/settings", groupID)
 	client, err := util.NewHTTPClient(url, http.MethodGet, t.AccessToken)
@@ -162,12 +164,12 @@ func (t *Template) GetMasterList(ctx context.Context, groupID string) (*MasterLi
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil

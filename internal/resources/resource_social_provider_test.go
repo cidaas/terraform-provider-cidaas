@@ -187,8 +187,9 @@ func TestSocialProvider_InvalidProviderName(t *testing.T) {
 func TestSocialProvider_MissingRequired(t *testing.T) {
 	t.Parallel()
 
+	// client_secret is Optional (ExactlyOneOf with client_secret_wo); not schema-Required.
 	requiredParams := []string{
-		"name", "provider_name", "client_id", "client_secret",
+		"name", "provider_name", "client_id",
 	}
 
 	for _, param := range requiredParams {

@@ -253,7 +253,7 @@ func (r *GroupTypeResource) Update(ctx context.Context, req resource.UpdateReque
 	})
 }
 
-func (r *GroupTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *GroupTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state GroupTypeConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {

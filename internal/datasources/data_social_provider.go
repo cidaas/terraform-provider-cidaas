@@ -108,7 +108,7 @@ func NewSocialProvider() datasource.DataSource {
 	}
 }
 
-func (d *SocialProviderDataSource) Read(
+func (d *SocialProviderDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -155,14 +155,15 @@ func listSocialProviders(ctx context.Context, client *cidaas.Client) ([]any, err
 	return TypedSliceToAny(sps), nil
 }
 
-func parseSocialProvider(sp cidaas.SocialProviderModel) (r SocialProvider) {
-	r.ID = types.StringValue(sp.ID)
-	r.ClientID = types.StringValue(sp.ClientID)
-	r.ClientSecret = types.StringValue(sp.ClientSecret)
-	r.Name = types.StringValue(sp.Name)
-	r.ProviderName = types.StringValue(sp.ProviderName)
-	r.Enabled = types.BoolValue(sp.Enabled)
-	r.EnabledForAdminPortal = types.BoolValue(sp.EnabledForAdminPortal)
-	r.Scopes = util.SetValueOrNull(sp.Scopes)
-	return r
+func parseSocialProvider(sp cidaas.SocialProviderModel) SocialProvider {
+	return SocialProvider{
+		ID:                    types.StringValue(sp.ID),
+		ClientID:              types.StringValue(sp.ClientID),
+		ClientSecret:          types.StringValue(sp.ClientSecret),
+		Name:                  types.StringValue(sp.Name),
+		ProviderName:          types.StringValue(sp.ProviderName),
+		Enabled:               types.BoolValue(sp.Enabled),
+		EnabledForAdminPortal: types.BoolValue(sp.EnabledForAdminPortal),
+		Scopes:                util.SetValueOrNull(sp.Scopes),
+	}
 }

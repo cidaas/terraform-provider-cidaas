@@ -38,7 +38,7 @@ func NewGroupType(clientConfig ClientConfig) *GroupType {
 	return &GroupType{clientConfig}
 }
 
-func (c *GroupType) Create(ctx context.Context, gt GroupTypeData) (*GroupTypeResponse, error) {
+func (c *GroupType) Create(ctx context.Context, gt GroupTypeData) (*GroupTypeResponse, error) { //nolint:dupl
 	var response GroupTypeResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "groups-srv/grouptypes")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -46,18 +46,18 @@ func (c *GroupType) Create(ctx context.Context, gt GroupTypeData) (*GroupTypeRes
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, gt)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *GroupType) Get(ctx context.Context, groupType string) (*GroupTypeResponse, error) {
+func (c *GroupType) Get(ctx context.Context, groupType string) (*GroupTypeResponse, error) { //nolint:dupl
 	var response GroupTypeResponse
 	url := fmt.Sprintf("%s/%s?groupType=%s", c.BaseURL, "groups-srv/grouptypes", groupType)
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -65,12 +65,12 @@ func (c *GroupType) Get(ctx context.Context, groupType string) (*GroupTypeRespon
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -97,7 +97,7 @@ func (c *GroupType) Delete(ctx context.Context, groupType string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
@@ -112,12 +112,12 @@ func (c *GroupType) GetAll(ctx context.Context) ([]GroupTypeData, error) {
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, struct{}{})
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil
