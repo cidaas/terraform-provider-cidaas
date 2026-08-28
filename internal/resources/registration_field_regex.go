@@ -54,23 +54,6 @@ func composeANDRegexes(patterns []string) (string, error) {
 	return composed, nil
 }
 
-// matchAllRegexes reports whether s matches every pattern (AND), using Go's regexp.
-func matchAllRegexes(patterns []string, s string) (matched bool, err error) {
-	if len(patterns) == 0 {
-		return false, fmt.Errorf("no patterns")
-	}
-	for i, p := range patterns {
-		re, compileErr := regexp.Compile(strings.TrimSpace(p))
-		if compileErr != nil {
-			return false, fmt.Errorf("regexes[%d]: %w", i, compileErr)
-		}
-		if !re.MatchString(s) {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 type shapeKind int
 
 const (
@@ -252,8 +235,8 @@ func (c *mergedConstraints) build() (string, error) {
 		if maxLen < 0 {
 			return "", fmt.Errorf("regexes: contains+charset merge requires a bounded max length (e.g. ^.{1,40}$); provide a single field_definition.regex")
 		}
-		if maxLen > 256 {
-			return "", fmt.Errorf("regexes: max length %d too large for contains merge", maxLen)
+		if maxLen > 64 {
+			return "", fmt.Errorf("regexes: max length %d too large for contains merge (limit 64 to keep composed regex size reasonable)", maxLen)
 		}
 		return buildContainsCharset(c.charset, c.contains[0], minLen, maxLen, c.hasNoLeading, c.forbid)
 	default:
@@ -395,5 +378,5 @@ func removeLiteralRuneFromClassBody(body string, forbid rune) (string, bool) {
 		b.WriteString(body[i : i+size])
 		i += size
 	}
-	return b.String(), true
+	return b.String(), true // NOTE: ranges are kept intact; if forbid appears only inside a range it is not removed
 }

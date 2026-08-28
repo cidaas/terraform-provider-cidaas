@@ -11,29 +11,29 @@ import (
 )
 
 type Client struct {
-	Roles                         *Role
-	NotificationsSrvTemplateGroup *NotificationsSrvTemplateGroup
-	NotificationsSrvTemplate      *NotificationsSrvTemplate
-	NotificationsSrvServiceSetup  *NotificationsSrvServiceSetup
+	Roles                          *Role
+	NotificationsSrvTemplateGroup  *NotificationsSrvTemplateGroup
+	NotificationsSrvTemplate       *NotificationsSrvTemplate
+	NotificationsSrvServiceSetup   *NotificationsSrvServiceSetup
 	NotificationsSrvProviderConfig *NotificationsSrvProviderConfig
-	CustomProvider                *CustomProvider
-	SocialProvider                *SocialProvider
-	Scopes                        *Scope
-	ScopeGroup                    *ScopeGroup
-	ConsentGroup                  *ConsentGroup
-	GroupType                     *GroupType
-	UserGroup                     *UserGroup
-	HostedPages                   *HostedPage
-	Webhook                       *Webhook
-	Apps                          *App
-	RegFields                     *RegField
-	TemplateGroup                 *TemplateGroup
-	Templates                     *Template
-	TemplateType                  *TemplateTypeServiceImpl
-	PasswordPolicy                *PasswordPolicy
-	SecuritySettings              *SecuritySettings
-	Consent                       *Consent
-	ConsentVersion                *ConsentVersion
+	CustomProvider                 *CustomProvider
+	SocialProvider                 *SocialProvider
+	Scopes                         *Scope
+	ScopeGroup                     *ScopeGroup
+	ConsentGroup                   *ConsentGroup
+	GroupType                      *GroupType
+	UserGroup                      *UserGroup
+	HostedPages                    *HostedPage
+	Webhook                        *Webhook
+	Apps                           *App
+	RegFields                      *RegField
+	TemplateGroup                  *TemplateGroup
+	Templates                      *Template
+	TemplateType                   *TemplateTypeServiceImpl
+	PasswordPolicy                 *PasswordPolicy
+	SecuritySettings               *SecuritySettings
+	Consent                        *Consent
+	ConsentVersion                 *ConsentVersion
 }
 
 type ClientConfig struct {
@@ -54,7 +54,7 @@ func (c *ClientConfig) makeRequest(ctx context.Context, method, endpoint string,
 	}
 
 	res, err := client.MakeRequest(ctx, body)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -81,39 +81,39 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		"grant_type":    "client_credentials",
 	}
 	res, err := httpClient.MakeRequest(ctx, payload)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, fmt.Errorf("failed to generate access token %s", err.Error())
 	}
 	defer res.Body.Close()
 	var response TokenResponse
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, fmt.Errorf("failed to generate access token %s", err.Error())
 	}
 	config.AccessToken = response.AccessToken
 	client := &Client{
-		Roles:                         NewRole(config),
-		NotificationsSrvTemplateGroup: NewNotificationsSrvTemplateGroup(config),
-		NotificationsSrvTemplate:      NewNotificationsSrvTemplate(config),
+		Roles:                          NewRole(config),
+		NotificationsSrvTemplateGroup:  NewNotificationsSrvTemplateGroup(config),
+		NotificationsSrvTemplate:       NewNotificationsSrvTemplate(config),
 		NotificationsSrvServiceSetup:   NewNotificationsSrvServiceSetup(config),
 		NotificationsSrvProviderConfig: NewNotificationsSrvProviderConfig(config),
-		CustomProvider:                NewCustomProvider(config),
-		Scopes:                        NewScope(config),
-		ScopeGroup:                    NewScopeGroup(config),
-		GroupType:                     NewGroupType(config),
-		UserGroup:                     NewUserGroup(config),
-		HostedPages:                   NewHostedPage(config),
-		Webhook:                       NewWebhook(config),
-		Apps:                          NewApp(config),
-		RegFields:                     NewRegField(config),
-		TemplateGroup:                 NewTemplateGroup(config),
-		Templates:                     NewTemplate(config),
-		TemplateType:                  NewTemplateType(config),
-		SocialProvider:                NewSocialProvider(config),
-		PasswordPolicy:                NewPasswordPolicy(config),
-		SecuritySettings:              NewSecuritySettings(config),
-		ConsentGroup:                  NewConsentGroup(config),
-		Consent:                       NewConsent(config),
-		ConsentVersion:                NewConsentVersion(config),
+		CustomProvider:                 NewCustomProvider(config),
+		Scopes:                         NewScope(config),
+		ScopeGroup:                     NewScopeGroup(config),
+		GroupType:                      NewGroupType(config),
+		UserGroup:                      NewUserGroup(config),
+		HostedPages:                    NewHostedPage(config),
+		Webhook:                        NewWebhook(config),
+		Apps:                           NewApp(config),
+		RegFields:                      NewRegField(config),
+		TemplateGroup:                  NewTemplateGroup(config),
+		Templates:                      NewTemplate(config),
+		TemplateType:                   NewTemplateType(config),
+		SocialProvider:                 NewSocialProvider(config),
+		PasswordPolicy:                 NewPasswordPolicy(config),
+		SecuritySettings:               NewSecuritySettings(config),
+		ConsentGroup:                   NewConsentGroup(config),
+		Consent:                        NewConsent(config),
+		ConsentVersion:                 NewConsentVersion(config),
 	}
 	return client, nil
 }

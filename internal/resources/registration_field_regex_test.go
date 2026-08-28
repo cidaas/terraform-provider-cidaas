@@ -1,12 +1,30 @@
 package resources
 
 import (
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
 	"testing"
 	"unicode/utf8"
 )
+
+// matchAllRegexes is the test oracle: s must match every pattern (AND).
+func matchAllRegexes(patterns []string, s string) (matched bool, err error) {
+	if len(patterns) == 0 {
+		return false, fmt.Errorf("no patterns")
+	}
+	for i, p := range patterns {
+		re, compileErr := regexp.Compile(strings.TrimSpace(p))
+		if compileErr != nil {
+			return false, fmt.Errorf("regexes[%d]: %w", i, compileErr)
+		}
+		if !re.MatchString(s) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
 
 func TestComposeANDRegexes_SingleReturnsAsIs(t *testing.T) {
 	t.Parallel()

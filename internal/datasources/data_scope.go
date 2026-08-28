@@ -124,7 +124,7 @@ func NewScope() datasource.DataSource {
 	}
 }
 
-func (d *ScopesDataSource) Read(
+func (d *ScopesDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -170,12 +170,14 @@ func listScopes(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	return TypedSliceToAny(scopes), nil
 }
 
-func parseScope(scope cidaas.ScopeModel) (r Scope) {
-	r.ID = types.StringValue(scope.ID)
-	r.ScopeKey = types.StringValue(scope.ScopeKey)
-	r.GroupName = util.SetValueOrNull(scope.GroupName)
-	r.SecurityLevel = types.StringValue(scope.SecurityLevel)
-	r.RequiredUserConsent = types.BoolValue(scope.RequiredUserConsent)
+func parseScope(scope cidaas.ScopeModel) Scope {
+	r := Scope{
+		ID:                  types.StringValue(scope.ID),
+		ScopeKey:            types.StringValue(scope.ScopeKey),
+		GroupName:           util.SetValueOrNull(scope.GroupName),
+		SecurityLevel:       types.StringValue(scope.SecurityLevel),
+		RequiredUserConsent: types.BoolValue(scope.RequiredUserConsent),
+	}
 
 	var objectValues []attr.Value
 	localeDescription := types.ObjectType{

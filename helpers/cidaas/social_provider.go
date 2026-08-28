@@ -63,7 +63,7 @@ func NewSocialProvider(clientConfig ClientConfig) *SocialProvider {
 	return &SocialProvider{clientConfig}
 }
 
-func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*SocialProviderResponse, error) {
+func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*SocialProviderResponse, error) { //nolint:dupl
 	var response SocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/multi/providers")
 	client, err := util.NewHTTPClient(url, http.MethodPost, s.AccessToken)
@@ -71,12 +71,12 @@ func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, sp)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -90,12 +90,12 @@ func (s *SocialProvider) Get(ctx context.Context, providerName, providerID strin
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -108,14 +108,14 @@ func (s *SocialProvider) Delete(ctx context.Context, providerName, providerID st
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	return nil
 }
 
-func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, error) {
+func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, error) { //nolint:dupl
 	var response AllSocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/providers/enabled/list")
 	client, err := util.NewHTTPClient(url, http.MethodGet, s.AccessToken)
@@ -123,12 +123,12 @@ func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, err
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

@@ -3,8 +3,11 @@ package cidaas
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -108,7 +111,40 @@ func NewConsentVersion(clientConfig ClientConfig) *ConsentVersion {
 	return &ConsentVersion{clientConfig}
 }
 
+// ponytail: 5 attempts, 1+2+4+8s sleeps (~15s). Consent-management returns 400/30001 until the parent consent is indexed. Raise maxAttempts if that lag grows.
+const consentVersionUpsertMaxAttempts = 5
+
+var consentVersionRetryDelay = func(attempt int) time.Duration {
+	return time.Duration(1<<attempt) * time.Second
+}
+
+func isConsentVersionNotIndexed(err error) bool {
+	var statusErr *util.UnexpectedStatusError
+	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
+		return false
+	}
+	body := strings.ToLower(statusErr.Body)
+	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found")
+}
+
 func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
+	for attempt := 0; ; attempt++ { // bound is the last-attempt return below; for{} so Go needs no dummy return
+		res, err := c.upsertOnce(ctx, consentVersionConfig)
+		if err == nil {
+			return res, nil
+		}
+		if !isConsentVersionNotIndexed(err) || attempt == consentVersionUpsertMaxAttempts-1 {
+			return nil, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(consentVersionRetryDelay(attempt)):
+		}
+	}
+}
+
+func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) { //nolint:dupl
 	var response ConsentVersionResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/versions")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -116,18 +152,18 @@ func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig Consen
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, consentVersionConfig)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *ConsentVersion) Get(ctx context.Context, consentID string) (*ConsentVersionReadResponse, error) {
+func (c *ConsentVersion) Get(ctx context.Context, consentID string) (*ConsentVersionReadResponse, error) { //nolint:dupl
 	var response ConsentVersionReadResponse
 	url := fmt.Sprintf("%s/%s/%s", c.BaseURL, "consent-management-srv/v2/consent/versions/list", consentID)
 	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
@@ -135,18 +171,18 @@ func (c *ConsentVersion) Get(ctx context.Context, consentID string) (*ConsentVer
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (c *ConsentVersion) UpsertLocal(ctx context.Context, consentLocal ConsentLocalModel) (*ConsentLocalResponse, error) {
+func (c *ConsentVersion) UpsertLocal(ctx context.Context, consentLocal ConsentLocalModel) (*ConsentLocalResponse, error) { //nolint:dupl
 	var response ConsentLocalResponse
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "consent-management-srv/v2/consent/locale")
 	client, err := util.NewHTTPClient(url, http.MethodPost, c.AccessToken)
@@ -154,12 +190,12 @@ func (c *ConsentVersion) UpsertLocal(ctx context.Context, consentLocal ConsentLo
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, consentLocal)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -179,11 +215,11 @@ func (c *ConsentVersion) GetLocal(ctx context.Context, consentVersionID string, 
 			Status:  http.StatusNoContent,
 		}, nil
 	}
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil

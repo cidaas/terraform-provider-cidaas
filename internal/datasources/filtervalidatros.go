@@ -43,7 +43,7 @@ func (v filterNameValidator) ValidateString(_ context.Context, req validator.Str
 			req.Path,
 			"Non-Filterable Field",
 			fmt.Sprintf(
-				"Field \"%s\" is not filterable.\nFilterable Fields: %s",
+				"Field %q is not filterable.\nFilterable Fields: %s",
 				fieldName,
 				strings.Join(filterableAttributes, ", "),
 			),

@@ -264,6 +264,10 @@ func TestUserGroup_GroupIDIsImmutable(t *testing.T) {
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Create group type first so user group create does not 404 on a missing type.
+			{
+				Config: testAccGroupTypeOnlyConfig(groupType, testResourceID),
+			},
 			{
 				Config: testAccUserGroupResourceConfig(groupType, groupID, groupDescription, testResourceID, groupName),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -277,4 +281,17 @@ func TestUserGroup_GroupIDIsImmutable(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccGroupTypeOnlyConfig(groupType, resourceID string) string {
+	return fmt.Sprintf(`
+		provider "cidaas" {
+			base_url = "%s"
+		}
+		resource "cidaas_group_type" "%s" {
+			group_type  = "%s"
+			role_mode   = "no_roles"
+			description = "group type description"
+		}
+	`, acctest.GetBaseURL(), resourceID, groupType)
 }

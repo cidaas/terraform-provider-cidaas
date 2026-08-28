@@ -251,7 +251,7 @@ func (r *AppResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	tflog.Debug(ctx, "resource app updated successfully")
 }
 
-func (r *AppResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *AppResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state AppConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -283,6 +283,8 @@ func (r *AppResource) ImportState(ctx context.Context, req resource.ImportStateR
 // updateAppState updates the Terraform state with data from the API response.
 // During import operations (isImport=true), all fields are updated.
 // During normal reads (isImport=false), only configured fields from tf file are updated.
+//
+//nolint:gocyclo // field mapping is intentionally flat
 func updateAppState(state *AppConfig, resp cidaas.AppResponse, isImport bool) {
 	data := resp.Data
 	state.ID = util.StringValueOrNull(&data.ID)

@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const WEBHOOK_EVENTS_DATASOURCE = "cidaas_webhook_events" // nolint:stylecheck
+const WebhookEventsDataSourceName = "cidaas_webhook_events"
 
 type webhookEventsDataSource struct {
 	BaseDataSource
@@ -20,7 +20,7 @@ type webhookEventsDataSource struct {
 func NewWebhookEvents() datasource.DataSource {
 	return &webhookEventsDataSource{
 		BaseDataSource: NewBaseDataSource(BaseDataSourceConfig{
-			Name:   WEBHOOK_EVENTS_DATASOURCE,
+			Name:   WebhookEventsDataSourceName,
 			Schema: &webhookEventsSchema,
 		}),
 	}

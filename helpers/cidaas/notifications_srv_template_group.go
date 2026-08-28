@@ -186,7 +186,7 @@ func (t *NotificationsSrvTemplateGroup) Delete(ctx context.Context, groupID stri
 }
 
 // FindGraphGroups POST /graph/templategroups/ with graph filter body.
-func (t *NotificationsSrvTemplateGroup) FindGraphGroups(ctx context.Context, filter json.RawMessage) ([]NotificationsSrvTemplateGroupData, error) {
+func (t *NotificationsSrvTemplateGroup) FindGraphGroups(ctx context.Context, filter json.RawMessage) ([]NotificationsSrvTemplateGroupData, error) { //nolint:dupl
 	urlStr := t.segmentURL("graph", "templategroups")
 	client, err := util.NewHTTPClient(urlStr, http.MethodPost, t.AccessToken)
 	if err != nil {
@@ -276,10 +276,10 @@ func (t *NotificationsSrvTemplateGroup) ListTemplateFiltersLocales(ctx context.C
 }
 
 // CopyLocales PUT …/templategroups/:id with copy.locale[] to seed templates for target locales.
-func (t *NotificationsSrvTemplateGroup) CopyLocales(ctx context.Context, groupID string, copy NotificationsSrvCopy) error {
+func (t *NotificationsSrvTemplateGroup) CopyLocales(ctx context.Context, groupID string, localeCopy NotificationsSrvCopy) error {
 	_, err := t.Update(ctx, groupID, NotificationsSrvTemplateGroupRequest{
 		ID:   groupID,
-		Copy: &copy,
+		Copy: &localeCopy,
 	})
 	return err
 }

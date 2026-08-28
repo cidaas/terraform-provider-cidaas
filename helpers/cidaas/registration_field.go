@@ -54,14 +54,14 @@ type RemoteFieldSettings struct {
 	CallOnce       *bool           `json:"callOnce,omitempty"`
 }
 
-type ApiClientSetup struct {
+type ApiClientSetup struct { //nolint:revive // API/json field names
 	CommunicationEP string         `json:"communicationEP,omitempty"`
-	HttpMethod      string         `json:"httpMethod,omitempty"`
-	ApiAccess       APIAccessSetup `json:"apiAccess,omitempty"`
+	HttpMethod      string         `json:"httpMethod,omitempty"` //nolint:revive // API/json field names
+	ApiAccess       APIAccessSetup `json:"apiAccess,omitempty"`  //nolint:revive // API/json field names
 }
 
 type APIAccessSetup struct {
-	ApiAccessType    string          `json:"apiAccessType,omitempty"`
+	ApiAccessType    string          `json:"apiAccessType,omitempty"` //nolint:revive // API/json field names
 	APIKeyDetails    *APIKeySetup    `json:"apikeyDetails,omitempty"`
 	TotpDetails      *TotpSetup      `json:"totpDetails,omitempty"`
 	BasicAuthDetails *BasicAuthSetup `json:"basicAuthDetails,omitempty"`
@@ -147,7 +147,7 @@ func NewRegField(clientConfig ClientConfig) *RegField {
 	return &RegField{clientConfig}
 }
 
-func (r *RegField) Upsert(ctx context.Context, rfc RegistrationFieldConfig) (*RegistrationFieldResponse, error) {
+func (r *RegField) Upsert(ctx context.Context, rfc RegistrationFieldConfig) (*RegistrationFieldResponse, error) { //nolint:dupl
 	var response RegistrationFieldResponse
 	url := fmt.Sprintf("%s/%s", r.BaseURL, "fieldsetup-srv/fields")
 	client, err := util.NewHTTPClient(url, http.MethodPost, r.AccessToken)
@@ -155,12 +155,12 @@ func (r *RegField) Upsert(ctx context.Context, rfc RegistrationFieldConfig) (*Re
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, rfc)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -175,12 +175,12 @@ func (r *RegField) UpdateOrder(ctx context.Context, order RegistrationFieldOrder
 		return err
 	}
 	res, err := client.MakeRequest(ctx, order)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return err
 	}
 	if !response.Success {
@@ -189,7 +189,7 @@ func (r *RegField) UpdateOrder(ctx context.Context, order RegistrationFieldOrder
 	return nil
 }
 
-func (r *RegField) Get(ctx context.Context, fieldKey string) (*RegistrationFieldResponse, error) {
+func (r *RegField) Get(ctx context.Context, fieldKey string) (*RegistrationFieldResponse, error) { //nolint:dupl
 	var response RegistrationFieldResponse
 	url := fmt.Sprintf("%s/%s/%s", r.BaseURL, "fieldsetup-srv/fields", fieldKey)
 	client, err := util.NewHTTPClient(url, http.MethodGet, r.AccessToken)
@@ -197,12 +197,12 @@ func (r *RegField) Get(ctx context.Context, fieldKey string) (*RegistrationField
 		return nil, err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
@@ -215,7 +215,7 @@ func (r *RegField) Delete(ctx context.Context, fieldKey string) error {
 		return err
 	}
 	res, err := client.MakeRequest(ctx, nil)
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
 	defer res.Body.Close()
@@ -231,12 +231,12 @@ func (r *RegField) GetAll(ctx context.Context) ([]RegistrationFieldConfig, error
 	}
 	// fieldsetup-srv/graph/fields expects POST with optional JSON body (empty object for list all).
 	res, err := client.MakeRequest(ctx, map[string]interface{}{})
-	if err = util.HandleResponseError(res, err); err != nil {
+	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err = util.ProcessResponse(res, &response); err != nil {
+	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
 	return response.Data, nil

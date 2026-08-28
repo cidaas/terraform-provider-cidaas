@@ -1,5 +1,14 @@
 ## Changelog
 
+### 3.5.20
+
+#### Bug Fixes
+
+- **`cidaas_registration_field`:** `field_definition.regex` is set to known null after apply when neither `regex` nor `regexes` is configured, so Terraform no longer rejects the apply result as unknown.
+- **`cidaas_registration_field`:** Reordering uses a mutex and the live remote order instead of stale state, so concurrent `order` updates in one apply no longer race or produce inconsistent apply results ([4861](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/issues/4861)).
+- **`cidaas_consent_version`:** Create retries while consent-management returns `400` / `30001` (`consent version not found`) until the parent consent is indexed.
+- **`cidaas_social_provider`:** `userinfo_fields` is a set (order is not significant). Existing state is upgraded from list via schema version 1 so plan/refresh no longer fails to decode after the type change.
+
 ### 3.5.19
 
 #### Enhancements

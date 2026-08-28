@@ -200,11 +200,12 @@ func (r *NotificationProviderConfigResource) ImportState(ctx context.Context, re
 func resolveProviderConfigData(plan, config notificationProviderConfigModel) (json.RawMessage, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var jsonStr string
-	if !config.ConfigDataWO.IsNull() && !config.ConfigDataWO.IsUnknown() {
+	switch {
+	case !config.ConfigDataWO.IsNull() && !config.ConfigDataWO.IsUnknown():
 		jsonStr = config.ConfigDataWO.ValueString()
-	} else if !plan.ConfigDataWO.IsNull() && !plan.ConfigDataWO.IsUnknown() {
+	case !plan.ConfigDataWO.IsNull() && !plan.ConfigDataWO.IsUnknown():
 		jsonStr = plan.ConfigDataWO.ValueString()
-	} else if !plan.ConfigData.IsNull() && !plan.ConfigData.IsUnknown() {
+	case !plan.ConfigData.IsNull() && !plan.ConfigData.IsUnknown():
 		jsonStr = plan.ConfigData.ValueString()
 	}
 	if jsonStr == "" {
@@ -247,12 +248,13 @@ func providerConfigStateFromAPI(api *cidaas.NotificationsSrvProviderConfigModel,
 		ID:             types.StringValue(api.ID),
 		ServiceSetupID: types.StringValue(api.ID),
 	}
-	if !config.ConfigDataWO.IsNull() && !config.ConfigDataWO.IsUnknown() {
+	switch {
+	case !config.ConfigDataWO.IsNull() && !config.ConfigDataWO.IsUnknown():
 		state.ConfigData = types.StringNull()
 		state.ConfigDataWOVersion = plan.ConfigDataWOVersion
-	} else if !plan.ConfigData.IsNull() && !plan.ConfigData.IsUnknown() {
+	case !plan.ConfigData.IsNull() && !plan.ConfigData.IsUnknown():
 		state.ConfigData = plan.ConfigData
-	} else if len(api.ConfigData) > 0 {
+	case len(api.ConfigData) > 0:
 		state.ConfigData = types.StringValue(string(api.ConfigData))
 	}
 	return state

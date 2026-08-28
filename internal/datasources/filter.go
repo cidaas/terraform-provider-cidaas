@@ -200,7 +200,7 @@ func (f FilterConfig) checkFieldMatchesFilter(field any, filter FilterModel) (bo
 	case EXACT, "":
 		result = checkFilterExact(filter.Values, normalizedValue)
 	case SUBSTRING:
-		result, d = checkFilterSubString(filter.Values, normalizedValue)
+		result = checkFilterSubString(filter.Values, normalizedValue)
 	case REGEX:
 		result, d = checkFilterRegex(filter.Values, normalizedValue)
 	}
@@ -255,14 +255,14 @@ func checkFilterExact(values []types.String, actualValue string) bool {
 	return false
 }
 
-func checkFilterSubString(values []types.String, actualValue string) (bool, diag.Diagnostic) {
+func checkFilterSubString(values []types.String, actualValue string) bool {
 	for _, value := range values {
 		if strings.Contains(actualValue, value.ValueString()) {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 func checkFilterRegex(values []types.String, actualValue string) (bool, diag.Diagnostic) {
@@ -296,7 +296,7 @@ func resolveStructFieldByJSON(val any, field string) (reflect.StructField, diag.
 
 		// If there is no JSON tag, compare against the lowercase field name.
 		// This is a workaround for untagged fields
-		if field == strings.ToLower(currentField.Name) {
+		if strings.EqualFold(field, currentField.Name) {
 			return currentField, nil
 		}
 

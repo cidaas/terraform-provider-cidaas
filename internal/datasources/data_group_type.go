@@ -89,7 +89,7 @@ func NewGroupType() datasource.DataSource {
 	}
 }
 
-func (d *GroupTypeDataSource) Read(
+func (d *GroupTypeDataSource) Read( //nolint:dupl
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
@@ -138,11 +138,12 @@ func listGroupTypes(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	return TypedSliceToAny(groupTypes), nil
 }
 
-func parseGroupTypes(groupType cidaas.GroupTypeData) (result GroupType) {
-	result.ID = types.StringValue(groupType.ID)
-	result.RoleMode = types.StringValue(groupType.RoleMode)
-	result.GroupType = types.StringValue(groupType.GroupType)
-	result.Description = types.StringValue(groupType.Description)
-	result.AllowedRoles = util.SetValueOrNull(groupType.AllowedRoles)
-	return result
+func parseGroupTypes(groupType cidaas.GroupTypeData) GroupType {
+	return GroupType{
+		ID:           types.StringValue(groupType.ID),
+		RoleMode:     types.StringValue(groupType.RoleMode),
+		GroupType:    types.StringValue(groupType.GroupType),
+		Description:  types.StringValue(groupType.Description),
+		AllowedRoles: util.SetValueOrNull(groupType.AllowedRoles),
+	}
 }

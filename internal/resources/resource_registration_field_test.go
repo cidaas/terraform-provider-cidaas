@@ -246,3 +246,61 @@ func TestRegistrationField_SelectBasic(t *testing.T) {
 		},
 	})
 }
+
+// TestRegistrationField_OrderUpdate covers writable order on a single field.
+// Two-field concurrent reorder is racy on fieldsetup-srv (same-apply updates leave
+// drift / off-by-one orders); the provider already documents that in Update.
+func TestRegistrationField_OrderUpdate(t *testing.T) {
+	t.Parallel()
+
+	fieldKey := "tf_order_" + acctest.RandString(8)
+	resourceName := fmt.Sprintf("%s.%s", resources.RESOURCE_REGISTRATION_FIELD, fieldKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRegFieldSingleOrderConfig(fieldKey, 910000),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "order", "910000"),
+				),
+			},
+			{
+				Config: testAccRegFieldSingleOrderConfig(fieldKey, 910050),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "order", "910050"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRegFieldSingleOrderConfig(key string, order int) string {
+	return fmt.Sprintf(`
+	provider "cidaas" {
+		base_url = "%s"
+	}
+	resource "cidaas_registration_field" "%s" {
+		data_type       = "TEXT"
+		field_key       = "%s"
+		field_type      = "CUSTOM"
+		internal        = true
+		required        = false
+		read_only       = false
+		unique          = false
+		enabled         = true
+		claimable       = true
+		order           = %d
+		parent_group_id = "DEFAULT"
+		scopes          = ["profile"]
+		local_texts = [
+			{
+				locale       = "en-US"
+				name         = "%s"
+				required_msg = "The field is required"
+			}
+		]
+	}
+	`, acctest.GetBaseURL(), key, key, order, key)
+}

@@ -177,14 +177,7 @@ func (r *HostedPageResource) Create(ctx context.Context, req resource.CreateRequ
 	var plan HostedPageConfig
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(plan.extractHostedPages(ctx)...)
-	hpPayload, diags := prepareHostedPageModel(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		tflog.Error(ctx, "failed to prepare hosted page model", util.H{
-			"errors": resp.Diagnostics.Errors(),
-		})
-		return
-	}
+	hpPayload := prepareHostedPageModel(ctx, plan)
 	res, err := r.cidaasClient.HostedPages.Upsert(ctx, *hpPayload)
 	if err != nil {
 		tflog.Error(ctx, "failed to create hosted page via API", util.H{
@@ -299,11 +292,7 @@ func (r *HostedPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	hpPayload, diags := prepareHostedPageModel(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	hpPayload := prepareHostedPageModel(ctx, plan)
 	_, err := r.cidaasClient.HostedPages.Upsert(ctx, *hpPayload)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update hosted page", util.FormatErrorMessage(err))
@@ -312,7 +301,7 @@ func (r *HostedPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *HostedPageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *HostedPageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) { //nolint:dupl
 	var state HostedPageConfig
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -341,7 +330,7 @@ func (r *HostedPageResource) ImportState(ctx context.Context, req resource.Impor
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func prepareHostedPageModel(_ context.Context, plan HostedPageConfig) (*cidaas.HostedPageModel, diag.Diagnostics) {
+func prepareHostedPageModel(_ context.Context, plan HostedPageConfig) *cidaas.HostedPageModel {
 	hostedPage := cidaas.HostedPageModel{
 		ID:            plan.HostedPageGroupName.ValueString(),
 		DefaultLocale: plan.DefaultLocale.ValueString(),
@@ -357,5 +346,5 @@ func prepareHostedPageModel(_ context.Context, plan HostedPageConfig) (*cidaas.H
 		})
 	}
 	hostedPage.HostedPages = hps
-	return &hostedPage, nil
+	return &hostedPage
 }
