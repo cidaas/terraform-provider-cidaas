@@ -24,6 +24,8 @@ type cidaasProvider struct {
 type Model struct {
 	BaseURL                  types.String `tfsdk:"base_url"`
 	NotificationsContextPath types.String `tfsdk:"notifications_context_path"`
+	ClientID                 types.String `tfsdk:"client_id"`
+	ClientSecret             types.String `tfsdk:"client_secret"`
 }
 
 func Cidaas(version string) func() provider.Provider {
@@ -51,6 +53,17 @@ func (p *cidaasProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 				Description: "URL path segment for notification-srv APIs (default: `notifications-srv`). " +
 					"Used by notification-srv resources and datasources (`cidaas_notifications_template_group`, `cidaas_notification_template`, `cidaas_notification_service_setup`, `cidaas_notification_provider_config`, service setups, graph datasources). " +
 					"Legacy `cidaas_template` / `cidaas_template_group` use `templates-srv` and ignore this setting.",
+			},
+			"client_id": schema.StringAttribute{
+				Optional: true,
+				Description: "The client ID of a non-interactive cidaas client used by Terraform to authenticate with cidaas. " +
+					"Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` environment variable. The provider configuration value takes precedence.",
+			},
+			"client_secret": schema.StringAttribute{
+				Optional:  true,
+				Sensitive: true,
+				Description: "The client secret of a non-interactive cidaas client used by Terraform to authenticate with cidaas. " +
+					"Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variable. The provider configuration value takes precedence.",
 			},
 		},
 	}
@@ -120,21 +133,29 @@ func (p *cidaasProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		"base_url": data.BaseURL.ValueString(),
 	})
 
-	clientID := os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID")
-	clientSecret := os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET")
+	clientID := data.ClientID.ValueString()
+	if clientID == "" {
+		clientID = os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID")
+	}
+	clientSecret := data.ClientSecret.ValueString()
+	if clientSecret == "" {
+		clientSecret = os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET")
+	}
 
 	if clientID == "" || clientSecret == "" {
-		tflog.Error(ctx, "Missing required environment variables", util.H{
+		tflog.Error(ctx, "Missing required client credentials", util.H{
 			"client_id_set":     clientID != "",
 			"client_secret_set": clientSecret != "",
 		})
 		resp.Diagnostics.AddError(
-			"missing environment variables",
-			"env variable TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID or TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET missing "+
-				"please check the document https://registry.terraform.io/providers/Cidaas/cidaas/latest/docs")
+			"missing client credentials",
+			"client_id or client_secret is missing. Set them in the provider configuration "+
+				"(client_id / client_secret) or via the TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID / "+
+				"TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET environment variables (deprecated). "+
+				"Please check the document https://registry.terraform.io/providers/Cidaas/cidaas/latest/docs")
 		return
 	}
-	tflog.Debug(ctx, "Successfully retrieved environment variables", util.H{
+	tflog.Debug(ctx, "Successfully retrieved client credentials", util.H{
 		"client_id_length": len(clientID),
 		"base_url":         data.BaseURL.ValueString(),
 	})

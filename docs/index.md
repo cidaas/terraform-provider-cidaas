@@ -31,9 +31,13 @@ terraform {
 
 Terraform pulls the version configured of the cidaas provider for your infrastructure.
 
-### 2. Setup Environment Variables
+### 2. Configure Client Credentials
 
-To authenticate and authorize Terraform operations with cidaas, set the necessary environment variables. These variables include your cidaas client credentials, allowing the Terraform provider to complete the client credentials flow and generate an access_token. Execute the following commands in your terminal, replacing placeholders with your actual cidaas client ID and client secret.
+To authenticate and authorize Terraform operations with cidaas, the provider needs a set of client credentials so it can complete the client credentials flow and generate an access_token.
+
+You can get a set of client credentials from the cidaas Admin UI by creating a new client. Simply go to the `Apps` > `App Settings` > `Create New App`. It's important to note that when creating the client, you must select the app type as **Non-Interactive**.
+
+The recommended way to provide the credentials is via the `client_id` and `client_secret` attributes in the provider configuration (see step 3 below).
 
 ### For Linux and MacOS:
 ```bash
@@ -47,15 +51,15 @@ Set-Item -Path env:TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID -Value “ENTER CIDAAS CL
 Set-Item -Path env:TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET -Value “ENTER CIDAAS CLIENT SECRET“
 ```
 
-You can get a set of client credentials from the cidaas Admin UI by creating a new client. Simply go to the `Apps` > `App Settings` > `Create New App`. It's important to note that when creating the client, you must select the app type as **Non-Interactive**.
-
 ### 3. Add cidaas Provider Configuration
 
-Next, add the cidaas provider configuration to your Terraform configuration file. Specify the `base_url` parameter to point to your cidaas instance. For reference, check the example folder.
+Next, add the cidaas provider configuration to your Terraform configuration file. Specify the `base_url` parameter to point to your cidaas instance, along with the `client_id` and `client_secret` obtained above. For reference, check the example folder.
 
 ```hcl
 provider "cidaas" {
-  base_url = "https://terraform-cidaas-test-free.cidaas.de"
+  base_url      = "https://terraform-cidaas-test-free.cidaas.de"
+  client_id     = var.cidaas_client_id
+  client_secret = var.cidaas_client_secret
 }
 ```
 
@@ -72,7 +76,9 @@ By following these steps, you integrate the cidaas Terraform provider, enabling 
 
 ### Optional
 
-- `notifications_context_path` (String) URL path segment for notification-srv APIs (default: `notifications-srv`). Used by notification-srv resources and datasources (`cidaas_notifications_template_group`, `cidaas_notification_template`, `cidaas_notification_template_type`, service setups, graph datasources). Legacy `cidaas_template` / `cidaas_template_group` use `templates-srv` and ignore this setting.
+- `client_id` (String) The client ID of a non-interactive cidaas client used by Terraform to authenticate with cidaas. Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` environment variable. The provider configuration value takes precedence.
+- `client_secret` (String, Sensitive) The client secret of a non-interactive cidaas client used by Terraform to authenticate with cidaas. Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variable. The provider configuration value takes precedence.
+- `notifications_context_path` (String) URL path segment for notification-srv APIs (default: `notifications-srv`). Used by notification-srv resources and datasources (`cidaas_notifications_template_group`, `cidaas_notification_template`, `cidaas_notification_service_setup`, `cidaas_notification_provider_config`, service setups, graph datasources). Legacy `cidaas_template` / `cidaas_template_group` use `templates-srv` and ignore this setting.
 
 ## Supported Resources
 
