@@ -171,7 +171,6 @@ func (t *TemplateTypeServiceImpl) Delete(id string) error {
 	return nil
 }
 
-// FindGraphTemplateTypes POST /graph/templatetypes/ with graph filter body.
 func (t *TemplateTypeServiceImpl) FindGraphTemplateTypes(ctx context.Context, filter json.RawMessage) ([]TemplateTypeModel, error) {
 	u := SegmentNotificationsURL(t.ClientConfig, "graph", "templatetypes")
 	httpClient, err := util.NewHTTPClient(u, http.MethodPost, t.AccessToken)

@@ -63,6 +63,7 @@ func NewTemplateResource() resource.Resource {
 }
 
 var templateSchema = schema.Schema{
+	DeprecationMessage: "This resource uses legacy templates-srv and will be deprecated in a future release. For cidaas v4+ notification-srv templates, use `cidaas_notification_template` instead.",
 	MarkdownDescription: "**Deprecated for new designs:** this resource uses legacy **templates-srv**. " +
 		"For notification-srv (`/{notifications_context_path}/templates`), use **`cidaas_notification_template`** instead.\n\n" +
 		"The Template resource in the provider is used to define and manage templates within the Cidaas system." +

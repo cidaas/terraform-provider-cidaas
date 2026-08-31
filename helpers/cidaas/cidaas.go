@@ -12,12 +12,15 @@ import (
 
 type Client struct {
 	Roles                          *Role
+	NotificationsSrvTemplateGroup  *NotificationsSrvTemplateGroup
+	NotificationsSrvTemplate       *NotificationsSrvTemplate
 	NotificationsSrvServiceSetup   *NotificationsSrvServiceSetup
 	NotificationsSrvProviderConfig *NotificationsSrvProviderConfig
 	Scopes                         *Scope
 	ScopeGroup                     *ScopeGroup
 	GroupType                      *GroupType
 	UserGroup                      *UserGroup
+	Webhook                        *Webhook
 	RegFields                      *RegField
 	TemplateGroup                  *TemplateGroup
 	Templates                      *Template
@@ -81,12 +84,15 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 	config.AccessToken = response.AccessToken
 	client := &Client{
 		Roles:                          NewRole(config),
+		NotificationsSrvTemplateGroup:  NewNotificationsSrvTemplateGroup(config),
+		NotificationsSrvTemplate:       NewNotificationsSrvTemplate(config),
 		NotificationsSrvServiceSetup:   NewNotificationsSrvServiceSetup(config),
 		NotificationsSrvProviderConfig: NewNotificationsSrvProviderConfig(config),
 		Scopes:                         NewScope(config),
 		ScopeGroup:                     NewScopeGroup(config),
 		GroupType:                      NewGroupType(config),
 		UserGroup:                      NewUserGroup(config),
+		Webhook:                        NewWebhook(config),
 		RegFields:                      NewRegField(config),
 		TemplateGroup:                  NewTemplateGroup(config),
 		Templates:                      NewTemplate(config),

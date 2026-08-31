@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// Matches notification-srv internal/base.OptInPrefix (template keys that skip processing/usage/verification in id).
 const optInReminderPrefix = "OPTIN_REMINDER"
 
 func templateIsOptInReminder(groupID, templateKey string) bool {
@@ -15,9 +14,6 @@ func templateIsOptInReminder(groupID, templateKey string) bool {
 	return strings.HasPrefix(templateKey, optInReminderPrefix)
 }
 
-// SyntheticTemplateDocumentID builds the template document _id the same way as
-// notification-srv internal/model/template.Template.CreateID when POST /templates/ has no _id.
-// Used to PUT after HTTP 409 "template already found".
 func SyntheticTemplateDocumentID(m NotificationsSrvTemplateModel) string {
 	if m.TemplateKey == "" {
 		return ""

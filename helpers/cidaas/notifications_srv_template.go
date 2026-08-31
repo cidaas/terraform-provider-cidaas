@@ -13,16 +13,12 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
 
-// ErrNotificationTemplateAlreadyExists is returned by Create when POST /templates/ responds with HTTP 409
-// (template document id already present). Callers may retry with PUT /templates/:id using SyntheticTemplateDocumentID.
-var ErrNotificationTemplateAlreadyExists = errors.New("notification-srv: template already exists (HTTP 409)")
+var ErrNotificationTemplateAlreadyExists = errors.New("notification template already exists")
 
-// NotificationsSrvTemplate calls notification-srv /templates and POST graph/templates/ (not legacy templates-srv).
 type NotificationsSrvTemplate struct {
 	ClientConfig
 }
 
-// NewNotificationsSrvTemplate builds a client for notification-srv template endpoints.
 func NewNotificationsSrvTemplate(cfg ClientConfig) *NotificationsSrvTemplate {
 	return &NotificationsSrvTemplate{ClientConfig: cfg}
 }
@@ -31,7 +27,6 @@ func (t *NotificationsSrvTemplate) segmentURL(parts ...string) string {
 	return SegmentNotificationsURL(t.ClientConfig, parts...)
 }
 
-// NotificationsSrvTemplateModel maps notification-srv template.Template JSON for REST.
 type NotificationsSrvTemplateModel struct {
 	ID                  string   `json:"_id,omitempty"`
 	GroupID             string   `json:"groupId,omitempty"`
@@ -54,7 +49,6 @@ type NotificationsSrvTemplateModel struct {
 	IsDraft             bool     `json:"isDraft,omitempty"`
 }
 
-// Get returns a template by document id (GET /templates/:id).
 func (t *NotificationsSrvTemplate) Get(ctx context.Context, id string) (*NotificationsSrvTemplateModel, error) { //nolint:dupl
 	escaped := url.PathEscape(id)
 	urlStr := t.segmentURL("templates", escaped)
@@ -74,7 +68,6 @@ func (t *NotificationsSrvTemplate) Get(ctx context.Context, id string) (*Notific
 	return ParseNotificationSrvDataOrNil[NotificationsSrvTemplateModel](bodyBytes, res.StatusCode)
 }
 
-// GetAllowNotFound returns the template for GET /templates/:id, or (nil, nil) when the server responds with HTTP 404.
 func (t *NotificationsSrvTemplate) GetAllowNotFound(ctx context.Context, id string) (*NotificationsSrvTemplateModel, error) {
 	if strings.TrimSpace(id) == "" {
 		return nil, fmt.Errorf("template id is empty")
@@ -99,7 +92,6 @@ func (t *NotificationsSrvTemplate) GetAllowNotFound(ctx context.Context, id stri
 	}
 }
 
-// Create POST /templates/
 func (t *NotificationsSrvTemplate) Create(ctx context.Context, req NotificationsSrvTemplateModel) (*NotificationsSrvTemplateModel, error) {
 	urlStr := t.segmentURL("templates")
 	client, err := util.NewHTTPClient(urlStr, http.MethodPost, t.AccessToken)
@@ -120,7 +112,6 @@ func (t *NotificationsSrvTemplate) Create(ctx context.Context, req Notifications
 	}
 }
 
-// Update PUT /templates/:id
 func (t *NotificationsSrvTemplate) Update(ctx context.Context, id string, req NotificationsSrvTemplateModel) (*NotificationsSrvTemplateModel, error) {
 	req.ID = id
 	escaped := url.PathEscape(id)
@@ -141,12 +132,8 @@ func (t *NotificationsSrvTemplate) Update(ctx context.Context, id string, req No
 	return ParseNotificationSrvData[NotificationsSrvTemplateModel](bodyBytes, res.StatusCode)
 }
 
-// notificationSrvCodeTemplateCannotDelete is returned when DELETE is not allowed (e.g. system templates).
 const notificationSrvCodeTemplateCannotDelete = "35013"
 
-// Delete DELETE /templates/:id.
-// If the server refuses deletion (HTTP 400, code 35013), returns privilegedNoOp=true and err=nil so Terraform
-// can still remove the resource from state (e.g. tainted replace); the remote template remains.
 func (t *NotificationsSrvTemplate) Delete(ctx context.Context, id string) (bool, error) {
 	escaped := url.PathEscape(id)
 	urlStr := t.segmentURL("templates", escaped)
@@ -183,7 +170,6 @@ func notificationSrvDeleteRefused(body []byte) bool {
 	return strings.Contains(msg, "can not be deleted") || strings.Contains(msg, "cannot be deleted")
 }
 
-// DeleteByGroupAndLocales DELETE /templates?groupId=&locale=
 func (t *NotificationsSrvTemplate) DeleteByGroupAndLocales(ctx context.Context, groupID string, locales []string) error {
 	base := t.segmentURL("templates")
 	u, err := url.Parse(base)
@@ -218,7 +204,6 @@ func (t *NotificationsSrvTemplate) DeleteByGroupAndLocales(ctx context.Context, 
 	return nil
 }
 
-// FindGraph POST /graph/templates/ with a graph filter JSON body (GenericGraphFilter).
 func (t *NotificationsSrvTemplate) FindGraph(ctx context.Context, filter json.RawMessage) ([]NotificationsSrvTemplateModel, error) { //nolint:dupl
 	urlStr := t.segmentURL("graph", "templates")
 	client, err := util.NewHTTPClient(urlStr, http.MethodPost, t.AccessToken)
@@ -246,4 +231,8 @@ func (t *NotificationsSrvTemplate) FindGraph(ctx context.Context, filter json.Ra
 		return nil, nil
 	}
 	return *out, nil
+}
+
+func ComputeNotificationTemplateDocID(m NotificationsSrvTemplateModel) string {
+	return SyntheticTemplateDocumentID(m)
 }

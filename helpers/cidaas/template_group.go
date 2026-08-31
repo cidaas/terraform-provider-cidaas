@@ -57,7 +57,11 @@ func NewTemplateGroup(clientConfig ClientConfig) *TemplateGroup {
 	return &TemplateGroup{clientConfig}
 }
 
-func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) { //nolint:dupl
+func (t *TemplateGroup) Upsert(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) {
+	return t.Create(ctx, tg)
+}
+
+func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) {
 	var response TemplateGroupResponse
 	url := fmt.Sprintf("%s/%s", t.BaseURL, "templates-srv/groups")
 	client, err := util.NewHTTPClient(url, http.MethodPost, t.AccessToken)
@@ -107,7 +111,7 @@ func (t *TemplateGroup) Get(ctx context.Context, groupID string) (*TemplateGroup
 		resp := &TemplateGroupResponse{
 			Status: http.StatusNoContent,
 		}
-		return resp, fmt.Errorf("%w: template group not found by the provider group_id  %s", util.ErrResourceNotFound, groupID)
+		return resp, fmt.Errorf("%w: template group not found by the provider group_id %s", util.ErrResourceNotFound, groupID)
 	}
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err

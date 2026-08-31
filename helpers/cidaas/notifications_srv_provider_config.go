@@ -11,12 +11,10 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
 
-// NotificationsSrvProviderConfig calls notification-srv /providerconfigs.
 type NotificationsSrvProviderConfig struct {
 	ClientConfig
 }
 
-// NewNotificationsSrvProviderConfig builds a client for notification-srv provider config APIs.
 func NewNotificationsSrvProviderConfig(cfg ClientConfig) *NotificationsSrvProviderConfig {
 	return &NotificationsSrvProviderConfig{ClientConfig: cfg}
 }
@@ -25,13 +23,11 @@ func (p *NotificationsSrvProviderConfig) segmentURL(parts ...string) string {
 	return SegmentNotificationsURL(p.ClientConfig, parts...)
 }
 
-// NotificationsSrvProviderConfigModel maps notification-srv provider config JSON.
 type NotificationsSrvProviderConfigModel struct {
 	ID         string          `json:"_id"`
 	ConfigData json.RawMessage `json:"configData"`
 }
 
-// Get returns provider config for a service setup id (GET /providerconfigs/:id).
 func (p *NotificationsSrvProviderConfig) Get(ctx context.Context, serviceSetupID string) (*NotificationsSrvProviderConfigModel, error) { //nolint:dupl
 	escaped := url.PathEscape(serviceSetupID)
 	urlStr := p.segmentURL("providerconfigs", escaped)
@@ -51,7 +47,6 @@ func (p *NotificationsSrvProviderConfig) Get(ctx context.Context, serviceSetupID
 	return ParseNotificationSrvDataOrNil[NotificationsSrvProviderConfigModel](bodyBytes, res.StatusCode)
 }
 
-// Create POST /providerconfigs/ (upsert by _id).
 func (p *NotificationsSrvProviderConfig) Create(ctx context.Context, serviceSetupID string, configData json.RawMessage) (*NotificationsSrvProviderConfigModel, error) {
 	req := NotificationsSrvProviderConfigModel{
 		ID:         serviceSetupID,

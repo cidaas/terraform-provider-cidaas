@@ -17,6 +17,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/user_group"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/usersetup"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/verification"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/webhook"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -160,6 +161,13 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		security.NewSecuritySettings,
 		notification.NewTemplateResource,
 		notification.NewNotificationServiceSetupResource,
+		notification.NewTemplateGroupResource,
+		notification.NewNotificationTemplateResource,
+		notification.NewNotificationTemplateTypeResource,
+		notification.NewNotificationsTemplateGroupResource,
+		notification.NewNotificationsTemplateGroupLocaleResource,
+
+		webhook.NewWebhookResource,
 	}
 }
 
