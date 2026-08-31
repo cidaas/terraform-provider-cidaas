@@ -88,6 +88,9 @@ func (r *translationsResource) Configure(_ context.Context, req resource.Configu
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
 		return
 	}
+	if !c.ValidateResourceVersion("cidaas_translations", &resp.Diagnostics) {
+		return
+	}
 	r.client = c
 }
 

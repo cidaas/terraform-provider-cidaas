@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 )
 
 // Client is the root API client for the cidaas v4 Terraform provider.
 type Client struct {
 	Config                    Config
 	Capabilities              Capabilities
+	CidaasClient              *cidaas.Client
 	HostedPages               *HostedPageGroupService
 	Themes                    *ThemeService
 	Translations              *TranslationsService
@@ -33,19 +34,13 @@ type Config struct {
 }
 
 type Capabilities struct {
-	SupportsV4 bool
-	Version    string
+	SupportsV4    bool
+	Version       string
+	TargetVersion string
 }
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
-}
-
-type versionAPIResponse struct {
-	Success bool `json:"success"`
-	Data    struct {
-		Version string `json:"version"`
-	} `json:"data"`
 }
 
 // NewClient authenticates via client_credentials and probes tenant version.
@@ -71,7 +66,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if err := ExpectStatus(resp, http.StatusOK); err != nil {
 		return nil, fmt.Errorf("token: %w", err)
 	}
@@ -84,14 +79,22 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	}
 	cfg.AccessToken = token.AccessToken
 
-	caps, err := probeCapabilities(ctx, cfg)
+	caps := Capabilities{SupportsV4: true}
+
+	cidaasClient, err := cidaas.NewClient(ctx, cidaas.ClientConfig{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		BaseURL:      cfg.BaseURL,
+		AccessToken:  cfg.AccessToken,
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("v3 cidaas client init: %w", err)
 	}
 
 	c := &Client{
 		Config:       cfg,
 		Capabilities: caps,
+		CidaasClient: cidaasClient,
 	}
 	c.HostedPages = NewHostedPageGroupService(cfg)
 	c.Themes = NewThemeService(cfg)
@@ -105,46 +108,14 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	return c, nil
 }
 
-func probeCapabilities(ctx context.Context, cfg Config) (Capabilities, error) {
-	// Documented probe: GET /public-srv/version → data.version (e.g. "4.0.2").
-	// When the endpoint is absent (404), this v4-only provider continues with SupportsV4=true.
-	versionURL, err := url.JoinPath(cfg.BaseURL, "public-srv/version")
-	if err != nil {
-		return Capabilities{}, err
+// NormalizeVersion converts inputs like "v3", "3", "3.x" to "3.x" and "v4", "4", "4.x" to "4.x".
+func NormalizeVersion(v string) string {
+	v = strings.TrimSpace(strings.ToLower(v))
+	if strings.HasPrefix(v, "v3") || strings.HasPrefix(v, "3") {
+		return "3.x"
 	}
-	httpClient := NewHTTPClient(versionURL, http.MethodGet, cfg.AccessToken)
-	resp, err := httpClient.DoJSON(ctx, nil)
-	if err != nil {
-		return Capabilities{SupportsV4: true}, nil
+	if strings.HasPrefix(v, "v4") || strings.HasPrefix(v, "4") {
+		return "4.x"
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return Capabilities{SupportsV4: true, Version: "unknown"}, nil
-	}
-	if err := ExpectStatus(resp, http.StatusOK); err != nil {
-		return Capabilities{}, fmt.Errorf("version probe: %w", err)
-	}
-	var out versionAPIResponse
-	if err := DecodeJSON(resp, &out); err != nil {
-		return Capabilities{}, fmt.Errorf("version decode: %w", err)
-	}
-	ver := strings.TrimSpace(out.Data.Version)
-	major, err := majorVersion(ver)
-	if err != nil {
-		return Capabilities{}, fmt.Errorf("parse version %q: %w", ver, err)
-	}
-	return Capabilities{
-		SupportsV4: major >= 4,
-		Version:    ver,
-	}, nil
-}
-
-var versionMajorRE = regexp.MustCompile(`^v?(\d+)`)
-
-func majorVersion(v string) (int, error) {
-	m := versionMajorRE.FindStringSubmatch(strings.TrimSpace(v))
-	if len(m) < 2 {
-		return 0, fmt.Errorf("invalid version")
-	}
-	return strconv.Atoi(m[1])
+	return v
 }

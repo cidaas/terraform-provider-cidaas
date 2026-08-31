@@ -200,6 +200,9 @@ func (r *suggestVerificationMethodResource) Configure(_ context.Context, req res
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
 		return
 	}
+	if !c.ValidateResourceVersion("cidaas_suggest_verification_method", &resp.Diagnostics) {
+		return
+	}
 	r.client = c
 }
 

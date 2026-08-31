@@ -29,3 +29,4 @@ coverage.out
 
 # Go
 vendor/
+.golangci.yml

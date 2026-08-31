@@ -1,3 +1,4 @@
+// Package verification implements cidaas verification method and option resources.
 package verification
 
 import (
@@ -266,6 +267,9 @@ func (r *verificationOptionsResource) Configure(_ context.Context, req resource.
 	c, ok := req.ProviderData.(*client.Client)
 	if !ok {
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
+		return
+	}
+	if !c.ValidateResourceVersion("cidaas_verification_options", &resp.Diagnostics) {
 		return
 	}
 	r.client = c

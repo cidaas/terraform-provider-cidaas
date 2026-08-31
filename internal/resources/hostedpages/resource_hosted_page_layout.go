@@ -3,6 +3,7 @@ package hostedpages
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -175,6 +176,9 @@ func (r *hostedPageLayoutResource) Configure(_ context.Context, req resource.Con
 	c, ok := req.ProviderData.(*client.Client)
 	if !ok {
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
+		return
+	}
+	if !c.ValidateResourceVersion("cidaas_hosted_page_layout", &resp.Diagnostics) {
 		return
 	}
 	r.client = c
@@ -369,7 +373,15 @@ func (r *hostedPageLayoutResource) Delete(ctx context.Context, req resource.Dele
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.Layouts.Delete(ctx, state.ID.ValueString()); err != nil {
+	layoutID := state.ID.ValueString()
+	if strings.EqualFold(layoutID, "system-default-layout") {
+		resp.Diagnostics.AddError(
+			"Cannot delete system default layout",
+			fmt.Sprintf("Hosted page layout %q is a system default layout and cannot be deleted from the cidaas platform.", layoutID),
+		)
+		return
+	}
+	if err := r.client.Layouts.Delete(ctx, layoutID); err != nil {
 		resp.Diagnostics.AddError("Delete hosted page layout failed", err.Error())
 		return
 	}

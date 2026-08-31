@@ -88,6 +88,9 @@ func (r *themeResource) Configure(_ context.Context, req resource.ConfigureReque
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
 		return
 	}
+	if !c.ValidateResourceVersion("cidaas_theme", &resp.Diagnostics) {
+		return
+	}
 	r.client = c
 }
 

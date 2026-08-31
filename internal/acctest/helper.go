@@ -34,10 +34,16 @@ func BaseURL() string {
 }
 
 func ProviderConfig() string {
+	verAttr := ""
+	if v := os.Getenv("TERRAFORM_PROVIDER_CIDAAS_VERSION"); v != "" {
+		verAttr = `  cidaas_version = "` + v + `"` + "\n"
+	} else if v := os.Getenv("CIDAAS_VERSION"); v != "" {
+		verAttr = `  cidaas_version = "` + v + `"` + "\n"
+	}
 	return `
 provider "cidaas" {
   base_url = "` + BaseURL() + `"
-}
+` + verAttr + `}
 `
 }
 

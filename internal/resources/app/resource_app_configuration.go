@@ -217,6 +217,9 @@ func (r *appConfigurationResource) Configure(_ context.Context, req resource.Con
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
 		return
 	}
+	if !c.ValidateResourceVersion("cidaas_app_configuration", &resp.Diagnostics) {
+		return
+	}
 	r.client = c
 }
 

@@ -3,6 +3,7 @@ package hostedpages
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -116,6 +117,9 @@ func (r *hostedPageGroupResource) Configure(_ context.Context, req resource.Conf
 	c, ok := req.ProviderData.(*client.Client)
 	if !ok {
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("Expected *client.Client, got %T", req.ProviderData))
+		return
+	}
+	if !c.ValidateResourceVersion("cidaas_hosted_page_group", &resp.Diagnostics) {
 		return
 	}
 	r.client = c
@@ -247,7 +251,15 @@ func (r *hostedPageGroupResource) Delete(ctx context.Context, req resource.Delet
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.HostedPages.Delete(ctx, state.Name.ValueString()); err != nil {
+	grpName := state.Name.ValueString()
+	if strings.EqualFold(grpName, "DEFAULT") || strings.EqualFold(grpName, "admin") {
+		resp.Diagnostics.AddError(
+			"Cannot delete system/default hosted page group",
+			fmt.Sprintf("Hosted page group %q is a system group and cannot be deleted from the cidaas platform. Only custom created hosted page groups can be deleted.", grpName),
+		)
+		return
+	}
+	if err := r.client.HostedPages.Delete(ctx, grpName); err != nil {
 		resp.Diagnostics.AddError("Delete hosted page group failed", err.Error())
 		return
 	}
