@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -19,8 +20,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
+func skipIfV4(t *testing.T) {
+	t.Helper()
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("CIDAAS_VERSION")))
+	if strings.HasPrefix(v, "4") || strings.HasPrefix(v, "v4") {
+		t.Skip("Consent resources are supported on cidaas v3.x only; skipping v3 CRUD test on v4 environment")
+	}
+}
+
 func TestAccConsentResource_Basic(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	name := acctest.RandString(10)
@@ -125,6 +135,7 @@ func testCheckConsentDestroyed(resourceName string) resource.TestCheckFunc {
 
 func TestAccConsentResource_GroupNameUpdateFail(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 	groupName := acctest.RandString(10)
 	name := acctest.RandString(10)
 	updatedName := acctest.RandString(10)
@@ -152,6 +163,7 @@ func TestAccConsentResource_GroupNameUpdateFail(t *testing.T) {
 
 func TestAccConsentResource_EmptyGroupName(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -175,6 +187,7 @@ func TestAccConsentResource_EmptyGroupName(t *testing.T) {
 
 func TestAccConsentResource_MissingRequired(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -211,7 +224,7 @@ func TestAccConsentResource_V4ComingSoon(t *testing.T) {
 					name             = "test-name"
 				}
 				`, acctest.GetBaseURL()),
-				ExpectError: regexp.MustCompile(`Consent resources \(\x60cidaas_consent\x60, \x60cidaas_consent_group\x60, \x60cidaas_consent_version\x60\) are supported on cidaas v3.x. Support for cidaas v4.x \(Trustdesk\) is coming soon.`),
+				ExpectError: regexp.MustCompile(`Consent Resource Coming Soon on v4`),
 			},
 		},
 	})

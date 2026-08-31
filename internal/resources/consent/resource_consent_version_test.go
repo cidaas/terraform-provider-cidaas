@@ -14,6 +14,7 @@ import (
 )
 
 func TestConsentVersion_Basic(t *testing.T) {
+	skipIfV4(t)
 	testResourceID := acctest.RandString(10)
 	groupName := acctest.RandString(10)
 	consentName := acctest.RandString(10)
@@ -122,6 +123,7 @@ func waitUntilConsentReadyForVersionCreate(consentGroupID, consentID, consentNam
 		} else if res != nil {
 			for _, c := range res.Data {
 				if c.ID == consentID || c.ConsentName == consentName {
+					time.Sleep(3 * time.Second)
 					return nil
 				}
 			}

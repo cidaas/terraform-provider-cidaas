@@ -78,6 +78,24 @@ func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (cv ConsentVersionModel) MarshalJSON() ([]byte, error) {
+	type consentVersionModelAlias ConsentVersionModel
+	aux := struct {
+		consentVersionModelAlias
+		Scopes interface{} `json:"scopes,omitempty"`
+	}{
+		consentVersionModelAlias: consentVersionModelAlias(cv),
+	}
+	if len(cv.Scopes) > 0 {
+		wireScopes := make([]consentVersionScopeWire, 0, len(cv.Scopes))
+		for _, s := range cv.Scopes {
+			wireScopes = append(wireScopes, consentVersionScopeWire{Scope: s})
+		}
+		aux.Scopes = wireScopes
+	}
+	return json.Marshal(aux)
+}
+
 type ConsentLocalResponse struct {
 	Success bool              `json:"success,omitempty"`
 	Status  int               `json:"status,omitempty"`

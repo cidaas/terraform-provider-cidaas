@@ -18,6 +18,7 @@ import (
 
 func TestAccConsentGroupResource_Basic(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	description := "Test consent Description"
@@ -113,6 +114,7 @@ func testCheckConsentGroupDestroyed(resourceName string) resource.TestCheckFunc 
 
 func TestAccConsentGroupResource_GoupNameUpdateFail(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	description := "Test consent Description"
@@ -141,6 +143,7 @@ func TestAccConsentGroupResource_GoupNameUpdateFail(t *testing.T) {
 
 func TestAccConsentGroupResource_EmptyGroupName(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 
 	description := "Test consent Description"
 	emptyGroupName := ""
@@ -159,6 +162,7 @@ func TestAccConsentGroupResource_EmptyGroupName(t *testing.T) {
 
 func TestAccConsentGroupResource_MissingRequired(t *testing.T) {
 	t.Parallel()
+	skipIfV4(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

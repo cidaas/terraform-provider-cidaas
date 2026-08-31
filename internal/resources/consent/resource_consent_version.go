@@ -121,8 +121,11 @@ var consentversionSchema = schema.Schema{
 			},
 		},
 		"version": schema.Float64Attribute{
-			Computed:            true,
-			MarkdownDescription: "The version number of the consent instance.",
+			Required:            true,
+			MarkdownDescription: "The version number of the consent. It can not be updated for a specific consent version.",
+			PlanModifiers: []planmodifier.Float64{
+				validators.ImmutableInt64Identifier{},
+			},
 		},
 		"consent_id": schema.StringAttribute{
 			Required:            true,
@@ -222,6 +225,7 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 	}
 
 	consentVersion := cidaas.ConsentVersionModel{
+		Version:        plan.Version.ValueFloat64(),
 		ConsentID:      plan.ConsentID.ValueString(),
 		ConsentType:    plan.ConsentType.ValueString(),
 		Scopes:         scopes,
