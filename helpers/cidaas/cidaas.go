@@ -22,6 +22,9 @@ type Client struct {
 	UserGroup                      *UserGroup
 	Webhook                        *Webhook
 	RegFields                      *RegField
+	Consent                        *Consent
+	ConsentGroup                   *ConsentGroup
+	ConsentVersion                 *ConsentVersion
 	TemplateGroup                  *TemplateGroup
 	Templates                      *Template
 	TemplateType                   *TemplateTypeServiceImpl
@@ -94,6 +97,9 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		UserGroup:                      NewUserGroup(config),
 		Webhook:                        NewWebhook(config),
 		RegFields:                      NewRegField(config),
+		Consent:                        NewConsent(config),
+		ConsentGroup:                   NewConsentGroup(config),
+		ConsentVersion:                 NewConsentVersion(config),
 		TemplateGroup:                  NewTemplateGroup(config),
 		Templates:                      NewTemplate(config),
 		TemplateType:                   NewTemplateType(config),

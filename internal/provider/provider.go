@@ -8,6 +8,7 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/app"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/consent"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/notification"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/registration_field"
@@ -166,6 +167,10 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		notification.NewNotificationTemplateTypeResource,
 		notification.NewNotificationsTemplateGroupResource,
 		notification.NewNotificationsTemplateGroupLocaleResource,
+
+		consent.NewConsentResource,
+		consent.NewConsentGroupResource,
+		consent.NewConsentVersionResource,
 
 		webhook.NewWebhookResource,
 	}
