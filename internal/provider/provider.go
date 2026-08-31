@@ -9,6 +9,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/app"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/consent"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/group"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/notification"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/registration_field"
@@ -150,6 +151,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		app.NewLegacyAppResource,
 		verification.NewSuggestVerificationMethodResource,
 		verification.NewVerificationOptionsResource,
+		group.NewGroupSelectionResource,
+		group.NewGroupVerificationFilterResource,
 
 		// Shared v3 Priority Resources organized in domain subpackages
 		registrationfield.NewRegFieldResource,

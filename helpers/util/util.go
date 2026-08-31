@@ -7,10 +7,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// GenerateUUID generates a new UUID v4 string.
+func GenerateUUID() string {
+	return uuid.New().String()
+}
 
 const (
 	ISO8601TimeFormat = "2006-01-02T15:04:05Z"

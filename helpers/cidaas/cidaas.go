@@ -30,6 +30,8 @@ type Client struct {
 	TemplateType                   *TemplateTypeServiceImpl
 	PasswordPolicy                 *PasswordPolicy
 	SecuritySettings               *SecuritySettings
+	GroupSelection                 *GroupSelection
+	GroupVerificationFilter        *GroupVerificationFilter
 }
 
 type ClientConfig struct {
@@ -105,6 +107,8 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		TemplateType:                   NewTemplateType(config),
 		PasswordPolicy:                 NewPasswordPolicy(config),
 		SecuritySettings:               NewSecuritySettings(config),
+		GroupSelection:                 NewGroupSelection(config),
+		GroupVerificationFilter:        NewGroupVerificationFilter(config),
 	}
 	return client, nil
 }

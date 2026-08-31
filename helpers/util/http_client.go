@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // HTTPClient provides a configurable HTTP client with authentication and error handling.
@@ -76,7 +77,11 @@ func (h *HTTPClient) MakeRequest(ctx context.Context, requestBody interface{}) (
 		return nil, fmt.Errorf("failed to create HTTP request, %w", err)
 	}
 	if h.Token != "" {
-		req.Header.Add("Authorization", "Bearer "+h.Token)
+		if strings.HasPrefix(h.Token, "Bearer ") || strings.HasPrefix(h.Token, "bearer ") {
+			req.Header.Add("Authorization", h.Token)
+		} else {
+			req.Header.Add("Authorization", "Bearer "+h.Token)
+		}
 	}
 	for k, v := range h.Headers {
 		req.Header.Add(k, v)

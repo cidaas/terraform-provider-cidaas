@@ -36,6 +36,8 @@ const (
 	RESOURCE_NOTIFICATION_PROVIDER_CONFIG        = "cidaas_notification_provider_config"        //nolint:revive
 	RESOURCE_USER_GROUP                          = "cidaas_user_groups"                         //nolint:revive
 	RESOURCE_WEBHOOK                             = "cidaas_webhook"                             //nolint:revive
+	RESOURCE_GROUP_SELECTION                     = "cidaas_group_selection"                     //nolint:revive
+	RESOURCE_GROUP_VERIFICATION_FILTER           = "cidaas_group_verification_filter"           //nolint:revive
 )
 
 //nolint:revive
