@@ -1,3 +1,7 @@
+# Example: cidaas_suggest_verification_method Resource (v4 Trustdesk)
+#
+# Defines rules for suggesting MFA verification methods during user login.
+
 resource "cidaas_suggest_verification_method" "sample" {
   name        = "web-suggest-methods"
   description = "Standard suggest flow for interactive web apps"

@@ -1,3 +1,8 @@
+# Example: cidaas_hosted_page_layout Resource (v4 Trustdesk)
+#
+# This resource configures hosted page layouts, linking a hosted_page_group
+# with a theme CSS file, custom branding colors, and translation sets.
+
 resource "cidaas_hosted_page_group" "example" {
   name           = "example-hpgroup"
   default_locale = "en"

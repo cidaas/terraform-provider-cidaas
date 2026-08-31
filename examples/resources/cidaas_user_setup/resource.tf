@@ -1,3 +1,8 @@
+# Example: cidaas_user_setup Resource (v4 Trustdesk)
+#
+# Configures global registration flow rules, required fields, deduplication settings,
+# verification policies, and consent references for user onboarding.
+
 resource "cidaas_user_setup" "sample" {
   name        = "developer-registration-setup"
   description = "Registration setup for developer clients"

@@ -1,3 +1,7 @@
+# Example: cidaas_verification_options Resource (v4 Trustdesk)
+#
+# Configures MFA verification options and links to suggest_verification_method configurations.
+
 resource "cidaas_suggest_verification_method" "web" {
   name        = "web-suggest-methods"
   description = "Standard suggest flow for interactive web apps"
