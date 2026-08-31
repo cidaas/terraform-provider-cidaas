@@ -38,11 +38,13 @@ const (
 	RESOURCE_WEBHOOK                             = "cidaas_webhook"                             //nolint:revive
 )
 
+//nolint:revive
 type BaseResourceConfig struct {
 	Name   string
 	Schema *schema.Schema
 }
 
+//nolint:revive
 type BaseResource struct {
 	Config       BaseResourceConfig
 	CidaasClient *cidaas.Client

@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+//nolint:revive
 type RoleResource struct {
 	base.BaseResource
 }

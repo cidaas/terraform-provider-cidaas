@@ -29,11 +29,11 @@ func TestRegistrationField_CheckBoxBasic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"order"},
-				ImportStateId:     fieldKey,
+				ImportStateId:           fieldKey,
 			},
 			{
 				Config: testRegFieldConfig("CHECKBOX", fieldKey, false),
@@ -63,11 +63,11 @@ func TestRegistrationField_GroupBasic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"order"},
-				ImportStateId:     fieldKey,
+				ImportStateId:           fieldKey,
 			},
 			{
 				Config: testRegFieldConfig("TEXT", fieldKey, false),
@@ -135,11 +135,11 @@ func TestRegistrationField_TextBasic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"order"},
-				ImportStateId:     fieldKey,
+				ImportStateId:           fieldKey,
 			},
 		},
 	})
@@ -241,11 +241,11 @@ func TestRegistrationField_SelectBasic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      testResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            testResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"order"},
-				ImportStateId:     fieldKey,
+				ImportStateId:           fieldKey,
 			},
 		},
 	})
