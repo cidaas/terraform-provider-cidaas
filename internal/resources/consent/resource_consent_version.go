@@ -29,6 +29,7 @@ const (
 	URL    = "URL"
 )
 
+//nolint:revive
 type ConsentVersionResource struct {
 	base.BaseResource
 	cidaasClient *cidaas.Client
@@ -45,6 +46,7 @@ func NewConsentVersionResource() resource.Resource {
 	}
 }
 
+//nolint:revive
 type ConsentVersionConfig struct {
 	ID             types.String  `tfsdk:"id"`
 	Version        types.Float64 `tfsdk:"version"`
@@ -57,6 +59,7 @@ type ConsentVersionConfig struct {
 	consentLocale []*ConsentLocale
 }
 
+//nolint:revive
 type ConsentLocale struct {
 	Content types.String `tfsdk:"content"`
 	Locale  types.String `tfsdk:"locale"`
@@ -177,6 +180,7 @@ var consentversionSchema = schema.Schema{
 	},
 }
 
+//nolint:dupl
 func (r *ConsentVersionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return

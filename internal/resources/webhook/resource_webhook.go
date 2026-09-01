@@ -41,6 +41,7 @@ func NewWebhookResource() resource.Resource {
 	}
 }
 
+//nolint:revive
 type WebhookConfig struct {
 	ID               types.String `tfsdk:"id"`
 	AuthType         types.String `tfsdk:"auth_type"`

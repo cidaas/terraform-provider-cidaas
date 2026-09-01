@@ -115,6 +115,7 @@ func (s *SocialProvider) Delete(ctx context.Context, providerName, providerID st
 	return nil
 }
 
+//nolint:dupl
 func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, error) {
 	var response AllSocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/providers/enabled/list")

@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+//nolint:revive
 type ConsentGroupResource struct {
 	base.BaseResource
 	cidaasClient *cidaas.Client
@@ -36,6 +37,7 @@ func NewConsentGroupResource() resource.Resource {
 	}
 }
 
+//nolint:revive
 type ConsentGroupConfig struct {
 	ID          types.String `tfsdk:"id"`
 	GroupName   types.String `tfsdk:"group_name"`
@@ -89,6 +91,7 @@ var consentGroupSchema = schema.Schema{
 	},
 }
 
+//nolint:dupl
 func (r *ConsentGroupResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return

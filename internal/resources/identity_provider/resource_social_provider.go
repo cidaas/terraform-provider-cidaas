@@ -33,7 +33,7 @@ func NewSocialProviderResource() resource.Resource {
 	}
 }
 
-func (r *SocialProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *SocialProviderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Social Identity Providers in Cidaas.",
 		Attributes: map[string]schema.Attribute{

@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+//nolint:revive
 type ConsentConfig struct {
 	ID             types.String `tfsdk:"id"`
 	Name           types.String `tfsdk:"name"`
@@ -32,6 +33,7 @@ type ConsentConfig struct {
 	UpdatedAt      types.String `tfsdk:"updated_at"`
 }
 
+//nolint:revive
 type ConsentResource struct {
 	base.BaseResource
 	cidaasClient *cidaas.Client
@@ -104,6 +106,7 @@ var consentSchema = schema.Schema{
 	},
 }
 
+//nolint:dupl
 func (r *ConsentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return

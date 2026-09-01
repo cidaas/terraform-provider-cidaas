@@ -1,3 +1,4 @@
+//nolint:revive
 package identity_provider
 
 import (
@@ -31,7 +32,7 @@ func NewCustomProviderResource() resource.Resource {
 	}
 }
 
-func (r *CustomProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *CustomProviderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Custom Identity Providers in Cidaas.",
 		Attributes: map[string]schema.Attribute{

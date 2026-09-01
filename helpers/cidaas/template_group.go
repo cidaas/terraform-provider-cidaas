@@ -61,6 +61,7 @@ func (t *TemplateGroup) Upsert(ctx context.Context, tg TemplateGroupModel) (*Tem
 	return t.Create(ctx, tg)
 }
 
+//nolint:dupl
 func (t *TemplateGroup) Create(ctx context.Context, tg TemplateGroupModel) (*TemplateGroupResponse, error) {
 	var response TemplateGroupResponse
 	url := fmt.Sprintf("%s/%s", t.BaseURL, "templates-srv/groups")

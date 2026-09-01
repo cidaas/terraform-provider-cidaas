@@ -1,3 +1,4 @@
+//nolint:revive
 package identity_provider
 
 import (
@@ -29,7 +30,7 @@ func NewFederationProviderResource() resource.Resource {
 	}
 }
 
-func (r *FederationProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *FederationProviderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Native Federated Identity Providers (v4.x) via /federation/providers.",
 		Attributes: map[string]schema.Attribute{
