@@ -11,6 +11,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/consent"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/group"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/hostedpages"
+	identityprovider "github.com/Cidaas/terraform-provider-cidaas/internal/resources/identity_provider"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/notification"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/registration_field"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/role"
@@ -176,6 +177,9 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		consent.NewConsentVersionResource,
 
 		webhook.NewWebhookResource,
+		identityprovider.NewCustomProviderResource,
+		identityprovider.NewSocialProviderResource,
+		identityprovider.NewFederationProviderResource,
 	}
 }
 

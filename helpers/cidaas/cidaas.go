@@ -32,6 +32,9 @@ type Client struct {
 	SecuritySettings               *SecuritySettings
 	GroupSelection                 *GroupSelection
 	GroupVerificationFilter        *GroupVerificationFilter
+	CustomProvider                 *CustomProvider
+	SocialProvider                 *SocialProvider
+	FederationProvider             *FederationProvider
 }
 
 type ClientConfig struct {
@@ -78,7 +81,7 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		"grant_type":    "client_credentials",
 	}
 	res, err := httpClient.MakeRequest(ctx, payload)
-	if err := util.HandleResponseError(res, err); err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token %s", err.Error())
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -109,6 +112,9 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		SecuritySettings:               NewSecuritySettings(config),
 		GroupSelection:                 NewGroupSelection(config),
 		GroupVerificationFilter:        NewGroupVerificationFilter(config),
+		CustomProvider:                 NewCustomProvider(config),
+		SocialProvider:                 NewSocialProvider(config),
+		FederationProvider:             NewFederationProvider(config),
 	}
 	return client, nil
 }

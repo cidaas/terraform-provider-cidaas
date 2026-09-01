@@ -38,6 +38,7 @@ const (
 	RESOURCE_WEBHOOK                             = "cidaas_webhook"                             //nolint:revive
 	RESOURCE_GROUP_SELECTION                     = "cidaas_group_selection"                     //nolint:revive
 	RESOURCE_GROUP_VERIFICATION_FILTER           = "cidaas_group_verification_filter"           //nolint:revive
+	RESOURCE_FEDERATION_PROVIDER                 = "cidaas_federation_provider"                 //nolint:revive
 )
 
 //nolint:revive
