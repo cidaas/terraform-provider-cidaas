@@ -31,7 +31,7 @@ func NewCustomProviderResource() resource.Resource {
 	}
 }
 
-func (r *CustomProviderResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *CustomProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Custom Identity Providers in Cidaas.",
 		Attributes: map[string]schema.Attribute{
@@ -137,6 +137,7 @@ func (r *CustomProviderResource) Create(ctx context.Context, req resource.Create
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+//nolint:dupl
 func (r *CustomProviderResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state customProviderModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)

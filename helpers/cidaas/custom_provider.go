@@ -111,6 +111,7 @@ func (c *CustomProvider) UpdateCustomProvider(ctx context.Context, cp *CustomPro
 	return nil
 }
 
+//nolint:dupl
 func (c *CustomProvider) GetCustomProvider(ctx context.Context, providerName string) (*CustomProviderResponse, error) {
 	var response CustomProviderResponse
 	url := fmt.Sprintf("%s/%s/%s", c.BaseURL, "providers-srv/custom", providerName)

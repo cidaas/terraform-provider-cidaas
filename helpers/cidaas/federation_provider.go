@@ -140,6 +140,7 @@ func (f *FederationProvider) Get(ctx context.Context, id string) (*ProviderConfi
 	return &response, nil
 }
 
+//nolint:dupl
 func (f *FederationProvider) Update(ctx context.Context, id string, pc *ProviderConfigModel) (*ProviderConfigResponse, error) {
 	var response ProviderConfigResponse
 	url := fmt.Sprintf("%s/%s/%s", f.BaseURL, "federation/providers", id)

@@ -29,7 +29,7 @@ func NewFederationProviderResource() resource.Resource {
 	}
 }
 
-func (r *FederationProviderResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *FederationProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Native Federated Identity Providers (v4.x) via /federation/providers.",
 		Attributes: map[string]schema.Attribute{
@@ -109,6 +109,7 @@ func (r *FederationProviderResource) Create(ctx context.Context, req resource.Cr
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+//nolint:dupl
 func (r *FederationProviderResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state federationProviderModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -178,7 +179,7 @@ type federationProviderModel struct {
 	Owner                 types.String `tfsdk:"owner"`
 }
 
-func prepareFederationProviderModel(ctx context.Context, plan federationProviderModel) *cidaas.ProviderConfigModel {
+func prepareFederationProviderModel(_ context.Context, plan federationProviderModel) *cidaas.ProviderConfigModel {
 	ownerVal := plan.Owner.ValueString()
 	if ownerVal == "" {
 		ownerVal = "client"

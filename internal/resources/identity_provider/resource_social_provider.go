@@ -1,3 +1,4 @@
+//nolint:revive
 package identity_provider
 
 import (
@@ -32,7 +33,7 @@ func NewSocialProviderResource() resource.Resource {
 	}
 }
 
-func (r *SocialProviderResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *SocialProviderResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages Social Identity Providers in Cidaas.",
 		Attributes: map[string]schema.Attribute{
@@ -91,6 +92,7 @@ func (r *SocialProviderResource) Schema(ctx context.Context, req resource.Schema
 	}
 }
 
+//nolint:dupl
 func (r *SocialProviderResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan socialProviderModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -132,6 +134,7 @@ func (r *SocialProviderResource) Read(ctx context.Context, req resource.ReadRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+//nolint:dupl
 func (r *SocialProviderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan socialProviderModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
