@@ -79,29 +79,97 @@ provider "cidaas" {
 | Resource | API Endpoint | Description |
 |----------|--------------|-------------|
 | `cidaas_app_configuration` | `/app-srv/apps` | App configuration (appv3) |
+| `cidaas_federation_provider` | `/federation/providers` | Enterprise federated identity providers |
+| `cidaas_group_selection` | `/groups-srv/selection` | Group selections |
+| `cidaas_group_type` | `/groups-srv/grouptypes` | Group types & role modes |
+| `cidaas_group_verification_filter` | `/groups-srv/verification-filter` | Group verification filters |
 | `cidaas_theme` | `/hostedpages-srv/themes` | Custom hosted page themes |
 | `cidaas_translations` | `/hostedpages-srv/translations` | Hosted page localization strings |
-| `cidaas_hosted_page_group` | `/hostedpages-srv/hpgroup` | Hosted page groups |
-| `cidaas_hosted_page_layout` | `/hostedpages-srv/hosted-page-layouts` | Hosted page layouts |
 | `cidaas_user_setup` | `/user-srv/usersetup` | Tenant user registration setup |
 | `cidaas_suggest_verification_method` | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods |
 | `cidaas_verification_options` | `/verification-actions-srv/verification-options` | Verification options |
-| `cidaas_app` | *Deprecated stub* | Legacy appv1 resource (deprecated in favor of `cidaas_app_configuration`) |
 
-### Shared Resources (v3 & v4)
+### v3.x Only
 | Resource | Description |
 |----------|-------------|
-| `cidaas_registration_field` | Registration field definitions & regex validators |
-| `cidaas_role` | Tenant roles |
-| `cidaas_user_groups` | User groups |
-| `cidaas_scope` | OAuth scopes |
-| `cidaas_scope_group` | Scope groups |
-| `cidaas_password_policy` | Password policies |
-| `cidaas_security_settings` | Tenant security settings |
-| `cidaas_template` | Notification templates |
-| `cidaas_notification_service_setup` | Notification service setup |
+| `cidaas_consent` | Consent definitions (v3.x) |
+| `cidaas_consent_group` | Consent groups (v3.x) |
+| `cidaas_consent_version` | Consent version management (v3.x) |
+| `cidaas_app` | Legacy appv1 resource (deprecated in favor of `cidaas_app_configuration`) |
+
+### Shared Resources (v3 & v4)
+| Resource | API Endpoint / Service | Description |
+|----------|------------------------|-------------|
+| `cidaas_custom_provider` | `providers-srv` | Custom OpenID Connect & OAuth2 identity providers (`owner: client`) |
+| `cidaas_social_provider` | `providers-srv` | Social identity providers (Google, Facebook, Apple, LinkedIn, etc.) |
+| `cidaas_hosted_page_group` | `hostedpages-srv` | Hosted page groups |
+| `cidaas_hosted_page_layout` | `hostedpages-srv` | Hosted page layouts |
+| `cidaas_registration_field` | `registration-setup-srv` | Registration field definitions & regex validators |
+| `cidaas_role` | `roles-srv` | Tenant roles |
+| `cidaas_user_groups` | `groups-srv` | User groups |
+| `cidaas_scope` | `scopes-srv` | OAuth scopes |
+| `cidaas_scope_group` | `scopes-srv` | Scope groups |
+| `cidaas_password_policy` | `password-policy-srv` | Password policies |
+| `cidaas_security_settings` | `security-srv` | Tenant security settings |
+| `cidaas_notification_template` | `templates-srv` | Notification templates |
+| `cidaas_notification_template_type` | `templates-srv` | Notification template types |
+| `cidaas_notifications_template_group` | `templates-srv` | Notification template groups |
+| `cidaas_notifications_template_group_locale` | `templates-srv` | Notification template group locales |
+| `cidaas_notification_service_setup` | `notification-srv` | Notification service setup |
+| `cidaas_webhook` | `webhook-srv` | Webhooks and event subscriptions |
 
 See [docs/](docs/) for detailed attribute schemas and documentation for each resource, and [examples/resources/](examples/resources/) for sample Terraform HCL configurations.
+
+---
+
+## Identity Provider Management (`v3` & `v4`)
+
+The provider supports full CRUD operations for Custom, Social, and Federated identity providers across both cidaas **v3.x** and **v4.x (Trustdesk)** environments:
+
+- **`cidaas_custom_provider`**: Custom OpenID Connect (`OPENID_CONNECT`) and OAuth2 (`OAUTH2`) providers.
+- **`cidaas_social_provider`**: Social identity providers (Google, Facebook, Apple, LinkedIn, etc.).
+- **`cidaas_federation_provider`**: Enterprise federated identity providers.
+
+### Admin UI Compatibility (`owner = "client"`)
+
+> [!IMPORTANT]
+> For cidaas **v4.x (Trustdesk)**, identity providers require `owner = "client"` in the API payload for full visibility and editability in the Admin UI dashboard (`adminui-srv`). The Terraform provider automatically defaults `owner = "client"` if omitted.
+
+### Example Configuration:
+
+```hcl
+# Custom OpenID Connect Provider
+resource "cidaas_custom_provider" "my_oidc_provider" {
+  provider_name          = "custom_oidc"
+  display_name           = "My Custom OIDC Provider"
+  standard_type          = "OPENID_CONNECT"
+  logo_url               = "https://cdn.cidaas.de/icons/oidc.svg"
+  owner                  = "client"
+  client_id              = "my-client-id"
+  client_secret          = "my-client-secret"
+  authorization_endpoint = "https://auth.example.com/auth"
+  token_endpoint         = "https://auth.example.com/token"
+  userinfo_endpoint      = "https://auth.example.com/userinfo"
+  scopes                 = ["openid", "profile", "email"]
+  domains                = ["example.com"]
+}
+
+# Social Provider (Google)
+resource "cidaas_social_provider" "google_login" {
+  provider_name          = "google"
+  display_name           = "Google Login"
+  standard_type          = "OAUTH2"
+  logo_url               = "https://cdn.cidaas.de/icons/google.svg"
+  owner                  = "client"
+  client_id              = "google-client-id"
+  client_secret          = "google-client-secret"
+  authorization_endpoint = "https://accounts.google.com/o/oauth2/auth"
+  token_endpoint         = "https://oauth2.googleapis.com/token"
+  userinfo_endpoint      = "https://openidconnect.googleapis.com/v1/userinfo"
+  scopes                 = ["openid", "email", "profile"]
+  domains                = ["gmail.com"]
+}
+```
 
 ---
 
