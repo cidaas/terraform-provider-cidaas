@@ -74,6 +74,7 @@ func NewCustomProvider(clientConfig ClientConfig) *CustomProvider {
 	return &CustomProvider{clientConfig}
 }
 
+//nolint:dupl
 func makeCustomProviderRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
 	var res *http.Response
 	var err error

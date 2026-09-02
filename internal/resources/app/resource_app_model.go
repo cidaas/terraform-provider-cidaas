@@ -18,6 +18,7 @@ const (
 	UPDATE = 4
 )
 
+//nolint:revive
 type AppConfig struct {
 	ID                              types.String `tfsdk:"id"`
 	ClientType                      types.String `tfsdk:"client_type"`
@@ -180,6 +181,7 @@ type LoginSPI struct {
 	SpiURL        types.String `tfsdk:"spi_url"`
 }
 
+//nolint:revive
 type AppMobileSettings struct {
 	TeamID      types.String `tfsdk:"team_id"`
 	BundleID    types.String `tfsdk:"bundle_id"`

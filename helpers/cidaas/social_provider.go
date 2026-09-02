@@ -64,6 +64,7 @@ func NewSocialProvider(clientConfig ClientConfig) *SocialProvider {
 	return &SocialProvider{clientConfig}
 }
 
+//nolint:dupl
 func makeRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
 	var res *http.Response
 	var err error
