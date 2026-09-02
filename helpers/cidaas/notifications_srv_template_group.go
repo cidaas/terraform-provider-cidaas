@@ -247,10 +247,20 @@ func (t *NotificationsSrvTemplateGroup) ListTemplateFiltersLocales(ctx context.C
 }
 
 func (t *NotificationsSrvTemplateGroup) CopyLocales(ctx context.Context, groupID string, localeCopy NotificationsSrvCopy) error {
-	_, err := t.Update(ctx, groupID, NotificationsSrvTemplateGroupRequest{
-		ID:   groupID,
-		Copy: &localeCopy,
-	})
+	existing, err := t.Get(ctx, groupID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch template group %q before copying locales: %w", groupID, err)
+	}
+	req := NotificationsSrvTemplateGroupRequest{
+		ID:            groupID,
+		TGType:        existing.TGType,
+		Description:   existing.Description,
+		DefaultLocale: existing.DefaultLocale,
+		CommSettings:  existing.CommSettings,
+		Copy:          &localeCopy,
+	}
+
+	_, err = t.Update(ctx, groupID, req)
 	return err
 }
 
