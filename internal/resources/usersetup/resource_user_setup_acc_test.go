@@ -19,6 +19,7 @@ func TestAccUserSetup_Basic(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	name := "tf-user-setup-" + acctest.RandString(8)
 	resourceName := "cidaas_user_setup.test"
@@ -64,6 +65,7 @@ func TestAccUserSetup_RequiredFieldsSubset(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(t) },
@@ -91,6 +93,7 @@ func TestAccUserSetup_InvalidEnum(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(t) },

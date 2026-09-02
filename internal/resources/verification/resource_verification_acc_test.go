@@ -19,6 +19,7 @@ func TestAccSuggestVerificationMethod_Basic(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	name := "tf-svm-" + acctest.RandString(8)
 	resourceName := "cidaas_suggest_verification_method.test"
@@ -58,6 +59,7 @@ func TestAccVerificationOptions_Linked(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	suffix := acctest.RandString(8)
 	suggestName := "tf-svm-" + suffix
@@ -102,6 +104,7 @@ func TestAccSuggestVerificationMethod_MethodOverlap(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(t) },
@@ -135,6 +138,7 @@ func TestAccVerificationOptions_InvalidSetting(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(t) },

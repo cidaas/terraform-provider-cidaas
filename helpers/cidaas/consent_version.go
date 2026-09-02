@@ -82,16 +82,10 @@ func (cv ConsentVersionModel) MarshalJSON() ([]byte, error) {
 	type consentVersionModelAlias ConsentVersionModel
 	aux := struct {
 		consentVersionModelAlias
-		Scopes interface{} `json:"scopes,omitempty"`
+		Scopes []string `json:"scopes,omitempty"`
 	}{
 		consentVersionModelAlias: consentVersionModelAlias(cv),
-	}
-	if len(cv.Scopes) > 0 {
-		wireScopes := make([]consentVersionScopeWire, 0, len(cv.Scopes))
-		for _, s := range cv.Scopes {
-			wireScopes = append(wireScopes, consentVersionScopeWire{Scope: s})
-		}
-		aux.Scopes = wireScopes
+		Scopes:                   cv.Scopes,
 	}
 	return json.Marshal(aux)
 }
@@ -133,11 +127,14 @@ var consentVersionRetryDelay = func(attempt int) time.Duration {
 
 func isConsentVersionNotIndexed(err error) bool {
 	var statusErr *util.UnexpectedStatusError
-	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
+	if !errors.As(err, &statusErr) {
+		return false
+	}
+	if statusErr.StatusCode != http.StatusBadRequest && statusErr.StatusCode != http.StatusExpectationFailed {
 		return false
 	}
 	body := strings.ToLower(statusErr.Body)
-	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found")
+	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found") || strings.Contains(body, "locale")
 }
 
 func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
@@ -202,9 +199,24 @@ func (c *ConsentVersion) UpsertLocal(ctx context.Context, consentLocal ConsentLo
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, consentLocal)
-	if err := util.HandleResponseError(res, err); err != nil {
-		return nil, err
+	var res *http.Response
+	for attempt := 0; attempt < 5; attempt++ {
+		res, err = client.MakeRequest(ctx, consentLocal)
+		handleErr := util.HandleResponseError(res, err)
+		if handleErr == nil {
+			break
+		}
+		if res != nil {
+			_ = res.Body.Close()
+		}
+		var statusErr *util.UnexpectedStatusError
+		if errors.As(handleErr, &statusErr) && (statusErr.StatusCode == http.StatusExpectationFailed || statusErr.StatusCode >= 500) {
+			if attempt < 4 {
+				time.Sleep(time.Duration(1<<attempt) * time.Second)
+				continue
+			}
+		}
+		return nil, handleErr
 	}
 	defer func() { _ = res.Body.Close() }()
 

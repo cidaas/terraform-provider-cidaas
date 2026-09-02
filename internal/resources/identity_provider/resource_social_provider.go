@@ -9,6 +9,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -31,6 +32,28 @@ func NewSocialProviderResource() resource.Resource {
 			},
 		),
 	}
+}
+
+func (r *SocialProviderResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	c, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *client.Client, got: %T.", req.ProviderData),
+		)
+		return
+	}
+	if c.Capabilities.TargetVersion == "4.x" {
+		resp.Diagnostics.AddError(
+			"Incompatible Resource",
+			"The resource `cidaas_social_provider` is a legacy v3 resource and is not supported on cidaas v4.x. Use `cidaas_federation_provider` instead.",
+		)
+		return
+	}
+	r.BaseResource.Configure(ctx, req, resp)
 }
 
 func (r *SocialProviderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {

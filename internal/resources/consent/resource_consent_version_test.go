@@ -14,7 +14,7 @@ import (
 )
 
 func TestConsentVersion_Basic(t *testing.T) {
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 	testResourceID := acctest.RandString(10)
 	groupName := acctest.RandString(10)
 	consentName := acctest.RandString(10)
@@ -138,7 +138,6 @@ func testConsentVersionGroupOnlyConfig(groupName string) string {
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
-			cidaas_version = "3.x"
 		}
 		resource "cidaas_consent_group" "sample" {
 			group_name  = "%s"
@@ -151,7 +150,6 @@ func testConsentVersionDepsConfig(groupName, consentName string) string {
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
-			cidaas_version = "3.x"
 		}
 		resource "cidaas_consent_group" "sample" {
 			group_name  = "%s"
@@ -169,7 +167,6 @@ func testConsentVersionConfig(content, resourceID, groupName, consentName string
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
-			cidaas_version = "3.x"
 		}
 		resource "cidaas_consent_group" "sample" {
 			group_name  = "%s"

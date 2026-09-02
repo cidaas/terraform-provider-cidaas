@@ -2,8 +2,6 @@ package group_test
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
@@ -11,17 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func skipIfV3(t *testing.T) {
-	t.Helper()
-	v := strings.ToLower(strings.TrimSpace(os.Getenv("CIDAAS_VERSION")))
-	if strings.HasPrefix(v, "3") || v == "3.x" {
-		t.Skip("Group selection resources are supported on cidaas v4.x only; skipping on v3 environment")
-	}
-}
-
 func TestAccGroupSelection_Basic(t *testing.T) {
 	t.Parallel()
-	skipIfV3(t)
+	acctest.SkipIfV3(t)
 
 	testResourceID := acctest.RandString(10)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_GROUP_SELECTION, testResourceID)
@@ -61,7 +51,6 @@ func testAccGroupSelectionConfig(resourceID, groupType, groupID, name string, al
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
-			cidaas_version = "4.x"
 		}
 		resource "cidaas_group_type" "%s" {
 			group_type = "%s"

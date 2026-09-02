@@ -147,6 +147,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewTranslationsResource,
 		hostedpages.NewHostedPageGroupResource,
 		hostedpages.NewHostedPageLayoutResource,
+		hostedpages.NewHostedPageLegacyResource,
 		usersetup.NewUserSetupResource,
 		app.NewAppConfigurationResource,
 		app.NewLegacyAppResource,

@@ -20,17 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-func skipIfV4(t *testing.T) {
-	t.Helper()
-	v := strings.ToLower(strings.TrimSpace(os.Getenv("CIDAAS_VERSION")))
-	if strings.HasPrefix(v, "4") || strings.HasPrefix(v, "v4") {
-		t.Skip("Consent resources are supported on cidaas v3.x only; skipping v3 CRUD test on v4 environment")
-	}
-}
-
 func TestAccConsentResource_Basic(t *testing.T) {
-	t.Parallel()
-	skipIfV4(t)
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
+	}
+	acctest.SkipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	name := acctest.RandString(10)
@@ -82,7 +76,6 @@ func testAccConsentResourceConfig(groupName, name string, enabled bool) string {
 	return fmt.Sprintf(`
 	provider "cidaas" {
 		base_url = "%s"
-		cidaas_version = "3.x"
 	}
 	resource "cidaas_consent_group" "example" {
 		group_name  = "%s"
@@ -135,7 +128,7 @@ func testCheckConsentDestroyed(resourceName string) resource.TestCheckFunc {
 
 func TestAccConsentResource_GroupNameUpdateFail(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 	groupName := acctest.RandString(10)
 	name := acctest.RandString(10)
 	updatedName := acctest.RandString(10)
@@ -163,7 +156,7 @@ func TestAccConsentResource_GroupNameUpdateFail(t *testing.T) {
 
 func TestAccConsentResource_EmptyGroupName(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -172,7 +165,6 @@ func TestAccConsentResource_EmptyGroupName(t *testing.T) {
 				Config: fmt.Sprintf(`
 				provider "cidaas" {
 					base_url = "%s"
-					cidaas_version = "3.x"
 				}
 				resource "cidaas_consent" "%s" {
 					consent_group_id  = ""
@@ -187,7 +179,7 @@ func TestAccConsentResource_EmptyGroupName(t *testing.T) {
 
 func TestAccConsentResource_MissingRequired(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -196,7 +188,6 @@ func TestAccConsentResource_MissingRequired(t *testing.T) {
 				Config: fmt.Sprintf(`
 				provider "cidaas" {
 					base_url = "%s"
-					cidaas_version = "3.x"
 				}
 				resource "cidaas_consent" "%s" {
 				}

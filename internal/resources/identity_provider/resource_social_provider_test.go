@@ -14,6 +14,7 @@ func TestAccSocialProvider_Basic(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
 	}
+	acctest.SkipIfV4(t)
 
 	testResourceID := acctest.RandString(8)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_SOCIAL_PROVIDER, testResourceID)
@@ -36,8 +37,7 @@ func TestAccSocialProvider_Basic(t *testing.T) {
 func testAccSocialProviderConfig(resourceID string) string {
 	return fmt.Sprintf(`
 provider "cidaas" {
-  base_url       = "%s"
-  cidaas_version = "4.x"
+  base_url = "%s"
 }
 
 resource "cidaas_social_provider" "%s" {

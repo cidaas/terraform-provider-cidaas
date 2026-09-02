@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -63,6 +64,29 @@ func NewSocialProvider(clientConfig ClientConfig) *SocialProvider {
 	return &SocialProvider{clientConfig}
 }
 
+func makeRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
+	var res *http.Response
+	var err error
+	maxAttempts := 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		res, err = client.MakeRequest(ctx, body)
+		if err == nil {
+			err = util.HandleResponseError(res, nil)
+			if err == nil {
+				return res, nil
+			}
+		}
+		if uErr, ok := err.(*util.UnexpectedStatusError); ok && uErr.StatusCode >= 500 {
+			if attempt < maxAttempts {
+				time.Sleep(time.Duration(attempt) * time.Second)
+				continue
+			}
+		}
+		return res, err
+	}
+	return res, err
+}
+
 func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*SocialProviderResponse, error) {
 	var response SocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/multi/providers")
@@ -70,8 +94,8 @@ func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, sp)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, sp)
+	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -89,8 +113,8 @@ func (s *SocialProvider) Get(ctx context.Context, providerName, providerID strin
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -107,8 +131,8 @@ func (s *SocialProvider) Delete(ctx context.Context, providerName, providerID st
 	if err != nil {
 		return err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return err
 	}
 	defer func() { _ = res.Body.Close() }()

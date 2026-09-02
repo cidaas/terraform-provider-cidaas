@@ -14,6 +14,8 @@ func TestAccFederationProvider_Basic(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
 	}
+	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	testResourceID := acctest.RandString(8)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_FEDERATION_PROVIDER, testResourceID)
@@ -38,8 +40,7 @@ func TestAccFederationProvider_Basic(t *testing.T) {
 func testAccFederationProviderConfig(resourceID, providerName string) string {
 	return fmt.Sprintf(`
 provider "cidaas" {
-  base_url       = "%s"
-  cidaas_version = "4.x"
+  base_url = "%s"
 }
 
 resource "cidaas_federation_provider" "%s" {

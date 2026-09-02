@@ -235,6 +235,15 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 		Scopes:         scopes,
 		RequiredFields: requiredFields,
 	}
+	if len(plan.consentLocale) > 0 {
+		consentVersion.ConsentLocale = cidaas.ConsentLocale{
+			Locale:  plan.consentLocale[0].Locale.ValueString(),
+			Content: plan.consentLocale[0].Content.ValueString(),
+		}
+		if plan.ConsentType.ValueString() == URL {
+			consentVersion.ConsentLocale.URL = plan.consentLocale[0].URL.ValueString()
+		}
+	}
 
 	res, err := r.cidaasClient.ConsentVersion.Upsert(ctx, consentVersion)
 	if err != nil {

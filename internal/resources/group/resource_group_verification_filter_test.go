@@ -11,7 +11,7 @@ import (
 
 func TestAccGroupVerificationFilter_Basic(t *testing.T) {
 	t.Parallel()
-	skipIfV3(t)
+	acctest.SkipIfV3(t)
 
 	testResourceID := acctest.RandString(10)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_GROUP_VERIFICATION_FILTER, testResourceID)
@@ -49,7 +49,6 @@ func testAccGroupVerificationFilterConfig(resourceID, description, matchConditio
 	return fmt.Sprintf(`
 		provider "cidaas" {
 			base_url = "%s"
-			cidaas_version = "4.x"
 		}
 		resource "cidaas_group_verification_filter" "%s" {
 			description = "%s"

@@ -17,8 +17,10 @@ import (
 )
 
 func TestAccConsentGroupResource_Basic(t *testing.T) {
-	t.Parallel()
-	skipIfV4(t)
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
+	}
+	acctest.SkipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	description := "Test consent Description"
@@ -64,7 +66,6 @@ func testAccConsentGroupResourceConfig(groupName, description, resourceID string
 	return fmt.Sprintf(`
 	provider "cidaas" {
 		base_url = "%s"
-		cidaas_version = "3.x"
 	}
 	resource "cidaas_consent_group" "%s" {
 		group_name  = "%s"
@@ -114,7 +115,7 @@ func testCheckConsentGroupDestroyed(resourceName string) resource.TestCheckFunc 
 
 func TestAccConsentGroupResource_GoupNameUpdateFail(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 
 	groupName := acctest.RandString(10)
 	description := "Test consent Description"
@@ -143,7 +144,7 @@ func TestAccConsentGroupResource_GoupNameUpdateFail(t *testing.T) {
 
 func TestAccConsentGroupResource_EmptyGroupName(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 
 	description := "Test consent Description"
 	emptyGroupName := ""
@@ -162,7 +163,7 @@ func TestAccConsentGroupResource_EmptyGroupName(t *testing.T) {
 
 func TestAccConsentGroupResource_MissingRequired(t *testing.T) {
 	t.Parallel()
-	skipIfV4(t)
+	acctest.SkipIfV4(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -172,7 +173,6 @@ func TestAccConsentGroupResource_MissingRequired(t *testing.T) {
 				Config: fmt.Sprintf(`
 				provider "cidaas" {
 					base_url = "%s"
-					cidaas_version = "3.x"
 				}
 				resource "cidaas_consent_group" "%s" {
 					description = "test description"

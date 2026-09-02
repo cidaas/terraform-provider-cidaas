@@ -35,6 +35,8 @@ type Client struct {
 	CustomProvider                 *CustomProvider
 	SocialProvider                 *SocialProvider
 	FederationProvider             *FederationProvider
+	HostedPages                    *HostedPage
+	Apps                           *App
 }
 
 type ClientConfig struct {
@@ -115,6 +117,8 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		CustomProvider:                 NewCustomProvider(config),
 		SocialProvider:                 NewSocialProvider(config),
 		FederationProvider:             NewFederationProvider(config),
+		HostedPages:                    NewHostedPage(config),
+		Apps:                           NewApp(config),
 	}
 	return client, nil
 }

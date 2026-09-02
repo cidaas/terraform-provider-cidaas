@@ -12,6 +12,7 @@ func TestAccHostedPageGroup_Basic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping acceptance test in short mode")
 	}
+	acctest.SkipIfV3(t)
 	name := fmt.Sprintf("tf_v4_hpg_%s", acctest.RandString(6))
 	base := acctest.BaseURL()
 

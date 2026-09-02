@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -73,6 +74,29 @@ func NewCustomProvider(clientConfig ClientConfig) *CustomProvider {
 	return &CustomProvider{clientConfig}
 }
 
+func makeCustomProviderRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
+	var res *http.Response
+	var err error
+	maxAttempts := 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		res, err = client.MakeRequest(ctx, body)
+		if err == nil {
+			err = util.HandleResponseError(res, nil)
+			if err == nil {
+				return res, nil
+			}
+		}
+		if uErr, ok := err.(*util.UnexpectedStatusError); ok && uErr.StatusCode >= 500 {
+			if attempt < maxAttempts {
+				time.Sleep(time.Duration(attempt) * time.Second)
+				continue
+			}
+		}
+		return res, err
+	}
+	return res, err
+}
+
 func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomProviderModel) (*CustomProviderResponse, error) {
 	if len(cp.UserinfoFields) == 0 {
 		cp.UserinfoFields = map[string]interface{}{
@@ -85,8 +109,8 @@ func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomPro
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, cp)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeCustomProviderRequestWithRetry(ctx, client, cp)
+	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -103,8 +127,8 @@ func (c *CustomProvider) UpdateCustomProvider(ctx context.Context, cp *CustomPro
 	if err != nil {
 		return err
 	}
-	res, err := client.MakeRequest(ctx, cp)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeCustomProviderRequestWithRetry(ctx, client, cp)
+	if err != nil {
 		return err
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -119,8 +143,8 @@ func (c *CustomProvider) GetCustomProvider(ctx context.Context, providerName str
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeCustomProviderRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -137,8 +161,8 @@ func (c *CustomProvider) DeleteCustomProvider(ctx context.Context, providerName 
 	if err != nil {
 		return err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeCustomProviderRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return err
 	}
 	defer func() { _ = res.Body.Close() }()

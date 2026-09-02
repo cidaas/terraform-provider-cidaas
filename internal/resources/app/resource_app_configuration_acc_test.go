@@ -18,6 +18,7 @@ func TestAccAppConfiguration_Basic(t *testing.T) {
 		t.Skip("skipping acceptance test in short mode")
 	}
 	t.Parallel()
+	acctest.SkipIfV3(t)
 
 	name := "tf-app-" + acctest.RandString(8)
 	resourceName := "cidaas_app_configuration.test"

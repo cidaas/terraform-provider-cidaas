@@ -12,6 +12,7 @@ func TestAccTheme_Basic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping acceptance test in short mode")
 	}
+	acctest.SkipIfV3(t)
 	name := fmt.Sprintf("tf-v4-theme-%s.css", acctest.RandString(6))
 
 	resource.Test(t, resource.TestCase{

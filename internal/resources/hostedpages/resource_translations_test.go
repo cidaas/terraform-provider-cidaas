@@ -12,6 +12,7 @@ func TestAccTranslations_Basic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping acceptance test in short mode")
 	}
+	acctest.SkipIfV3(t)
 	// Prefer a fresh synthetic locale suffix via custom key content; locale itself must be valid (fr).
 	suffix := acctest.RandString(4)
 

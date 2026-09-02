@@ -253,7 +253,7 @@ func (r *hostedPageGroupResource) Delete(ctx context.Context, req resource.Delet
 	}
 	grpName := state.Name.ValueString()
 	if strings.EqualFold(grpName, "DEFAULT") || strings.EqualFold(grpName, "admin") {
-		resp.Diagnostics.AddError(
+		resp.Diagnostics.AddWarning(
 			"Cannot delete system/default hosted page group",
 			fmt.Sprintf("Hosted page group %q is a system group and cannot be deleted from the cidaas platform. Only custom created hosted page groups can be deleted.", grpName),
 		)

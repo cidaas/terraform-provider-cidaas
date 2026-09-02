@@ -12,6 +12,7 @@ func TestAccHostedPageLayout_Basic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping acceptance test in short mode")
 	}
+	acctest.SkipIfV3(t)
 	suffix := acctest.RandString(6)
 	groupName := fmt.Sprintf("tf_v4_hpg_%s", suffix)
 	themeFile := fmt.Sprintf("tf-v4-theme-%s.css", suffix)

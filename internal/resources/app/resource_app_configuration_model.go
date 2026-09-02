@@ -1,3 +1,4 @@
+// Plan/state model for cidaas_app_configuration (appv3 / Trustdesk).
 package app
 
 import (
