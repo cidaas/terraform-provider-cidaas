@@ -16,8 +16,6 @@ import (
 )
 
 func TestAccScopeGroupResource_Basic(t *testing.T) {
-	t.Parallel()
-
 	scopeGroupName := acctest.RandString(10)
 	scopeGroupdescription := "Test Scope Group Description"
 	updatedDescription := "Updated Scope Group Description"
@@ -119,8 +117,6 @@ func testCheckScopeGroupDestroyed(resourceName string) resource.TestCheckFunc {
 
 // failed validation on updating immutable proprty group_name
 func TestAccScopeGroupResource_GoupNameUpdateFail(t *testing.T) {
-	t.Parallel()
-
 	scopeGroupName := acctest.RandString(10)
 	updateGroupName := acctest.RandString(10)
 	scopeGroupdescription := "Test Scope Group Description"
@@ -147,8 +143,6 @@ func TestAccScopeGroupResource_GoupNameUpdateFail(t *testing.T) {
 
 // Empty group_name validation test
 func TestAccScopeGroupResource_EmptyGroupName(t *testing.T) {
-	t.Parallel()
-
 	scopeGroupdescription := "Test Scope Group Description"
 	emptyScopeGroupName := ""
 
@@ -166,8 +160,6 @@ func TestAccScopeGroupResource_EmptyGroupName(t *testing.T) {
 
 // missing required parameter
 func TestAccScopeGroupResource_MissingRequired(t *testing.T) {
-	t.Parallel()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,

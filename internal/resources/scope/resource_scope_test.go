@@ -38,8 +38,6 @@ var (
 
 // create, read and update test
 func TestAccScopeResource_Basic(t *testing.T) {
-	t.Parallel()
-
 	updatedScopeDescription := "Updated description of the scope in German"
 	updatedRequiredUserConsent := true
 	localizedDesc := []map[string]string{
@@ -177,8 +175,6 @@ func testCheckScopeDestroyed(resourceName string) resource.TestCheckFunc {
 
 // failed validation on updating immutable proprty scope_key
 func TestAccScopeResource_ImmutableScopeKeyUpdateFail(t *testing.T) {
-	t.Parallel()
-
 	scopeKey := acctest.RandString(10)
 	updatedScopeKey := acctest.RandString(10)
 
@@ -205,8 +201,6 @@ func TestAccScopeResource_ImmutableScopeKeyUpdateFail(t *testing.T) {
 
 // Invalid security_level validation
 func TestAccScopeResource_InvalidSecurityLevel(t *testing.T) {
-	t.Parallel()
-
 	scopeKey := acctest.RandString(10)
 	invalidSecurityLevel := "INVALID"
 
@@ -224,8 +218,6 @@ func TestAccScopeResource_InvalidSecurityLevel(t *testing.T) {
 
 // missing required parameter scope_key
 func TestAccScopeResource_MissingRequired(t *testing.T) {
-	t.Parallel()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -246,8 +238,6 @@ func TestAccScopeResource_MissingRequired(t *testing.T) {
 
 // check default required_user_consent is false
 func TestAccScopeResource_DefaultRequiredConsent(t *testing.T) {
-	t.Parallel()
-
 	scopeKey := acctest.RandString(10)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_SCOPE, scopeKey)
 
@@ -284,8 +274,6 @@ func TestAccScopeResource_DefaultRequiredConsent(t *testing.T) {
 
 // localized_descriptions[i].title is required
 func TestAccScopeResource_TitleRequired(t *testing.T) {
-	t.Parallel()
-
 	scopeKey := acctest.RandString(10)
 
 	resource.Test(t, resource.TestCase{
@@ -317,8 +305,6 @@ func TestAccScopeResource_TitleRequired(t *testing.T) {
 
 // Invalid locale validation
 func TestAccScopeResource_InvalidLocale(t *testing.T) {
-	t.Parallel()
-
 	scopeKey := acctest.RandString(10)
 	invalidLocale := "ab"
 
