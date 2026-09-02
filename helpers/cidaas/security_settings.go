@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -79,26 +80,50 @@ func NewSecuritySettings(clientConfig ClientConfig) *SecuritySettings {
 	return &SecuritySettings{clientConfig}
 }
 
-// Get loads current fraud-detection settings.
+// Get loads current fraud-detection settings with retries for transient gateway timeouts (502/503/504).
 func (s *SecuritySettings) Get(ctx context.Context) (*SecuritySettingsGetResponse, error) {
-	var response SecuritySettingsGetResponse
-	url := fmt.Sprintf("%s/%s", s.BaseURL, fraudDetectionSettingsPath)
-	client, err := util.NewHTTPClient(url, http.MethodGet, s.AccessToken)
-	if err != nil {
-		return nil, err
+	var lastErr error
+	maxRetries := 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+		}
+		var response SecuritySettingsGetResponse
+		url := fmt.Sprintf("%s/%s", s.BaseURL, fraudDetectionSettingsPath)
+		client, err := util.NewHTTPClient(url, http.MethodGet, s.AccessToken)
+		if err != nil {
+			return nil, err
+		}
+		res, err := client.MakeRequest(ctx, nil)
+		if err := util.HandleResponseError(res, err); err != nil {
+			lastErr = err
+			if isRetryableStatusCode(res) {
+				continue
+			}
+			return nil, err
+		}
+		defer func() { _ = res.Body.Close() }()
+		if err := util.ProcessResponse(res, &response); err != nil {
+			return nil, err
+		}
+		if !response.Success {
+			return nil, fmt.Errorf("fraud-detection settings GET was not successful (success=false, status=%d)", response.Status)
+		}
+		return &response, nil
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
-		return nil, err
+	return nil, lastErr
+}
+
+func isRetryableStatusCode(res *http.Response) bool {
+	if res == nil {
+		return true
 	}
-	defer func() { _ = res.Body.Close() }()
-	if err := util.ProcessResponse(res, &response); err != nil {
-		return nil, err
+	switch res.StatusCode {
+	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	default:
+		return false
 	}
-	if !response.Success {
-		return nil, fmt.Errorf("fraud-detection settings GET was not successful (success=false, status=%d)", response.Status)
-	}
-	return &response, nil
 }
 
 // Patch applies a partial update (PATCH) to fraud-detection settings.
