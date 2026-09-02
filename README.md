@@ -73,37 +73,94 @@ provider "cidaas" {
 
 ---
 
+---
+
+## Dual Versioning & Module Architecture
+
+The provider features a **dual-version architectural model** supporting both **Cidaas Version 3.x** and **Version 4.x (Trustdesk)** tenants within a single codebase:
+
+```
+                               ┌────────────────────────────────┐
+                               │   Cidaas Terraform Provider    │
+                               └───────────────┬────────────────┘
+                                               │
+                                 Evaluates CIDAAS_VERSION
+                                               │
+                   ┌───────────────────────────┴───────────────────────────┐
+                   ▼                                                       ▼
+      ┌─────────────────────────┐                             ┌─────────────────────────┐
+      │   Version 3.x Tenant    │                             │  Version 4.x Tenant     │
+      └────────────┬────────────┘                             └────────────┬────────────┘
+                   │                                                       │
+  ┌────────────────┴────────────────┐                     ┌────────────────┴────────────────┐
+  │         v3-Only Resources       │                     │         v4-Only Resources       │
+  │ • cidaas_app                    │                     │ • cidaas_app_configuration      │
+  │ • cidaas_hosted_page            │                     │ • cidaas_hosted_page_group      │
+  │                                 │                     │ • cidaas_hosted_page_layout     │
+  │                                 │                     │ • cidaas_theme / translations   │
+  │                                 │                     │ • cidaas_user_setup             │
+  │                                 │                     │ • cidaas_verification_options   │
+  │                                 │                     │ • cidaas_federation_provider    │
+  │                                 │                     │ • cidaas_group_selection        │
+  │                                 │                     │ • cidaas_group_verification_fltr│
+  └────────────────┬────────────────┘                     └────────────────┬────────────────┘
+                   │                                                       │
+                   └───────────────────────────┬───────────────────────────┘
+                                               ▼
+                              ┌─────────────────────────────────┐
+                              │  Shared / Universal Resources   │
+                              │ • cidaas_scope / scope_group    │
+                              │ • cidaas_role / user_groups     │
+                              │ • cidaas_password_policy        │
+                              │ • cidaas_registration_field     │
+                              │ • cidaas_webhook                │
+                              │ • cidaas_consent / version      │
+                              │ • cidaas_social_provider        │
+                              │ • cidaas_custom_provider        │
+                              └─────────────────────────────────┘
+```
+
+### Safety & Diagnostic Behavior
+
+- **v4-only Resource on v3 Tenant**: If a v3 customer includes a v4 resource (e.g. `cidaas_app_configuration`), Terraform `Configure()` rejects the plan with an error:
+  > *"Resource `cidaas_app_configuration` is supported on Cidaas Version 4.x (Trustdesk) only. For Version 3.x tenants, please use `cidaas_app` instead."*
+- **v3-only Resource on v4 Tenant**: If a v4 customer includes a v3 resource (e.g. `cidaas_hosted_page`), Terraform `Configure()` rejects the plan with an error:
+  > *"Resource `cidaas_hosted_page` is supported on Cidaas Version 3.x only. For Version 4.x (Trustdesk) tenants, please use `cidaas_hosted_page_group` instead."*
+
+---
+
 ## Resource Inventory
 
 ### Trustdesk (v4 Only)
 | Resource | API Endpoint | Description |
 |----------|--------------|-------------|
-| `cidaas_app_configuration` | `/app-srv/apps` | App configuration (appv3) |
-| `cidaas_federation_provider` | `/federation/providers` | Enterprise federated identity providers |
-| `cidaas_group_selection` | `/groups-srv/selection` | Group selections |
-| `cidaas_group_type` | `/groups-srv/grouptypes` | Group types & role modes |
-| `cidaas_group_verification_filter` | `/groups-srv/verification-filter` | Group verification filters |
+| `cidaas_app_configuration` | `/app-srv/apps` | App configuration (Trustdesk v4.x app model) |
+| `cidaas_hosted_page_group` | `/hostedpages-srv/hpgroup` | Hosted page groups |
+| `cidaas_hosted_page_layout` | `/hostedpages-srv/layout` | Hosted page layouts |
 | `cidaas_theme` | `/hostedpages-srv/themes` | Custom hosted page themes |
 | `cidaas_translations` | `/hostedpages-srv/translations` | Hosted page localization strings |
 | `cidaas_user_setup` | `/user-srv/usersetup` | Tenant user registration setup |
 | `cidaas_suggest_verification_method` | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods |
 | `cidaas_verification_options` | `/verification-actions-srv/verification-options` | Verification options |
+| `cidaas_federation_provider` | `/federation/providers` | Enterprise federated identity providers |
+| `cidaas_group_selection` | `/groups-srv/selection` | Group selections |
+| `cidaas_group_type` | `/groups-srv/grouptypes` | Group types & role modes |
+| `cidaas_group_verification_filter` | `/groups-srv/verification-filter` | Group verification filters |
 
 ### v3.x Only
 | Resource | Description |
 |----------|-------------|
-| `cidaas_consent` | Consent definitions (v3.x) |
-| `cidaas_consent_group` | Consent groups (v3.x) |
-| `cidaas_consent_version` | Consent version management (v3.x) |
-| `cidaas_app` | Legacy appv1 resource (deprecated in favor of `cidaas_app_configuration`) |
+| `cidaas_app` | Legacy v3 application resource (replaced by `cidaas_app_configuration` in v4) |
+| `cidaas_hosted_page` | Legacy v3 single hosted page resource (replaced by `cidaas_hosted_page_group` in v4) |
 
 ### Shared Resources (v3 & v4)
 | Resource | API Endpoint / Service | Description |
 |----------|------------------------|-------------|
 | `cidaas_custom_provider` | `providers-srv` | Custom OpenID Connect & OAuth2 identity providers (`owner: client`) |
 | `cidaas_social_provider` | `providers-srv` | Social identity providers (Google, Facebook, Apple, LinkedIn, etc.) |
-| `cidaas_hosted_page_group` | `hostedpages-srv` | Hosted page groups |
-| `cidaas_hosted_page_layout` | `hostedpages-srv` | Hosted page layouts |
+| `cidaas_consent` | `consent-management-srv` | Consent definitions |
+| `cidaas_consent_group` | `consent-management-srv` | Consent groups |
+| `cidaas_consent_version` | `consent-management-srv` | Consent version management |
 | `cidaas_registration_field` | `registration-setup-srv` | Registration field definitions & regex validators |
 | `cidaas_role` | `roles-srv` | Tenant roles |
 | `cidaas_user_groups` | `groups-srv` | User groups |
