@@ -91,7 +91,7 @@ func (r *CustomProviderResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"standard_type": schema.StringAttribute{
 				Required:    true,
 				Description: "Standard type of custom provider (e.g. OAUTH2, OIDC).",
-				Validators:  []validator.String{stringvalidator.OneOf("OAUTH2", "OIDC")},
+				Validators:  []validator.String{stringvalidator.OneOf("OAUTH2", "OIDC", "OPENID_CONNECT")},
 			},
 			"authorization_endpoint": schema.StringAttribute{
 				Required:    true,
