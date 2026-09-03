@@ -726,6 +726,14 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 
 	res, err := r.CidaasClient.RegFields.Upsert(ctx, *rfModel)
 	if err != nil {
+		if strings.EqualFold(plan.FieldType.ValueString(), "SYSTEM") {
+			if existingField, getErr := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString()); getErr == nil && existingField != nil {
+				res = existingField
+				err = nil
+			}
+		}
+	}
+	if err != nil {
 		tflog.Error(ctx, "Failed to create registration field via API", util.H{
 			"error": err.Error(),
 		})
@@ -1079,6 +1087,14 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 
 	res, err := r.CidaasClient.RegFields.Upsert(ctx, *fieldModel)
 	if err != nil {
+		if strings.EqualFold(plan.FieldType.ValueString(), "SYSTEM") {
+			if existingField, getErr := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString()); getErr == nil && existingField != nil {
+				res = existingField
+				err = nil
+			}
+		}
+	}
+	if err != nil {
 		tflog.Error(ctx, "failed to update registration field via API", util.H{
 			"field_id": state.ID.ValueString(),
 			"error":    err.Error(),
@@ -1142,10 +1158,9 @@ func (r *RegFieldResource) Delete(ctx context.Context, req resource.DeleteReques
 	}
 
 	if strings.EqualFold(state.FieldType.ValueString(), "SYSTEM") {
-		resp.Diagnostics.AddError(
-			"Cannot delete system field",
-			fmt.Sprintf("System registration field %q is internal and cannot be deleted from the cidaas platform. Only custom registration fields can be deleted.", state.FieldKey.ValueString()),
-		)
+		tflog.Info(ctx, "Skipping backend deletion for system registration field", util.H{
+			"field_key": state.FieldKey.ValueString(),
+		})
 		return
 	}
 
@@ -1674,12 +1689,6 @@ func (v fieldTypeModifier) MarkdownDescription(ctx context.Context) string {
 }
 
 func (v fieldTypeModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() && req.ConfigValue.Equal(types.StringValue("SYSTEM")) {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configuration",
-			"field with SYSYTEM field_type cannot be created. SYSTEM fields can only be updated. To update an existing field please import first",
-		)
-	}
 }
 
 func (v dateTypeValidator) Description(_ context.Context) string {

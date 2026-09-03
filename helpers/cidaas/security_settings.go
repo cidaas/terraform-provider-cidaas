@@ -118,41 +118,51 @@ func isRetryableStatusCode(res *http.Response) bool {
 	if res == nil {
 		return true
 	}
-	switch res.StatusCode {
-	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+	if res.StatusCode >= http.StatusInternalServerError {
 		return true
-	default:
-		return false
 	}
+	return false
 }
 
 // Patch applies a partial update (PATCH) to fraud-detection settings.
 func (s *SecuritySettings) Patch(ctx context.Context, patch SecuritySettingsPatch) error {
-	url := fmt.Sprintf("%s/%s", s.BaseURL, fraudDetectionSettingsPath)
-	client, err := util.NewHTTPClient(url, http.MethodPatch, s.AccessToken)
-	if err != nil {
-		return err
-	}
-	res, err := client.MakeRequest(ctx, patch)
-	if err := util.HandleResponseError(res, err); err != nil {
-		return err
-	}
-	defer func() { _ = res.Body.Close() }()
+	var lastErr error
+	maxRetries := 5
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+		}
+		url := fmt.Sprintf("%s/%s", s.BaseURL, fraudDetectionSettingsPath)
+		client, err := util.NewHTTPClient(url, http.MethodPatch, s.AccessToken)
+		if err != nil {
+			return err
+		}
+		res, err := client.MakeRequest(ctx, patch)
+		if err := util.HandleResponseError(res, err); err != nil {
+			lastErr = err
+			if isRetryableStatusCode(res) {
+				continue
+			}
+			return err
+		}
+		defer func() { _ = res.Body.Close() }()
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read fraud-detection settings PATCH response: %w", err)
-	}
-	if len(bytes.TrimSpace(body)) == 0 {
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read fraud-detection settings PATCH response: %w", err)
+		}
+		if len(bytes.TrimSpace(body)) == 0 {
+			return nil
+		}
+
+		var response SecuritySettingsPatchResponse
+		if err := json.Unmarshal(body, &response); err != nil {
+			return fmt.Errorf("failed to decode fraud-detection settings PATCH response: %w", err)
+		}
+		if response.Success != nil && !*response.Success {
+			return fmt.Errorf("fraud-detection settings PATCH was not successful (success=false, status=%d)", response.Status)
+		}
 		return nil
 	}
-
-	var response SecuritySettingsPatchResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to decode fraud-detection settings PATCH response: %w", err)
-	}
-	if response.Success != nil && !*response.Success {
-		return fmt.Errorf("fraud-detection settings PATCH was not successful (success=false, status=%d)", response.Status)
-	}
-	return nil
+	return lastErr
 }

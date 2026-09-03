@@ -2,6 +2,7 @@ package cidaas
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -78,7 +79,7 @@ func NewCustomProvider(clientConfig ClientConfig) *CustomProvider {
 func makeCustomProviderRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
 	var res *http.Response
 	var err error
-	maxAttempts := 3
+	maxAttempts := 5
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		res, err = client.MakeRequest(ctx, body)
 		if err == nil {
@@ -87,7 +88,8 @@ func makeCustomProviderRequestWithRetry(ctx context.Context, client *util.HTTPCl
 				return res, nil
 			}
 		}
-		if uErr, ok := err.(*util.UnexpectedStatusError); ok && uErr.StatusCode >= 500 {
+		var statusErr *util.UnexpectedStatusError
+		if errors.As(err, &statusErr) && statusErr.StatusCode >= http.StatusInternalServerError {
 			if attempt < maxAttempts {
 				time.Sleep(time.Duration(attempt) * time.Second)
 				continue

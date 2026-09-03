@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -138,6 +139,7 @@ func (r *CustomProviderResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"owner": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
+				Default:     stringdefault.StaticString("client"),
 				Description: "Owner of the provider (defaults to client for Admin UI compatibility).",
 			},
 		},
@@ -172,6 +174,10 @@ func (r *CustomProviderResource) Read(ctx context.Context, req resource.ReadRequ
 
 	res, err := r.CidaasClient.CustomProvider.GetCustomProvider(ctx, state.ProviderName.ValueString())
 	if err != nil {
+		if util.IsResourceNotFound(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Failed to read custom provider", util.FormatErrorMessage(err))
 		return
 	}
@@ -206,7 +212,7 @@ func (r *CustomProviderResource) Delete(ctx context.Context, req resource.Delete
 	}
 
 	err := r.CidaasClient.CustomProvider.DeleteCustomProvider(ctx, state.ProviderName.ValueString())
-	if err != nil {
+	if err != nil && !util.IsResourceNotFound(err) {
 		resp.Diagnostics.AddError("Failed to delete custom provider", util.FormatErrorMessage(err))
 		return
 	}

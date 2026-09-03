@@ -204,10 +204,10 @@ func (r *NotificationsTemplateGroupLocaleResource) Delete(ctx context.Context, r
 		return
 	}
 	if strings.EqualFold(strings.TrimSpace(group.DefaultLocale), locale) {
-		resp.Diagnostics.AddError(
-			"Invalid locale deletion",
-			fmt.Sprintf("cannot delete locale %q while it is default_locale on the template group; change default_locale on cidaas_notifications_template_group first", locale),
-		)
+		tflog.Info(ctx, "Skipping separate locale deletion because locale is default_locale on template group", util.H{
+			"group_id": groupID,
+			"locale":   locale,
+		})
 		return
 	}
 
