@@ -30,8 +30,15 @@ var (
 		"SINGLE_PAGE",
 		"REGULAR_WEB",
 		"NATIVE",
+		"MOBILE",
+		"DESKTOP",
+		"IOS",
+		"ANDROID",
+		"WINDOWS_MOBILE",
 		"DEVICE",
 		"THIRD_PARTY",
+		"SAML_SP",
+		"HYBRID_APP",
 	}
 )
 
@@ -82,6 +89,16 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 				Optional: true,
 				Computed: true,
 				Default:  booldefault.StaticBool(true),
+			},
+			"require_pkce": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "When `true`, requires PKCE for authorization requests.",
+			},
+			"disable_insecure_pkce_method": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "When `true`, rejects plain PKCE challenge method.",
 			},
 			"grant_types": schema.ListAttribute{
 				Optional:    true,

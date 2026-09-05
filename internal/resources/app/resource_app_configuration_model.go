@@ -16,8 +16,10 @@ type appConfigurationConfig struct {
 	ClientID            types.String `tfsdk:"client_id"`
 	ClientName          types.String `tfsdk:"client_name"`
 	ClientType          types.String `tfsdk:"client_type"`
-	Enabled             types.Bool   `tfsdk:"enabled"`
-	GrantTypes          types.List   `tfsdk:"grant_types"`
+	Enabled                     types.Bool   `tfsdk:"enabled"`
+	RequirePKCE                 types.Bool   `tfsdk:"require_pkce"`
+	DisableInsecurePKCEMethod   types.Bool   `tfsdk:"disable_insecure_pkce_method"`
+	GrantTypes                  types.List   `tfsdk:"grant_types"`
 	ResponseTypes       types.List   `tfsdk:"response_types"`
 	RedirectURIs        types.Object `tfsdk:"redirect_uris"`
 	Scopes              types.Object `tfsdk:"scopes"`
@@ -131,6 +133,15 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 		HostedPagesLayoutID: c.HostedPagesLayoutID.ValueString(),
 		UserSetupID:         c.UserSetupID.ValueString(),
 	}
+
+	if (!c.RequirePKCE.IsNull() && !c.RequirePKCE.IsUnknown()) || (!c.DisableInsecurePKCEMethod.IsNull() && !c.DisableInsecurePKCEMethod.IsUnknown()) {
+		model.RequirePKCE = boolPtr(c.RequirePKCE)
+		model.DisableInsecurePKCEMethod = boolPtr(c.DisableInsecurePKCEMethod)
+		model.PKCE = &client.PKCEConfig{
+			RequirePKCE:               boolPtr(c.RequirePKCE),
+			DisableInsecurePKCEMethod: boolPtr(c.DisableInsecurePKCEMethod),
+		}
+	}
 	var d diag.Diagnostics
 	model.GrantTypes, d = listToStrings(ctx, c.GrantTypes)
 	diags.Append(d...)
@@ -225,18 +236,35 @@ func authenticationSetupToClient(cfg *authenticationSetupConfig) *client.Authent
 // flattenAppConfiguration maps an app-srv appv3 response into Terraform state.
 func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurationConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	var requirePKCE *bool
+	if model.RequirePKCE != nil {
+		requirePKCE = model.RequirePKCE
+	} else if model.PKCE != nil {
+		requirePKCE = model.PKCE.RequirePKCE
+	}
+
+	var disableInsecurePKCE *bool
+	if model.DisableInsecurePKCEMethod != nil {
+		disableInsecurePKCE = model.DisableInsecurePKCEMethod
+	} else if model.PKCE != nil {
+		disableInsecurePKCE = model.PKCE.DisableInsecurePKCEMethod
+	}
+
 	cfg := appConfigurationConfig{
-		ClientID:            types.StringValue(model.ClientID),
-		ClientName:          types.StringValue(model.ClientName),
-		ClientType:          types.StringValue(model.ClientType),
-		Owner:               stringOrNull(model.Owner),
-		Enabled:             boolValueOrNull(model.Enabled),
-		GrantTypes:          stringList(model.GrantTypes),
-		ResponseTypes:       stringList(model.ResponseTypes),
-		HostedPagesLayoutID: stringOrNull(model.HostedPagesLayoutID),
-		UserSetupID:         stringOrNull(model.UserSetupID),
-		CreatedTime:         stringOrNull(model.CreatedTime),
-		UpdatedTime:         stringOrNull(model.UpdatedTime),
+		ClientID:                  types.StringValue(model.ClientID),
+		ClientName:                types.StringValue(model.ClientName),
+		ClientType:                types.StringValue(model.ClientType),
+		Owner:                     stringOrNull(model.Owner),
+		Enabled:                   boolValueOrNull(model.Enabled),
+		RequirePKCE:               boolValueOrNull(requirePKCE),
+		DisableInsecurePKCEMethod: boolValueOrNull(disableInsecurePKCE),
+		GrantTypes:                stringList(model.GrantTypes),
+		ResponseTypes:             stringList(model.ResponseTypes),
+		HostedPagesLayoutID:       stringOrNull(model.HostedPagesLayoutID),
+		UserSetupID:               stringOrNull(model.UserSetupID),
+		CreatedTime:               stringOrNull(model.CreatedTime),
+		UpdatedTime:               stringOrNull(model.UpdatedTime),
 	}
 	if model.RedirectURIs != nil {
 		obj, d := types.ObjectValue(redirectURIsAttrTypes(), map[string]attr.Value{

@@ -22,25 +22,34 @@ const OwnerClient = "client"
 
 // AppConfigurationModel matches appv3.App JSON (MVP subset for Terraform).
 type AppConfigurationModel struct {
-	ID                  string                     `json:"_id,omitempty"`
-	ClientID            string                     `json:"client_id,omitempty"`
-	ClientName          string                     `json:"client_name"`
-	ClientType          string                     `json:"client_type"`
-	Owner               string                     `json:"owner,omitempty"`
-	Enabled             *bool                      `json:"enabled,omitempty"`
-	GrantTypes          []string                   `json:"grant_types,omitempty"`
-	ResponseTypes       []string                   `json:"response_types,omitempty"`
-	RedirectURIs        *RedirectURIsConfig        `json:"redirect_uris,omitempty"`
-	Scopes              *ScopesConfig              `json:"scopes,omitempty"`
-	TokenLifetimes      *TokenLifetimesConfig      `json:"token_lifetimes,omitempty"`
-	AuthenticationSetup *AuthenticationSetupConfig `json:"authentication_setup,omitempty"`
-	HostedPagesLayoutID string                     `json:"hosted_pages_layout_id,omitempty"`
-	UserSetupID         string                     `json:"user_setup_id,omitempty"`
-	OwnershipDetails    *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
-	ClientAuthConfig    *AuthConfig                `json:"client_auth_config,omitempty"`
-	SigningKeyConfig    *SigningKeyConfig          `json:"signing_key_config,omitempty"`
-	CreatedTime         string                     `json:"created_time,omitempty"`
-	UpdatedTime         string                     `json:"updated_time,omitempty"`
+	ID                        string                     `json:"_id,omitempty"`
+	ClientID                  string                     `json:"client_id,omitempty"`
+	ClientName                string                     `json:"client_name"`
+	ClientType                string                     `json:"client_type"`
+	Owner                     string                     `json:"owner,omitempty"`
+	Enabled                   *bool                      `json:"enabled,omitempty"`
+	RequirePKCE               *bool                      `json:"require_pkce,omitempty"`
+	DisableInsecurePKCEMethod *bool                      `json:"disable_insecure_pkce_method,omitempty"`
+	PKCE                      *PKCEConfig                `json:"pkce,omitempty"`
+	GrantTypes                []string                   `json:"grant_types,omitempty"`
+	ResponseTypes             []string                   `json:"response_types,omitempty"`
+	RedirectURIs              *RedirectURIsConfig        `json:"redirect_uris,omitempty"`
+	Scopes                    *ScopesConfig              `json:"scopes,omitempty"`
+	TokenLifetimes            *TokenLifetimesConfig      `json:"token_lifetimes,omitempty"`
+	AuthenticationSetup       *AuthenticationSetupConfig `json:"authentication_setup,omitempty"`
+	HostedPagesLayoutID       string                     `json:"hosted_pages_layout_id,omitempty"`
+	UserSetupID               string                     `json:"user_setup_id,omitempty"`
+	OwnershipDetails          *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
+	ClientAuthConfig          *AuthConfig                `json:"client_auth_config,omitempty"`
+	SigningKeyConfig          *SigningKeyConfig          `json:"signing_key_config,omitempty"`
+	CreatedTime               string                     `json:"created_time,omitempty"`
+	UpdatedTime               string                     `json:"updated_time,omitempty"`
+}
+
+// PKCEConfig maps the nested pkce object required by app-srv validation.
+type PKCEConfig struct {
+	RequirePKCE               *bool `json:"require_pkce,omitempty"`
+	DisableInsecurePKCEMethod *bool `json:"disable_insecure_pkce_method,omitempty"`
 }
 
 // RedirectURIsConfig maps redirect_uris nested object.
