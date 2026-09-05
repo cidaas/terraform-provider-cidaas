@@ -1,10 +1,34 @@
-![Logo](https://raw.githubusercontent.com/cidaas/terraform-provider-cidaas/master/logo.jpg)
+![Logo](assets/logo.jpg)
 
 # Terraform Provider for cidaas (v3 & v4)
+
+<a href="https://www.terraform.io">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/terraform_logo_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/terraform_logo_light.svg">
+    <img src="assets/terraform_logo_light.svg" alt="Terraform logo" title="Terraform" align="right" height="50">
+  </picture>
+</a>
 
 Manage cidaas **v3** and **v4 (Trustdesk)** tenants with Terraform: applications, scopes, roles, registration fields, hosted pages, notifications, identity providers, and more.
 
 Registry address: `registry.terraform.io/Cidaas/cidaas`
+
+The Terraform provider for cidaas enables interaction with cidaas instances for CRUD operations on applications, custom providers, registration fields, and many other capabilities. From managing applications to configuring custom providers, it helps you define, provision, and manipulate cidaas resources as infrastructure as code.
+
+---
+
+## About cidaas
+
+[cidaas](https://www.cidaas.com) is a fast and secure Cloud Identity & Access Management solution that standardises what's important and simplifies what's complex.
+
+### Feature set includes
+
+- Single Sign On (SSO) based on OAuth 2.0, OpenID Connect, SAML 2.0
+- Multi-Factor Authentication with more than 14 authentication methods, including TOTP and FIDO2
+- Passwordless Authentication
+- Social Login (e.g. Facebook, Google, LinkedIn and more) as well as Enterprise Identity Providers (e.g. SAML or AD)
+- Security in Machine-to-Machine (M2M) and IoT
 
 ---
 
@@ -32,8 +56,8 @@ Attribute schemas and Example Usage for each resource are generated into `docs/r
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
-- Go >= 1.25 (building from source)
+- Ensure [Terraform](https://www.terraform.io/downloads.html) (>= 1.0) is installed on your local machine. Installation instructions for different operating systems are on the Terraform downloads page.
+- Go >= 1.25 (for building from source)
 - A cidaas **v3** or **v4** tenant and a non-interactive OAuth client (`client_id` / `client_secret`) with scopes for the resources you manage
 
 ---
@@ -87,58 +111,58 @@ Using a v4-only resource with `cidaas_version = "3.x"` (or the reverse) fails wi
 
 ## Resources
 
-Every registered resource is listed below. **Docs** = Registry page; **Example** = sample HCL.
+Every registered resource is listed below. **Docs** = Registry page; **Example** = sample HCL (`resource.tf`).
 
 ### Trustdesk (v4 only)
 
 | Resource | API / service | Description | Docs | Example |
 |----------|---------------|-------------|------|---------|
-| [`cidaas_app_configuration`](docs/resources/app_configuration.md) | `/app-srv/apps` | Application configuration (Trustdesk app model) | [docs](docs/resources/app_configuration.md) | [example](examples/resources/cidaas_app_configuration/) |
-| [`cidaas_hosted_page_group`](docs/resources/hosted_page_group.md) | `/hostedpages-srv/hpgroup` | Hosted page groups | [docs](docs/resources/hosted_page_group.md) | [example](examples/resources/cidaas_hosted_page_group/) |
-| [`cidaas_hosted_page_layout`](docs/resources/hosted_page_layout.md) | `/hostedpages-srv/hosted-page-layouts` | Hosted page layouts | [docs](docs/resources/hosted_page_layout.md) | [example](examples/resources/cidaas_hosted_page_layout/) |
-| [`cidaas_theme`](docs/resources/theme.md) | `/hostedpages-srv/themes` | Custom CSS themes | [docs](docs/resources/theme.md) | [example](examples/resources/cidaas_theme/) |
-| [`cidaas_translations`](docs/resources/translations.md) | `/hostedpages-srv/translations` | Hosted page locale strings | [docs](docs/resources/translations.md) | [example](examples/resources/cidaas_translations/) |
-| [`cidaas_user_setup`](docs/resources/user_setup.md) | `/user-srv/usersetup` | Tenant user registration setup | [docs](docs/resources/user_setup.md) | [example](examples/resources/cidaas_user_setup/) |
-| [`cidaas_suggest_verification_method`](docs/resources/suggest_verification_method.md) | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods | [docs](docs/resources/suggest_verification_method.md) | [example](examples/resources/cidaas_suggest_verification_method/) |
-| [`cidaas_verification_options`](docs/resources/verification_options.md) | `/verification-actions-srv/verification-options` | Verification options | [docs](docs/resources/verification_options.md) | [example](examples/resources/cidaas_verification_options/) |
-| [`cidaas_federation_provider`](docs/resources/federation_provider.md) | `/federation/providers` | Enterprise federation providers | [docs](docs/resources/federation_provider.md) | [example](examples/resources/cidaas_federation_provider/) |
-| [`cidaas_group_selection`](docs/resources/group_selection.md) | `/groups-srv/selection` | Group login selection | [docs](docs/resources/group_selection.md) | [example](examples/resources/cidaas_group_selection/) |
-| [`cidaas_group_verification_filter`](docs/resources/group_verification_filter.md) | `/groups-srv/verification-filter` | Group verification filters | [docs](docs/resources/group_verification_filter.md) | [example](examples/resources/cidaas_group_verification_filter/) |
+| [`cidaas_app_configuration`](docs/resources/app_configuration.md) | `/app-srv/apps` | Application configuration (Trustdesk app model) | [docs](docs/resources/app_configuration.md) | [example](examples/resources/cidaas_app_configuration/resource.tf) |
+| [`cidaas_hosted_page_group`](docs/resources/hosted_page_group.md) | `/hostedpages-srv/hpgroup` | Hosted page groups | [docs](docs/resources/hosted_page_group.md) | [example](examples/resources/cidaas_hosted_page_group/resource.tf) |
+| [`cidaas_hosted_page_layout`](docs/resources/hosted_page_layout.md) | `/hostedpages-srv/hosted-page-layouts` | Hosted page layouts | [docs](docs/resources/hosted_page_layout.md) | [example](examples/resources/cidaas_hosted_page_layout/resource.tf) |
+| [`cidaas_theme`](docs/resources/theme.md) | `/hostedpages-srv/themes` | Custom CSS themes | [docs](docs/resources/theme.md) | [example](examples/resources/cidaas_theme/resource.tf) |
+| [`cidaas_translations`](docs/resources/translations.md) | `/hostedpages-srv/translations` | Hosted page locale strings | [docs](docs/resources/translations.md) | [example](examples/resources/cidaas_translations/resource.tf) |
+| [`cidaas_user_setup`](docs/resources/user_setup.md) | `/user-srv/usersetup` | Tenant user registration setup | [docs](docs/resources/user_setup.md) | [example](examples/resources/cidaas_user_setup/resource.tf) |
+| [`cidaas_suggest_verification_method`](docs/resources/suggest_verification_method.md) | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods | [docs](docs/resources/suggest_verification_method.md) | [example](examples/resources/cidaas_suggest_verification_method/resource.tf) |
+| [`cidaas_verification_options`](docs/resources/verification_options.md) | `/verification-actions-srv/verification-options` | Verification options | [docs](docs/resources/verification_options.md) | [example](examples/resources/cidaas_verification_options/resource.tf) |
+| [`cidaas_federation_provider`](docs/resources/federation_provider.md) | `/federation/providers` | Enterprise federation providers | [docs](docs/resources/federation_provider.md) | [example](examples/resources/cidaas_federation_provider/resource.tf) |
+| [`cidaas_group_selection`](docs/resources/group_selection.md) | `/groups-srv/selection` | Group login selection | [docs](docs/resources/group_selection.md) | [example](examples/resources/cidaas_group_selection/resource.tf) |
+| [`cidaas_group_verification_filter`](docs/resources/group_verification_filter.md) | `/groups-srv/verification-filter` | Group verification filters | [docs](docs/resources/group_verification_filter.md) | [example](examples/resources/cidaas_group_verification_filter/resource.tf) |
 
 ### v3 only
 
 | Resource | API / service | Description | Docs | Example |
 |----------|---------------|-------------|------|---------|
-| [`cidaas_app`](docs/resources/app.md) | app-srv (legacy) | Legacy v3 application (`cidaas_app_configuration` on v4) | [docs](docs/resources/app.md) | [example](examples/resources/cidaas_app/) |
-| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | hostedpages (legacy) | Legacy v3 hosted page (`cidaas_hosted_page_group` on v4) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/) |
+| [`cidaas_app`](docs/resources/app.md) | app-srv (legacy) | Legacy v3 application (`cidaas_app_configuration` on v4) | [docs](docs/resources/app.md) | [example](examples/resources/cidaas_app/resource.tf) |
+| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | hostedpages (legacy) | Legacy v3 hosted page (`cidaas_hosted_page_group` on v4) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/resource.tf) |
 
 ### Shared (v3 & v4)
 
 | Resource | API / service | Description | Docs | Example |
 |----------|---------------|-------------|------|---------|
-| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | providers-srv | Custom OIDC / OAuth2 identity providers | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/) |
-| [`cidaas_social_provider`](docs/resources/social_provider.md) | providers-srv | Social identity providers (Google, Apple, …) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/) |
-| [`cidaas_consent`](docs/resources/consent.md) | consent-management-srv | Consent definitions | [docs](docs/resources/consent.md) | [example](examples/resources/cidaas_consent/) |
-| [`cidaas_consent_group`](docs/resources/consent_group.md) | consent-management-srv | Consent groups | [docs](docs/resources/consent_group.md) | [example](examples/resources/cidaas_consent_group/) |
-| [`cidaas_consent_version`](docs/resources/consent_version.md) | consent-management-srv | Consent versions | [docs](docs/resources/consent_version.md) | [example](examples/resources/cidaas_consent_version/) |
-| [`cidaas_registration_field`](docs/resources/registration_field.md) | registration-setup-srv | Registration fields & validators | [docs](docs/resources/registration_field.md) | [example](examples/resources/cidaas_registration_field/) |
-| [`cidaas_role`](docs/resources/role.md) | roles-srv | Tenant roles | [docs](docs/resources/role.md) | [example](examples/resources/cidaas_role/) |
-| [`cidaas_user_groups`](docs/resources/user_groups.md) | groups-srv | User groups | [docs](docs/resources/user_groups.md) | [example](examples/resources/cidaas_user_groups/) |
-| [`cidaas_group_type`](docs/resources/group_type.md) | groups-srv | Group types & role modes | [docs](docs/resources/group_type.md) | [example](examples/resources/cidaas_group_type/) |
-| [`cidaas_scope`](docs/resources/scope.md) | scopes-srv | OAuth scopes | [docs](docs/resources/scope.md) | [example](examples/resources/cidaas_scope/) |
-| [`cidaas_scope_group`](docs/resources/scope_group.md) | scopes-srv | Scope groups | [docs](docs/resources/scope_group.md) | [example](examples/resources/cidaas_scope_group/) |
-| [`cidaas_password_policy`](docs/resources/password_policy.md) | password-policy-srv | Password policies | [docs](docs/resources/password_policy.md) | [example](examples/resources/cidaas_password_policy/) |
-| [`cidaas_security_settings`](docs/resources/security_settings.md) | security-srv | Tenant security settings | [docs](docs/resources/security_settings.md) | [example](examples/resources/cidaas_security_settings/) |
-| [`cidaas_template`](docs/resources/template.md) | templates-srv | Legacy communication templates | [docs](docs/resources/template.md) | [example](examples/resources/cidaas_template/) |
-| [`cidaas_template_group`](docs/resources/template_group.md) | templates-srv | Legacy template groups (prefer notifications template group on v4+) | [docs](docs/resources/template_group.md) | [example](examples/resources/cidaas_template_group/) |
-| [`cidaas_notification_template`](docs/resources/notification_template.md) | templates-srv / notification | Notification templates | [docs](docs/resources/notification_template.md) | [example](examples/resources/cidaas_notification_template/) |
-| [`cidaas_notification_template_type`](docs/resources/notification_template_type.md) | templates-srv / notification | Notification template types | [docs](docs/resources/notification_template_type.md) | [example](examples/resources/cidaas_notification_template_type/) |
-| [`cidaas_notifications_template_group`](docs/resources/notifications_template_group.md) | notification-srv | Notification template groups | [docs](docs/resources/notifications_template_group.md) | [example](examples/resources/cidaas_notifications_template_group/) |
-| [`cidaas_notifications_template_group_locale`](docs/resources/notifications_template_group_locale.md) | notification-srv | Template group locales | [docs](docs/resources/notifications_template_group_locale.md) | [example](examples/resources/cidaas_notifications_template_group_locale/) |
-| [`cidaas_notification_service_setup`](docs/resources/notification_service_setup.md) | notification-srv | Communication provider service setups | [docs](docs/resources/notification_service_setup.md) | [example](examples/resources/cidaas_notification_service_setup/) |
-| [`cidaas_webhook`](docs/resources/webhook.md) | webhook-srv | Webhooks and event subscriptions | [docs](docs/resources/webhook.md) | [example](examples/resources/cidaas_webhook/) |
+| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | providers-srv | Custom OIDC / OAuth2 identity providers | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
+| [`cidaas_social_provider`](docs/resources/social_provider.md) | providers-srv | Social identity providers (Google, Apple, …) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
+| [`cidaas_consent`](docs/resources/consent.md) | consent-management-srv | Consent definitions | [docs](docs/resources/consent.md) | [example](examples/resources/cidaas_consent/resource.tf) |
+| [`cidaas_consent_group`](docs/resources/consent_group.md) | consent-management-srv | Consent groups | [docs](docs/resources/consent_group.md) | [example](examples/resources/cidaas_consent_group/resource.tf) |
+| [`cidaas_consent_version`](docs/resources/consent_version.md) | consent-management-srv | Consent versions | [docs](docs/resources/consent_version.md) | [example](examples/resources/cidaas_consent_version/resource.tf) |
+| [`cidaas_registration_field`](docs/resources/registration_field.md) | registration-setup-srv | Registration fields & validators | [docs](docs/resources/registration_field.md) | [example](examples/resources/cidaas_registration_field/resource.tf) |
+| [`cidaas_role`](docs/resources/role.md) | roles-srv | Tenant roles | [docs](docs/resources/role.md) | [example](examples/resources/cidaas_role/resource.tf) |
+| [`cidaas_user_groups`](docs/resources/user_groups.md) | groups-srv | User groups | [docs](docs/resources/user_groups.md) | [example](examples/resources/cidaas_user_groups/resource.tf) |
+| [`cidaas_group_type`](docs/resources/group_type.md) | groups-srv | Group types & role modes | [docs](docs/resources/group_type.md) | [example](examples/resources/cidaas_group_type/resource.tf) |
+| [`cidaas_scope`](docs/resources/scope.md) | scopes-srv | OAuth scopes | [docs](docs/resources/scope.md) | [example](examples/resources/cidaas_scope/resource.tf) |
+| [`cidaas_scope_group`](docs/resources/scope_group.md) | scopes-srv | Scope groups | [docs](docs/resources/scope_group.md) | [example](examples/resources/cidaas_scope_group/resource.tf) |
+| [`cidaas_password_policy`](docs/resources/password_policy.md) | password-policy-srv | Password policies | [docs](docs/resources/password_policy.md) | [example](examples/resources/cidaas_password_policy/resource.tf) |
+| [`cidaas_security_settings`](docs/resources/security_settings.md) | security-srv | Tenant security settings | [docs](docs/resources/security_settings.md) | [example](examples/resources/cidaas_security_settings/resource.tf) |
+| [`cidaas_template`](docs/resources/template.md) | templates-srv | Legacy communication templates | [docs](docs/resources/template.md) | [example](examples/resources/cidaas_template/resource.tf) |
+| [`cidaas_template_group`](docs/resources/template_group.md) | templates-srv | Legacy template groups (prefer notifications template group on v4+) | [docs](docs/resources/template_group.md) | [example](examples/resources/cidaas_template_group/resource.tf) |
+| [`cidaas_notification_template`](docs/resources/notification_template.md) | templates-srv / notification | Notification templates | [docs](docs/resources/notification_template.md) | [example](examples/resources/cidaas_notification_template/resource.tf) |
+| [`cidaas_notification_template_type`](docs/resources/notification_template_type.md) | templates-srv / notification | Notification template types | [docs](docs/resources/notification_template_type.md) | [example](examples/resources/cidaas_notification_template_type/resource.tf) |
+| [`cidaas_notifications_template_group`](docs/resources/notifications_template_group.md) | notification-srv | Notification template groups | [docs](docs/resources/notifications_template_group.md) | [example](examples/resources/cidaas_notifications_template_group/resource.tf) |
+| [`cidaas_notifications_template_group_locale`](docs/resources/notifications_template_group_locale.md) | notification-srv | Template group locales | [docs](docs/resources/notifications_template_group_locale.md) | [example](examples/resources/cidaas_notifications_template_group_locale/resource.tf) |
+| [`cidaas_notification_service_setup`](docs/resources/notification_service_setup.md) | notification-srv | Communication provider service setups | [docs](docs/resources/notification_service_setup.md) | [example](examples/resources/cidaas_notification_service_setup/resource.tf) |
+| [`cidaas_webhook`](docs/resources/webhook.md) | webhook-srv | Webhooks and event subscriptions | [docs](docs/resources/webhook.md) | [example](examples/resources/cidaas_webhook/resource.tf) |
 
-Identity provider examples: [custom](examples/resources/cidaas_custom_provider/) · [social](examples/resources/cidaas_social_provider/) · [federation](examples/resources/cidaas_federation_provider/). On Trustdesk, `owner` defaults to `client` for Admin UI visibility.
+Identity provider examples: [custom](examples/resources/cidaas_custom_provider/resource.tf) · [social](examples/resources/cidaas_social_provider/resource.tf) · [federation](examples/resources/cidaas_federation_provider/resource.tf). On Trustdesk, `owner` defaults to `client` for Admin UI visibility.
 
 ---
 
@@ -156,6 +180,10 @@ CIDAAS_VERSION=4.x TF_ACC=1 BASE_URL=https://... make testacc
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the documentation workflow.
+
+### Before you push
+
+Acceptance tests (`acceptance_test` in `.gitlab-ci.yml`) create **real** resources on a cidaas tenant. Run them locally against a **dedicated test tenant**, not production.
 
 ---
 
