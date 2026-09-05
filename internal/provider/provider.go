@@ -64,7 +64,8 @@ func (p *cidaasProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"cidaas_version": schema.StringAttribute{
 				Optional: true,
 				MarkdownDescription: "Target cidaas version (e.g. `3.x`, `v3.x`, `4.x`, `v4.x`). " +
-					"If unset, uses `TERRAFORM_PROVIDER_CIDAAS_VERSION` or `CIDAAS_VERSION`, then live `/public-srv/version`, else `4.x`.",
+					"Required via this attribute or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. " +
+					"Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`(?i)^v?[34](\..*)?$`),

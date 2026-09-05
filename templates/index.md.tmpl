@@ -1,0 +1,22 @@
+---
+page_title: "{{.ProviderShortName}} Provider"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.ProviderShortName}} Provider
+
+{{ .Description | trimspace }}
+
+Set the target major version with HCL `cidaas_version`, or environment variables `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`. One of these is **required**. Trustdesk-only resources error when the target is `3.x`; shared resources work on both.
+
+{{ if .HasExamples -}}
+## Example Usage
+
+{{- range .ExampleFiles }}
+
+{{ tffile . }}
+{{- end }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}

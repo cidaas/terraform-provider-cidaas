@@ -133,7 +133,7 @@ var webhookSchema = schema.Schema{
 		"events": schema.SetAttribute{
 			ElementType:         types.StringType,
 			Required:            true,
-			MarkdownDescription: "Set of event IDs subscribed by this webhook.",
+			MarkdownDescription: "Set of event IDs subscribed by this webhook. Discover values via `GET /webhook-srv/eventdescriptions?category=webhook`.",
 			Validators: []validator.Set{
 				setvalidator.SizeAtLeast(1),
 			},
@@ -465,7 +465,7 @@ func validateWebhookEvents(ctx context.Context, client *cidaas.Client, events []
 		if _, ok := allowedSet[event]; !ok {
 			diags.AddError(
 				"Invalid webhook event",
-				fmt.Sprintf("event %q is not a webhook-capable event in this tenant; use the cidaas_webhook_events data source to list valid values", event),
+				fmt.Sprintf("event %q is not a webhook-capable event in this tenant; use GET /webhook-srv/eventdescriptions?category=webhook to list valid values", event),
 			)
 		}
 	}
