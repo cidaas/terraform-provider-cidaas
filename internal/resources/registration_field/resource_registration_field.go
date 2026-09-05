@@ -711,6 +711,18 @@ func (r *RegFieldResource) applyRegistrationFieldOrderChange(ctx context.Context
 	})
 }
 
+func (r *RegFieldResource) verifyRegistrationFieldOrder(ctx context.Context, plan RegFieldConfig) (*cidaas.RegistrationFieldResponse, error) {
+	getRes, err := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+	if err != nil {
+		return nil, fmt.Errorf("failed to read registration field %q after order update: %w", plan.FieldKey.ValueString(), err)
+	}
+	if !registrationFieldOrderMatchesPlan(plan, getRes.Data.Order) {
+		return getRes, fmt.Errorf("registration field %q order after update is %d, wanted %d",
+			plan.FieldKey.ValueString(), getRes.Data.Order, plan.Order.ValueInt64())
+	}
+	return getRes, nil
+}
+
 func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan RegFieldConfig
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -775,10 +787,10 @@ func (r *RegFieldResource) Create(ctx context.Context, req resource.CreateReques
 			}
 		}
 
-		getRes, err := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		getRes, err := r.verifyRegistrationFieldOrder(ctx, plan)
 		if err != nil {
 			regFieldOrderMutex.Unlock()
-			resp.Diagnostics.AddError("failed to read registration field after order update", util.FormatErrorMessage(err))
+			resp.Diagnostics.AddError("failed to verify registration field order", util.FormatErrorMessage(err))
 			return
 		}
 		plan.BaseDataType = types.StringValue(getRes.Data.BaseDataType)
@@ -1069,20 +1081,12 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 
 	fieldModel.ID = state.ID.ValueString()
 
+	orderChangeRequested := false
 	if _, _, ok := registrationFieldOrderChangeRequested(plan, state); ok {
-		regFieldOrderMutex.Lock()
-		actualOrder := state.Order.ValueInt64()
-		if actualField, err := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString()); err == nil && actualField != nil {
-			actualOrder = actualField.Data.Order
-		}
-		if actualOrder != plan.Order.ValueInt64() {
-			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
-				regFieldOrderMutex.Unlock()
-				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
-				return
-			}
-		}
-		regFieldOrderMutex.Unlock()
+		orderChangeRequested = true
+		// Upsert must not send order when a dedicated reorder follows; Upsert after
+		// reorder was reverting the PATCH and causing non-empty refresh plans.
+		fieldModel.Order = 0
 	}
 
 	res, err := r.CidaasClient.RegFields.Upsert(ctx, *fieldModel)
@@ -1105,6 +1109,27 @@ func (r *RegFieldResource) Update(ctx context.Context, req resource.UpdateReques
 	tflog.Info(ctx, "successfully updated registration field via API", util.H{
 		"field_id": state.ID.ValueString(),
 	})
+
+	if orderChangeRequested {
+		regFieldOrderMutex.Lock()
+		actualOrder := state.Order.ValueInt64()
+		if actualField, err := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString()); err == nil && actualField != nil {
+			actualOrder = actualField.Data.Order
+		}
+		if actualOrder != plan.Order.ValueInt64() {
+			if err := r.applyRegistrationFieldOrderChange(ctx, plan, actualOrder); err != nil {
+				regFieldOrderMutex.Unlock()
+				resp.Diagnostics.AddError("failed to update registration field order", util.FormatErrorMessage(err))
+				return
+			}
+		}
+		if _, err := r.verifyRegistrationFieldOrder(ctx, plan); err != nil {
+			regFieldOrderMutex.Unlock()
+			resp.Diagnostics.AddError("failed to verify registration field order", util.FormatErrorMessage(err))
+			return
+		}
+		regFieldOrderMutex.Unlock()
+	}
 
 	if plan.Order.IsNull() || plan.Order.IsUnknown() {
 		plan.Order = types.Int64Value(res.Data.Order)
