@@ -48,7 +48,7 @@ func TestClientConfig_makeRequest_Success(t *testing.T) {
 		// Verify request body
 		body, _ := io.ReadAll(r.Body)
 		var receivedBody map[string]string
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 
 		if receivedBody["test"] != expectedRequestBody["test"] {
 			t.Errorf("Expected request body %v, got %v", expectedRequestBody, receivedBody)
@@ -56,7 +56,7 @@ func TestClientConfig_makeRequest_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"result": "success"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"result": "success"})
 	}))
 	defer server.Close()
 
@@ -108,7 +108,7 @@ func TestNewClient_Success(t *testing.T) {
 		// Verify request body contains client credentials
 		body, _ := io.ReadAll(r.Body)
 		var payload map[string]string
-		json.Unmarshal(body, &payload)
+		_ = json.Unmarshal(body, &payload)
 
 		if payload["client_id"] != "test-client-id" {
 			t.Errorf("Expected client_id 'test-client-id', got %s", payload["client_id"])
@@ -127,7 +127,7 @@ func TestNewClient_Success(t *testing.T) {
 			AccessToken: "generated-access-token-123",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer tokenServer.Close()
 
@@ -151,35 +151,17 @@ func TestNewClient_Success(t *testing.T) {
 	if client.Roles == nil {
 		t.Error("Expected Roles to be initialized")
 	}
-	if client.CustomProvider == nil {
-		t.Error("Expected CustomProvider to be initialized")
-	}
-	if client.SocialProvider == nil {
-		t.Error("Expected SocialProvider to be initialized")
-	}
 	if client.Scopes == nil {
 		t.Error("Expected Scopes to be initialized")
 	}
 	if client.ScopeGroup == nil {
 		t.Error("Expected ScopeGroup to be initialized")
 	}
-	if client.ConsentGroup == nil {
-		t.Error("Expected ConsentGroup to be initialized")
-	}
 	if client.GroupType == nil {
 		t.Error("Expected GroupType to be initialized")
 	}
 	if client.UserGroup == nil {
 		t.Error("Expected UserGroup to be initialized")
-	}
-	if client.HostedPages == nil {
-		t.Error("Expected HostedPages to be initialized")
-	}
-	if client.Webhook == nil {
-		t.Error("Expected Webhook to be initialized")
-	}
-	if client.Apps == nil {
-		t.Error("Expected Apps to be initialized")
 	}
 	if client.RegFields == nil {
 		t.Error("Expected RegFields to be initialized")
@@ -192,12 +174,6 @@ func TestNewClient_Success(t *testing.T) {
 	}
 	if client.PasswordPolicy == nil {
 		t.Error("Expected PasswordPolicy to be initialized")
-	}
-	if client.Consent == nil {
-		t.Error("Expected Consent to be initialized")
-	}
-	if client.ConsentVersion == nil {
-		t.Error("Expected ConsentVersion to be initialized")
 	}
 }
 
@@ -218,7 +194,7 @@ func TestNewClient_URLCleanup(t *testing.T) {
 		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := TokenResponse{AccessToken: "test-token"}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}))
 
 		config := ClientConfig{
@@ -309,10 +285,7 @@ func TestNewClient_InvalidTokenResponse(t *testing.T) {
 func TestNewClient_ContextCancellation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Simulate slow response
-		select {
-		case <-r.Context().Done():
-			return
-		}
+		<-r.Context().Done()
 	}))
 	defer server.Close()
 

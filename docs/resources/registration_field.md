@@ -1,6 +1,6 @@
 ---
 page_title: "cidaas_registration_field Resource - cidaas"
-subcategory: ""
+subcategory: "Security"
 description: |-
   The cidaas_registration_field in the provider allows management of registration fields in the Cidaas system. This resource enables you to configure and customize the fields displayed during user registration.
   Ensure that the below scopes are assigned to the client with the specified client_id:
@@ -52,16 +52,7 @@ resource "cidaas_registration_field" "text" {
     }
   ]
   field_definition = {
-    # Either `regex` or `regexes` (not both). Entries must be valid Go regexp (RE2).
-    # Multiple regexes are AND-merged into one API regex via supported shapes
-    # (length, charset, contains, no_leading) — not concatenation / not JS lookaheads.
-    # Unmergable shapes fail closed; use a single regex then.
-    regexes = [
-      "^.*[A-Za-z]+.*$",           # at least one letter
-      "^.{1,40}$",                 # length 1–40
-      "^[ A-Za-z/,`'´\\-'.&()]*$", # allowed chars
-      "^[^.].*$",                  # no leading period
-    ]
+    regex = "^.{10,100}$"
   }
 }
 ```
@@ -85,7 +76,7 @@ resource "cidaas_registration_field" "text" {
 - `internal` (Boolean) Flag to mark if a field is internal. Defaults set to `false`
 - `is_list` (Boolean)
 - `is_searchable` (Boolean) Flag to mark if a field is searchable. Defaults set to `true`
-- `order` (Number) The display order of the field in the registration UI. When omitted on create, fieldsetup-srv assigns the next available order. Changing `order` on an existing field uses the fieldsetup-srv reorder API (`PATCH /fieldsetup-srv/fields/order`) before other updates are applied; upsert alone does not change order.
+- `order` (Number) The display order of the field in the registration UI. When omitted, the API assigns an order.
 - `overwrite_with_null_value_from_social_provider` (Boolean) Set to true if you want the value should be reset by identity provider. Defaults set to `false`
 - `parent_group_id` (String) The ID of the parent registration group. Defaults to `DEFAULT` if not provided.
 - `read_only` (Boolean) Flag to mark if a field is read only. Defaults set to `false`
@@ -147,8 +138,8 @@ Optional:
 - `max_length` (Number) The maximum length of a string type attribute.
 - `min_date` (String) The earliest date a user can select. Applicable only for DATE attributes. Example format: `2024-06-28T18:30:00Z`.
 - `min_length` (Number) The minimum length of a string type attribute
-- `regex` (String) A single regular expression stored as `fieldDefinition.regex`. Must be valid Go `regexp` (RE2); cidaas evaluates it in the backend. Only for TEXT and URL. Mutually exclusive with `regexes`. When `regexes` is set, this is the RE2 shape-merged result in plan and state. Requires `min_length_msg` and `max_length_msg` in every `local_texts` entry.
-- `regexes` (List of String) Go `regexp` (RE2) patterns merged with AND into one API regex via supported shapes (length, charset, contains, no_leading) — not concatenation or JS lookaheads. Unknown/unmergable shapes fail closed. Equivalence: same accept/reject as matching every entry for supported shapes. Mutually exclusive with `regex`. Not a 1:1 for Zod ErrorKeys. Same message and data-type rules as `regex`.
+- `regex` (String) A single regular expression stored as `fieldDefinition.regex` in the API. Must be valid Go `regexp` (RE2) syntax — cidaas evaluates it in the backend. Only allowed for data types TEXT and URL. Mutually exclusive with `regexes`. When `regexes` is set, this attribute is the RE2 shape-merged result in plan and state.
+- `regexes` (List of String) List of Go `regexp` (RE2) full-string patterns merged with AND into one `fieldDefinition.regex`. Supported shapes: length (`^.{m,n}$`), charset (`^[…]*$` / `^[…]+$`), contains (`^.*[…].*$`), no_leading (`^[^x].*$`). Not string concatenation and not JavaScript lookaheads — unknown or unmergable shapes fail closed. Equivalence holds for supported shapes (same accept/reject as matching every entry). Mutually exclusive with `regex`. Not a 1:1 for Zod ErrorKeys. Requires `min_length_msg` and `max_length_msg` in every `local_texts` entry, same as `regex`.
 
 
 <a id="nestedblock--remote_field_settings"></a>
@@ -220,11 +211,3 @@ Optional:
 - `totp_placeholder` (String)
 - `totp_placement` (String)
 - `totpkey` (String)
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-terraform import cidaas_registration_page_field.resource_name field_key
-```

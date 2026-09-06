@@ -6,12 +6,13 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	provider "github.com/Cidaas/terraform-provider-cidaas/internal"
+	provider "github.com/Cidaas/terraform-provider-cidaas/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
@@ -21,7 +22,7 @@ import (
 // CLI command executed to create a provider server to which the CLI can
 // reattach.
 var TestAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"cidaas": providerserver.NewProtocol6WithError(provider.Cidaas("test")()),
+	"cidaas": providerserver.NewProtocol6WithError(provider.New("test")()),
 }
 
 var (
@@ -46,6 +47,9 @@ func TestAccPreCheck(t *testing.T) {
 	if os.Getenv("BASE_URL") == "" {
 		t.Fatal("BASE_URL must be set for acceptance tests")
 	}
+	if os.Getenv("TERRAFORM_PROVIDER_CIDAAS_VERSION") == "" && os.Getenv("CIDAAS_VERSION") == "" {
+		t.Fatal("TERRAFORM_PROVIDER_CIDAAS_VERSION or CIDAAS_VERSION must be set for acceptance tests")
+	}
 
 	tokenURL := fmt.Sprintf("%s/%s", os.Getenv("BASE_URL"), "token-srv/token")
 	client, err := util.NewHTTPClient(tokenURL, http.MethodPost)
@@ -61,7 +65,7 @@ func TestAccPreCheck(t *testing.T) {
 	if err := util.HandleResponseError(res, err); err != nil {
 		t.Fatalf("failed to generate access token %s", err.Error())
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	var response cidaas.TokenResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
 		t.Fatalf("failed to generate access token %s", err.Error())
@@ -87,4 +91,30 @@ func GetBaseURL() string {
 		return BaseURL
 	}
 	return os.Getenv("BASE_URL")
+}
+
+func targetVersionEnv() string {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("TERRAFORM_PROVIDER_CIDAAS_VERSION")))
+	if v == "" {
+		v = strings.ToLower(strings.TrimSpace(os.Getenv("CIDAAS_VERSION")))
+	}
+	return v
+}
+
+// SkipIfV3 skips when the acceptance run targets cidaas v3.x (v4-only resources).
+func SkipIfV3(t *testing.T) {
+	t.Helper()
+	v := targetVersionEnv()
+	if strings.HasPrefix(v, "3") || v == "3.x" {
+		t.Skip("Resource is supported on cidaas v4.x only; skipping on v3 environment")
+	}
+}
+
+// SkipIfV4 skips when the acceptance run targets cidaas v4.x (v3-only / happy-path v3 CRUD).
+func SkipIfV4(t *testing.T) {
+	t.Helper()
+	v := targetVersionEnv()
+	if strings.HasPrefix(v, "4") || strings.HasPrefix(v, "v4") || v == "4.x" {
+		t.Skip("Resource is supported on cidaas v3.x only; skipping on v4 environment")
+	}
 }

@@ -1,90 +1,26 @@
 ---
 page_title: "cidaas_social_provider Resource - cidaas"
-subcategory: ""
+subcategory: "Identity Providers"
 description: |-
-  The cidaas_social_provider resource allows you to configure and manage social login providers within Cidaas.
-  Social login providers enable users to authenticate using their existing accounts from popular social platforms such as Google, Facebook, LinkedIn and others.
-  Ensure that the below scopes are assigned to the client:
-  cidaas:providers_readcidaas:providers_writecidaas:providers_delete
-  -> Note: Write-Only argument client_secret_wo is available to use in place of client_secret. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. Learn more https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments.
+  Manages Social Identity Providers in Cidaas.
 ---
 
 # cidaas_social_provider (Resource)
 
-The `cidaas_social_provider` resource allows you to configure and manage social login providers within Cidaas.
- Social login providers enable users to authenticate using their existing accounts from popular social platforms such as Google, Facebook, LinkedIn and others.
-
- Ensure that the below scopes are assigned to the client:
-- cidaas:providers_read
-- cidaas:providers_write
-- cidaas:providers_delete
-
--> **Note:** Write-Only argument `client_secret_wo` is available to use in place of `client_secret`. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. [Learn more](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments).
+Manages Social Identity Providers in Cidaas.
 
 ## Example Usage
 
 ```terraform
-variable "google_client_secret" {
-  type      = string
-  sensitive = true
-  ephemeral = true
-}
-
-resource "cidaas_social_provider" "sample" {
-  name          = "Sample Social Provider"
-  provider_name = "google"
-  enabled       = true
-  client_id     = "8d789b3d-b312"
-
-  # Write-Only: not stored in plan or state. Increment client_secret_wo_version to trigger an update.
-  client_secret_wo         = var.google_client_secret
-  client_secret_wo_version = "1"
-
-  # Alternative: client_secret = "96ae-ea2e8d8e6708" (stored in the state file).
-
-  scopes                   = ["profile", "email"]
-  enabled_for_admin_portal = true
-  claims = {
-    required_claims = {
-      user_info = ["name"]
-      id_token  = ["phone_number"]
-    }
-    optional_claims = {
-      user_info = ["website"]
-      id_token  = ["street_address"]
-    }
-  }
-  userinfo_fields = [
-    {
-      inner_key       = "sample_custom_field"
-      external_key    = "external_sample_cf"
-      is_custom_field = true
-      is_system_field = false
-    },
-    {
-      inner_key       = "sample_system_field"
-      external_key    = "external_sample_sf"
-      is_custom_field = false
-      is_system_field = true
-    }
-  ]
-}
-```
-
-### Configuring a Social Provider to a Client
-To configure a social provider for a client in your Terraform configuration, you need to update the `cidaas_app` resources with the details from the `cidaas_social_provider` resource. Below is an example demonstrating how you can configure a social provider for a client:
-
-```terraform
-resource "cidaas_app" "app_sample" {
-  ...
-  social_providers = [
-    {
-      provider_name = cidaas_social_provider.sample.provider_name
-      social_id     = cidaas_social_provider.sample.id
-      display_name  = "google"
-    }
-  ]
-...
+resource "cidaas_social_provider" "google" {
+  provider_name            = "google"
+  name                     = "Google Login"
+  client_id                = "google-client-id.apps.googleusercontent.com"
+  client_secret            = "google-client-secret"
+  enabled                  = true
+  enabled_for_admin_portal = false
+  scopes                   = ["openid", "email", "profile"]
+  owner                    = "client"
 }
 ```
 
@@ -93,69 +29,20 @@ resource "cidaas_app" "app_sample" {
 
 ### Required
 
-- `client_id` (String) The client ID provided by the social provider. This is used to authenticate your application with the social provider.
-- `name` (String) The name of the social provider configuration. This should be unique within your cidaas environment.
-- `provider_name` (String) The name of the social provider. Supported values include `google`, `facebook`, `linkedin` etc.
+- `client_id` (String) Client ID of the social provider.
+- `name` (String) Name of the social provider.
+- `provider_name` (String) Provider identifier name (e.g. google, facebook, apple).
 
 ### Optional
 
-> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
-
-- `claims` (Attributes) A map defining required and optional claims to be requested from the social provider. (see [below for nested schema](#nestedatt--claims))
-- `client_secret` (String, Sensitive) The client secret provided by the social provider. Exactly one of `client_secret` or `client_secret_wo` must be set. Note that this will be stored in the state file.
-- `client_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Write-Only equivalent of `client_secret`. The value is sent to cidaas on create and update but is not stored in plan or state. Must be set together with `client_secret_wo_version`. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later.
-- `client_secret_wo_version` (String) Used together with `client_secret_wo` to trigger an update. Increment this value when an update to `client_secret_wo` is required.
-- `enabled` (Boolean) A flag to enable or disable the social provider configuration. Set to `true` to enable and `false` to disable.
-- `enabled_for_admin_portal` (Boolean) A flag to enable or disable the social provider for the admin portal. Set to `true` to enable and `false` to disable.
-- `scopes` (Set of String) A list of scopes of the social provider.
-- `userinfo_fields` (Attributes Set) User info fields to map between the social provider and Cidaas. Order is not significant; Terraform treats this as a set. (see [below for nested schema](#nestedatt--userinfo_fields))
+- `client_secret` (String, Sensitive) Client secret of the social provider.
+- `client_secret_wo` (String, Sensitive) Write-only client secret.
+- `client_secret_wo_version` (String) Version of write-only client secret.
+- `enabled` (Boolean) Whether the provider is enabled.
+- `enabled_for_admin_portal` (Boolean) Whether the provider is enabled for Admin Portal login.
+- `owner` (String) Owner of the provider (defaults to client for Admin UI compatibility).
+- `scopes` (Set of String) Scopes requested from social provider.
 
 ### Read-Only
 
-- `id` (String) The unique identifier of the social provider
-
-<a id="nestedatt--claims"></a>
-### Nested Schema for `claims`
-
-Optional:
-
-- `optional_claims` (Attributes) Defines the claims that are optional from the social provider. (see [below for nested schema](#nestedatt--claims--optional_claims))
-- `required_claims` (Attributes) Defines the claims that are required from the social provider. (see [below for nested schema](#nestedatt--claims--required_claims))
-
-<a id="nestedatt--claims--optional_claims"></a>
-### Nested Schema for `claims.optional_claims`
-
-Optional:
-
-- `id_token` (Set of String) A list of ID token claims that are optional.
-- `user_info` (Set of String) A list of user information claims that are optional.
-
-
-<a id="nestedatt--claims--required_claims"></a>
-### Nested Schema for `claims.required_claims`
-
-Optional:
-
-- `id_token` (Set of String) A list of ID token claims that are required.
-- `user_info` (Set of String) A list of user information claims that are required.
-
-
-
-<a id="nestedatt--userinfo_fields"></a>
-### Nested Schema for `userinfo_fields`
-
-Required:
-
-- `external_key` (String) The external key used by the social provider.
-- `inner_key` (String) The internal key used by cidaas.
-- `is_custom_field` (Boolean) A flag indicating whether the field is a custom field.
-- `is_system_field` (Boolean) A flag indicating whether the field is a system field.
-
-## Import
-
-The import identifier of resource social provider is a combination of **provider_name** and **provider_id** joined by the special character ":".
-For example, if the resource name is `sample` with provider_name `google` and provider_id `8d789b3d-b312-4251`, the import statement would be:
-
-```shell
-terraform import cidaas_social_provider.sample google:8d789b3d-b312-4251
-```
+- `id` (String) Unique identifier of the social provider.

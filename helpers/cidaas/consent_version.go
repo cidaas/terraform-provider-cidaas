@@ -24,8 +24,6 @@ type ConsentVersionReadResponse struct {
 	Data    []ConsentVersionModel `json:"data,omitempty"`
 }
 
-// consentVersionScopeWire matches consent-management-srv v2 responses where scopes are
-// []DetailedFieldsByScope (scope key only is needed for Terraform state).
 type consentVersionScopeWire struct {
 	Scope string `json:"scope"`
 }
@@ -42,8 +40,6 @@ type ConsentVersionModel struct {
 	UpdatedAt      string        `json:"updated_at,omitempty"`
 }
 
-// UnmarshalJSON accepts scopes as either []string (request/legacy) or []object with a
-// "scope" field (consent-management-srv POST .../v2/consent/versions response).
 func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
 	type consentVersionModelAlias ConsentVersionModel
 	aux := struct {
@@ -82,6 +78,18 @@ func (cv *ConsentVersionModel) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (cv ConsentVersionModel) MarshalJSON() ([]byte, error) {
+	type consentVersionModelAlias ConsentVersionModel
+	aux := struct {
+		consentVersionModelAlias
+		Scopes []string `json:"scopes,omitempty"`
+	}{
+		consentVersionModelAlias: consentVersionModelAlias(cv),
+		Scopes:                   cv.Scopes,
+	}
+	return json.Marshal(aux)
+}
+
 type ConsentLocalResponse struct {
 	Success bool              `json:"success,omitempty"`
 	Status  int               `json:"status,omitempty"`
@@ -111,7 +119,6 @@ func NewConsentVersion(clientConfig ClientConfig) *ConsentVersion {
 	return &ConsentVersion{clientConfig}
 }
 
-// ponytail: 5 attempts, 1+2+4+8s sleeps (~15s). Consent-management returns 400/30001 until the parent consent is indexed. Raise maxAttempts if that lag grows.
 const consentVersionUpsertMaxAttempts = 5
 
 var consentVersionRetryDelay = func(attempt int) time.Duration {
@@ -120,15 +127,18 @@ var consentVersionRetryDelay = func(attempt int) time.Duration {
 
 func isConsentVersionNotIndexed(err error) bool {
 	var statusErr *util.UnexpectedStatusError
-	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusBadRequest {
+	if !errors.As(err, &statusErr) {
+		return false
+	}
+	if statusErr.StatusCode != http.StatusBadRequest && statusErr.StatusCode != http.StatusExpectationFailed {
 		return false
 	}
 	body := strings.ToLower(statusErr.Body)
-	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found")
+	return strings.Contains(body, "30001") || strings.Contains(body, "consent version not found") || strings.Contains(body, "locale")
 }
 
 func (c *ConsentVersion) Upsert(ctx context.Context, consentVersionConfig ConsentVersionModel) (*ConsentVersionResponse, error) {
-	for attempt := 0; ; attempt++ { // bound is the last-attempt return below; for{} so Go needs no dummy return
+	for attempt := 0; ; attempt++ {
 		res, err := c.upsertOnce(ctx, consentVersionConfig)
 		if err == nil {
 			return res, nil
@@ -155,7 +165,7 @@ func (c *ConsentVersion) upsertOnce(ctx context.Context, consentVersionConfig Co
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -174,7 +184,7 @@ func (c *ConsentVersion) Get(ctx context.Context, consentID string) (*ConsentVer
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -189,11 +199,26 @@ func (c *ConsentVersion) UpsertLocal(ctx context.Context, consentLocal ConsentLo
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, consentLocal)
-	if err := util.HandleResponseError(res, err); err != nil {
-		return nil, err
+	var res *http.Response
+	for attempt := 0; attempt < 5; attempt++ {
+		res, err = client.MakeRequest(ctx, consentLocal)
+		handleErr := util.HandleResponseError(res, err)
+		if handleErr == nil {
+			break
+		}
+		if res != nil {
+			_ = res.Body.Close()
+		}
+		var statusErr *util.UnexpectedStatusError
+		if errors.As(handleErr, &statusErr) && (statusErr.StatusCode == http.StatusExpectationFailed || statusErr.StatusCode >= 500) {
+			if attempt < 4 {
+				time.Sleep(time.Duration(1<<attempt) * time.Second)
+				continue
+			}
+		}
+		return nil, handleErr
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -218,7 +243,7 @@ func (c *ConsentVersion) GetLocal(ctx context.Context, consentVersionID string, 
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}

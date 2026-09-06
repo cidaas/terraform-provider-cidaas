@@ -1,1 +1,0 @@
-terraform import cidaas_security_settings.example security_settings

@@ -9,7 +9,13 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
 
-// notificationSrvEnvelope matches basetype.Response[T] JSON from notification-srv handlers.
+func truncateBody(b []byte) string {
+	if len(b) > 2048 {
+		return string(b[:2048]) + "... (truncated)"
+	}
+	return string(b)
+}
+
 type notificationSrvEnvelope struct {
 	Success  bool            `json:"success"`
 	Status   int             `json:"status"`
@@ -19,7 +25,6 @@ type notificationSrvEnvelope struct {
 	Data     json.RawMessage `json:"data"`
 }
 
-// ParseNotificationSrvData unmarshals the `data` field from a notification-srv JSON envelope into T.
 func ParseNotificationSrvData[T any](body []byte, httpStatus int) (*T, error) {
 	var env notificationSrvEnvelope
 	if err := json.Unmarshal(body, &env); err != nil {
@@ -51,7 +56,6 @@ func ParseNotificationSrvData[T any](body []byte, httpStatus int) (*T, error) {
 	return &out, nil
 }
 
-// ParseNotificationSrvDataOrNil unmarshals envelope data into T when present; if `data` is JSON null or empty, returns (nil, nil) without error (e.g. GET by id with no match).
 func ParseNotificationSrvDataOrNil[T any](body []byte, httpStatus int) (*T, error) {
 	var env notificationSrvEnvelope
 	if err := json.Unmarshal(body, &env); err != nil {

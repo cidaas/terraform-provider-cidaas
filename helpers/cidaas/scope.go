@@ -57,7 +57,7 @@ func (c *Scope) Upsert(ctx context.Context, sc ScopeModel) (*ScopeResponse, erro
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (c *Scope) Get(ctx context.Context, scopeKey string) (*ScopeResponse, error
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (c *Scope) Delete(ctx context.Context, scopeKey string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (c *Scope) GetAll(ctx context.Context) ([]ScopeModel, error) { //nolint:dup
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
