@@ -91,11 +91,11 @@ resource "cidaas_notification_template_type" "simple_notification" {
 ### Optional
 
 - `category` (String) Category of the template type: `cidaas` (system) or `custom`.
-- `communication_methods` (Set of String) Supported communication methods: `email`, `sms`, `ivr`, `push`. Optional in schema, but may be required by the API for certain template types.
+- `communication_methods` (Set of String) Supported communication methods (`email`, `sms`, `ivr`, `push`). Optional in the provider schema, but may be required by the API depending on the template category. Uppercase values are normalized to lowercase.
 - `context_attributes` (Map of String) Map of context attribute names to their descriptions.
 - `custom_attributes` (Map of String) Map of custom attribute names to their descriptions.
 - `deactivatable` (Boolean) Whether templates of this type can be deactivated.
-- `description` (String) Description of what this template type is used for. Optional in schema, but may be required by the API for certain template types.
+- `description` (String) Description of the template type. Optional in the provider schema, but may be required by the API for certain template types. Must be between 10 and 600 characters when provided. Cannot be updated for system template types.
 - `msg_formats` (Set of String) Supported message formats: `html`, `text`, `media`.
 - `owner` (String) Owner of the template type (`client`, `admin`, `core`, `system`).
 - `processing_types` (Set of String) Supported processing types (e.g. `SYNC`, `ASYNC`).
