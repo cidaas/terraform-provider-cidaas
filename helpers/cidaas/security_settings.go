@@ -102,8 +102,9 @@ func (s *SecuritySettings) Get(ctx context.Context) (*SecuritySettingsGetRespons
 			}
 			return nil, err
 		}
-		defer func() { _ = res.Body.Close() }()
-		if err := util.ProcessResponse(res, &response); err != nil {
+		err = util.ProcessResponse(res, &response)
+		_ = res.Body.Close()
+		if err != nil {
 			return nil, err
 		}
 		if !response.Success {
@@ -145,9 +146,9 @@ func (s *SecuritySettings) Patch(ctx context.Context, patch SecuritySettingsPatc
 			}
 			return err
 		}
-		defer func() { _ = res.Body.Close() }()
 
 		body, err := io.ReadAll(res.Body)
+		_ = res.Body.Close()
 		if err != nil {
 			return fmt.Errorf("failed to read fraud-detection settings PATCH response: %w", err)
 		}

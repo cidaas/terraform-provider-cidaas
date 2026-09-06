@@ -1713,7 +1713,7 @@ func (v fieldTypeModifier) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (v fieldTypeModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+func (v fieldTypeModifier) PlanModifyString(_ context.Context, _ planmodifier.StringRequest, _ *planmodifier.StringResponse) {
 }
 
 func (v dateTypeValidator) Description(_ context.Context) string {

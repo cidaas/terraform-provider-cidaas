@@ -13,26 +13,26 @@ import (
 
 // appConfigurationConfig is the Terraform state/plan model for cidaas_app_configuration.
 type appConfigurationConfig struct {
-	ClientID            types.String `tfsdk:"client_id"`
-	ClientName          types.String `tfsdk:"client_name"`
-	ClientType          types.String `tfsdk:"client_type"`
-	Enabled                     types.Bool   `tfsdk:"enabled"`
-	RequirePKCE                 types.Bool   `tfsdk:"require_pkce"`
-	DisableInsecurePKCEMethod   types.Bool   `tfsdk:"disable_insecure_pkce_method"`
-	GrantTypes                  types.List   `tfsdk:"grant_types"`
-	ResponseTypes       types.List   `tfsdk:"response_types"`
-	RedirectURIs        types.Object `tfsdk:"redirect_uris"`
-	Scopes              types.Object `tfsdk:"scopes"`
-	TokenLifetimes      types.Object `tfsdk:"token_lifetimes"`
-	AuthenticationSetup types.Object `tfsdk:"authentication_setup"`
-	HostedPagesLayoutID types.String `tfsdk:"hosted_pages_layout_id"`
-	UserSetupID         types.String `tfsdk:"user_setup_id"`
-	OwnershipDetails    types.Object `tfsdk:"ownership_details"`
-	ClientAuthConfig    types.Object `tfsdk:"client_auth_config"`
-	SigningKeyConfig    types.Object `tfsdk:"signing_key_config"`
-	CreatedTime         types.String `tfsdk:"created_time"`
-	UpdatedTime         types.String `tfsdk:"updated_time"`
-	Owner               types.String `tfsdk:"owner"`
+	ClientID                  types.String `tfsdk:"client_id"`
+	ClientName                types.String `tfsdk:"client_name"`
+	ClientType                types.String `tfsdk:"client_type"`
+	Enabled                   types.Bool   `tfsdk:"enabled"`
+	RequirePKCE               types.Bool   `tfsdk:"require_pkce"`
+	DisableInsecurePKCEMethod types.Bool   `tfsdk:"disable_insecure_pkce_method"`
+	GrantTypes                types.List   `tfsdk:"grant_types"`
+	ResponseTypes             types.List   `tfsdk:"response_types"`
+	RedirectURIs              types.Object `tfsdk:"redirect_uris"`
+	Scopes                    types.Object `tfsdk:"scopes"`
+	TokenLifetimes            types.Object `tfsdk:"token_lifetimes"`
+	AuthenticationSetup       types.Object `tfsdk:"authentication_setup"`
+	HostedPagesLayoutID       types.String `tfsdk:"hosted_pages_layout_id"`
+	UserSetupID               types.String `tfsdk:"user_setup_id"`
+	OwnershipDetails          types.Object `tfsdk:"ownership_details"`
+	ClientAuthConfig          types.Object `tfsdk:"client_auth_config"`
+	SigningKeyConfig          types.Object `tfsdk:"signing_key_config"`
+	CreatedTime               types.String `tfsdk:"created_time"`
+	UpdatedTime               types.String `tfsdk:"updated_time"`
+	Owner                     types.String `tfsdk:"owner"`
 
 	redirectURIs        *redirectURIsConfig
 	scopes              *scopesConfig
