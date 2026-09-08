@@ -9,6 +9,8 @@ description: |-
 
 Manages Social Identity Providers in Cidaas.
 
+-> **Note:** `cidaas_social_provider` supports both `3.x` and `4.x` target versions.
+
 ## Example Usage
 
 ```terraform

@@ -66,4 +66,5 @@ terraform apply
 
 - [Authentication](authentication.md)
 - [Version targeting (v3 vs v4)](version-targeting.md)
+- [Cidaas v3 to v4 migration guide](v3-to-v4-migration.md)
 - [Resource dependency order](resource-dependencies.md)

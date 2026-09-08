@@ -30,12 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Framework Migration**: Fully migrated from Terraform Plugin SDKv2 to modern **Terraform Plugin Framework** (`github.com/hashicorp/terraform-plugin-framework`).
 - **Domain Package Restructuring**: Reorganized internal package layout from flat files into domain-driven subpackages under `internal/resources/` (`app`, `consent`, `group`, `hostedpages`, `identity_provider`, `notification`, `registration_field`, `role`, `scope`, `security`, `user_group`, `usersetup`, `verification`, `webhook`).
-- **Shared Resources Compatibility**: Restored and validated shared resources (`cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`) to function on both `3.x` and `4.x` target versions.
+- **Shared Resources & Dual-Version Compatibility**: Restored and validated shared resources (`cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`) as well as legacy resources (`cidaas_hosted_page`, `cidaas_social_provider`, `cidaas_custom_provider`) to function on both `3.x` and `4.x` target versions without requiring breaking changes in customer HCL configurations.
 
 ### Deprecated
 
-- `cidaas_app`: Legacy v3 application resource (use `cidaas_app_configuration` for v4).
-- `cidaas_hosted_page`: Legacy v3 hosted page resource (use `cidaas_hosted_page_group` + layout/theme/translations for v4).
+- `cidaas_app`: Legacy v3 application resource (backed by appv1). Shows a deprecation message directing v4 users to `cidaas_app_configuration` (backed by appv3 `/app-srv/apps`).
 - `cidaas_template` / `cidaas_template_group`: Legacy v3 templates-srv resources (use `cidaas_notifications_template_group` for v4).
 
 ### Fixed

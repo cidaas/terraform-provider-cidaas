@@ -36,6 +36,6 @@ resource "cidaas_hosted_page_layout" "login" {
 
 Exact attribute names differ per resource — use each resource’s schema page under [docs/resources](../resources/).
 
-## v3 notes
+## Version notes
 
-On v3 tenants, use `cidaas_app` and `cidaas_hosted_page` instead of the Trustdesk app/hosted-page resources. Shared resources (scopes, roles, consent, etc.) follow the same dependency ideas.
+`cidaas_app`, `cidaas_hosted_page`, `cidaas_social_provider`, and `cidaas_custom_provider` support both `3.x` and `4.x` target versions. On `4.x` (Trustdesk) environments, native resources such as `cidaas_app_configuration` and `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations` offer enhanced functionality, while legacy resources remain fully operational. Shared core resources (scopes, roles, group types, notification service setups, webhooks) follow identical dependency principles across both version targets.

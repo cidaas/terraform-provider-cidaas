@@ -52,18 +52,10 @@ func (r *hostedPageLegacyResource) Configure(ctx context.Context, req resource.C
 	if req.ProviderData == nil {
 		return
 	}
-	c, ok := req.ProviderData.(*client.Client)
-	if !ok {
+	if _, ok := req.ProviderData.(*client.Client); !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *client.Client, got: %T.", req.ProviderData),
-		)
-		return
-	}
-	if c.Capabilities.TargetVersion == "4.x" {
-		resp.Diagnostics.AddError(
-			"Incompatible Resource",
-			"The resource `cidaas_hosted_page` is a legacy v3 resource and is not supported on cidaas v4.x. Use cidaas_hosted_page_group, cidaas_hosted_page_layout, cidaas_theme, and cidaas_translations.",
 		)
 		return
 	}

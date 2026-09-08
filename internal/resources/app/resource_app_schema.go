@@ -15,6 +15,7 @@ import (
 )
 
 var resourceAppSchema = schema.Schema{
+	DeprecationMessage: "The resource `cidaas_app` is a legacy v3 application resource (backed by appv1). For v4 tenants, use `cidaas_app_configuration` (backed by appv3 /app-srv/apps).",
 	MarkdownDescription: "The App resource allows creation and management of clients in Cidaas system." +
 		" When creating a client with a custom `client_id` and `client_secret` you can include the configuration in the resource." +
 		" If not provided, Cidaas will generate a set for you. `client_secret` is sensitive data." +

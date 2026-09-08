@@ -177,23 +177,15 @@ Every registered resource is listed below. **Docs** = Registry page; **Example**
 
 </details>
 
-<details>
-<summary><strong>v3 only</strong></summary>
+<details open>
+<summary><strong>Dual-Version Compatible Resources (v3 & v4)</strong></summary>
 
 | Resource | API / service | Description | Docs | Example |
 |----------|---------------|-------------|------|---------|
-| [`cidaas_app`](docs/resources/app.md) | app-srv (legacy) | Legacy v3 application (`cidaas_app_configuration` on v4) | [docs](docs/resources/app.md) | [example](examples/resources/cidaas_app/resource.tf) |
-| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | hostedpages (legacy) | Legacy v3 hosted page (`cidaas_hosted_page_group` on v4) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/resource.tf) |
-
-</details>
-
-<details>
-<summary><strong>Shared (v3 & v4)</strong></summary>
-
-| Resource | API / service | Description | Docs | Example |
-|----------|---------------|-------------|------|---------|
-| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | providers-srv | Custom OIDC / OAuth2 identity providers | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
-| [`cidaas_social_provider`](docs/resources/social_provider.md) | providers-srv | Social identity providers (Google, Apple, …) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
+| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | `/hostedpages-srv/hpgroup` | Legacy hosted page resource (supported on both v3 & v4 backends) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/resource.tf) |
+| [`cidaas_social_provider`](docs/resources/social_provider.md) | `/providers-srv/social` | Social identity providers (Google, Apple, …; supported on both v3 & v4) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
+| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | `/providers-srv/custom` | Custom OIDC / OAuth2 identity providers (supported on both v3 & v4) | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
+| [`cidaas_app`](docs/resources/app.md) | `/apps-srv/apps` | Legacy v3 application (supported on v4 with deprecation notice; use `cidaas_app_configuration` for new v4 setups) | [docs](docs/resources/app.md) | [example](examples/resources/cidaas_app/resource.tf) |
 | [`cidaas_consent`](docs/resources/consent.md) | consent-management-srv | Consent definitions | [docs](docs/resources/consent.md) | [example](examples/resources/cidaas_consent/resource.tf) |
 | [`cidaas_consent_group`](docs/resources/consent_group.md) | consent-management-srv | Consent groups | [docs](docs/resources/consent_group.md) | [example](examples/resources/cidaas_consent_group/resource.tf) |
 | [`cidaas_consent_version`](docs/resources/consent_version.md) | consent-management-srv | Consent versions | [docs](docs/resources/consent_version.md) | [example](examples/resources/cidaas_consent_version/resource.tf) |
@@ -205,13 +197,7 @@ Every registered resource is listed below. **Docs** = Registry page; **Example**
 | [`cidaas_scope_group`](docs/resources/scope_group.md) | scopes-srv | Scope groups | [docs](docs/resources/scope_group.md) | [example](examples/resources/cidaas_scope_group/resource.tf) |
 | [`cidaas_password_policy`](docs/resources/password_policy.md) | password-policy-srv | Password policies | [docs](docs/resources/password_policy.md) | [example](examples/resources/cidaas_password_policy/resource.tf) |
 | [`cidaas_security_settings`](docs/resources/security_settings.md) | security-srv | Tenant security settings | [docs](docs/resources/security_settings.md) | [example](examples/resources/cidaas_security_settings/resource.tf) |
-| [`cidaas_template`](docs/resources/template.md) | templates-srv | Legacy communication templates | [docs](docs/resources/template.md) | [example](examples/resources/cidaas_template/resource.tf) |
-| [`cidaas_template_group`](docs/resources/template_group.md) | templates-srv | Legacy template groups (prefer notifications template group on v4+) | [docs](docs/resources/template_group.md) | [example](examples/resources/cidaas_template_group/resource.tf) |
-| [`cidaas_notification_template`](docs/resources/notification_template.md) | templates-srv / notification | Notification templates | [docs](docs/resources/notification_template.md) | [example](examples/resources/cidaas_notification_template/resource.tf) |
-| [`cidaas_notification_template_type`](docs/resources/notification_template_type.md) | templates-srv / notification | Notification template types | [docs](docs/resources/notification_template_type.md) | [example](examples/resources/cidaas_notification_template_type/resource.tf) |
 | [`cidaas_notifications_template_group`](docs/resources/notifications_template_group.md) | notification-srv | Notification template groups | [docs](docs/resources/notifications_template_group.md) | [example](examples/resources/cidaas_notifications_template_group/resource.tf) |
-| [`cidaas_notifications_template_group_locale`](docs/resources/notifications_template_group_locale.md) | notification-srv | Template group locales | [docs](docs/resources/notifications_template_group_locale.md) | [example](examples/resources/cidaas_notifications_template_group_locale/resource.tf) |
-| [`cidaas_notification_service_setup`](docs/resources/notification_service_setup.md) | notification-srv | Communication provider service setups | [docs](docs/resources/notification_service_setup.md) | [example](examples/resources/cidaas_notification_service_setup/resource.tf) |
 | [`cidaas_webhook`](docs/resources/webhook.md) | webhook-srv | Webhooks and event subscriptions | [docs](docs/resources/webhook.md) | [example](examples/resources/cidaas_webhook/resource.tf) |
 
 </details>

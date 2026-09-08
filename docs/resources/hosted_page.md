@@ -16,6 +16,8 @@ The Hosted Page resource in the provider allows you to define and manage hosted 
 - cidaas:hosted_pages_read
 - cidaas:hosted_pages_delete
 
+-> **Note:** `cidaas_hosted_page` supports both `3.x` and `4.x` target versions. On `4.x` (Trustdesk) environments, `cidaas_hosted_page_group` (+ layout/theme/translations) provides enhanced layout and styling capabilities.
+
 ## Example Usage
 
 ```terraform
