@@ -712,7 +712,18 @@ func (r *RegFieldResource) applyRegistrationFieldOrderChange(ctx context.Context
 }
 
 func (r *RegFieldResource) verifyRegistrationFieldOrder(ctx context.Context, plan RegFieldConfig) (*cidaas.RegistrationFieldResponse, error) {
-	getRes, err := r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+	var getRes *cidaas.RegistrationFieldResponse
+	var err error
+	maxRetries := 5
+	for i := 0; i < maxRetries; i++ {
+		getRes, err = r.CidaasClient.RegFields.Get(ctx, plan.FieldKey.ValueString())
+		if err == nil && registrationFieldOrderMatchesPlan(plan, getRes.Data.Order) {
+			return getRes, nil
+		}
+		if i < maxRetries-1 {
+			time.Sleep(time.Duration(250*(i+1)) * time.Millisecond)
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to read registration field %q after order update: %w", plan.FieldKey.ValueString(), err)
 	}
