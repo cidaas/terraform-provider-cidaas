@@ -94,6 +94,40 @@ func (r *translationsResource) Configure(_ context.Context, req resource.Configu
 	r.client = c
 }
 
+func setNestedKey(m map[string]any, key string, val string) {
+	parts := strings.Split(key, ".")
+	curr := m
+	for i, part := range parts {
+		if i == len(parts)-1 {
+			curr[part] = val
+		} else {
+			next, ok := curr[part].(map[string]any)
+			if !ok {
+				next = map[string]any{}
+				curr[part] = next
+			}
+			curr = next
+		}
+	}
+}
+
+func flattenNestedMap(prefix string, val any, out map[string]attr.Value) {
+	switch v := val.(type) {
+	case map[string]any:
+		for k, child := range v {
+			newKey := k
+			if prefix != "" {
+				newKey = prefix + "." + k
+			}
+			flattenNestedMap(newKey, child, out)
+		}
+	default:
+		if prefix != "" {
+			out[prefix] = types.StringValue(fmt.Sprint(v))
+		}
+	}
+}
+
 func (r *translationsResource) toAPI(ctx context.Context, m translationsModel) (client.TranslationModel, error) {
 	out := client.TranslationModel{
 		Locale:      m.LocaleID.ValueString(),
@@ -106,7 +140,7 @@ func (r *translationsResource) toAPI(ctx context.Context, m translationsModel) (
 		return out, fmt.Errorf("%s", diags.Errors())
 	}
 	for k, v := range raw {
-		out.Translation[k] = v
+		setNestedKey(out.Translation, k, v)
 	}
 	return out, nil
 }
@@ -116,9 +150,7 @@ func (r *translationsResource) fromAPI(_ context.Context, locale string, enabled
 	state.LocaleID = types.StringValue(locale)
 	state.Enabled = types.BoolValue(enabled)
 	elems := map[string]attr.Value{}
-	for k, v := range translation {
-		elems[k] = types.StringValue(fmt.Sprint(v))
-	}
+	flattenNestedMap("", translation, elems)
 	m, diags := types.MapValue(types.StringType, elems)
 	if diags.HasError() {
 		return fmt.Errorf("%s", diags.Errors())
@@ -141,13 +173,15 @@ func (r *translationsResource) Create(ctx context.Context, req resource.CreateRe
 	}
 	out, err := r.client.Translations.Create(ctx, apiModel)
 	if err != nil {
-		// Locale may already exist (HTTP 409); Terraform create should converge via update.
-		if !strings.Contains(err.Error(), "409") {
-			resp.Diagnostics.AddError("Create translation failed", err.Error())
-			return
-		}
-		out, err = r.client.Translations.Update(ctx, plan.LocaleID.ValueString(), apiModel)
-		if err != nil {
+		// Locale may already exist (HTTP 409, 400, or duplicate string); Terraform create should converge via update.
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "409") || strings.Contains(errStr, "400") || strings.Contains(errStr, "exist") || strings.Contains(errStr, "duplicate") {
+			out, err = r.client.Translations.Update(ctx, plan.LocaleID.ValueString(), apiModel)
+			if err != nil {
+				resp.Diagnostics.AddError("Create translation failed", err.Error())
+				return
+			}
+		} else {
 			resp.Diagnostics.AddError("Create translation failed", err.Error())
 			return
 		}
