@@ -17,7 +17,7 @@ The App resource allows creation and management of clients in Cidaas system. Whe
 - cidaas:apps_write
 - cidaas:apps_delete
 
--> **Note:** `cidaas_app` supports both `3.x` and `4.x` target versions. On `4.x` (Trustdesk) environments, using `cidaas_app_configuration` is recommended for native appv3 functionality.
+-> **Deprecated:** The `cidaas_app` resource is deprecated in v4. Use `cidaas_app_configuration` (backed by appv3 `/app-srv/apps`) for native app management in v4 environments.
 
 -> **Note:** Write-Only argument `client_secret_wo` is available to use in place of `client_secret`. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. [Learn more](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments).
 
