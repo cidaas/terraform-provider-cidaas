@@ -33,24 +33,24 @@ resource "cidaas_notification_template" "welcome_email_en" {
 
 ### Required
 
-- `communication_method` (String)
-- `content` (String)
-- `description` (String)
-- `group_id` (String)
-- `locale` (String)
-- `message_format` (String)
-- `template_key` (String)
+- `communication_method` (String) Communication channel format (e.g. `email`, `sms`, `ivr`, `push`).
+- `content` (String) The body content of the template (e.g. HTML or text format).
+- `description` (String) Description of the notification template (10 to 600 characters).
+- `group_id` (String) Notification group identifier (e.g. `default`).
+- `locale` (String) BCP47 locale tag for the template content (e.g. `en`, `en-US`, `de-DE`).
+- `message_format` (String) Message format identifier (e.g. `html`, `text`).
+- `template_key` (String) Unique template key matching a registered template type (e.g. `WELCOME_USER`).
 
 ### Optional
 
-- `enabled` (Boolean)
-- `number` (Number)
-- `owner` (String)
-- `processing_type` (String)
-- `subject` (String)
-- `usage_type` (String)
-- `user_group_ids` (Set of String)
-- `verification_type` (String)
+- `enabled` (Boolean) Whether this template is active and enabled for notifications.
+- `number` (Number) Numeric sequence identifier or template version.
+- `owner` (String) Owner classification (`client` or `system`).
+- `processing_type` (String) Processing delivery method (e.g. `GENERAL`).
+- `subject` (String) Subject line for email notification templates.
+- `usage_type` (String) Specific use case classification (e.g. `GENERAL`).
+- `user_group_ids` (Set of String) Set of user group IDs bound to this template.
+- `verification_type` (String) Associated verification type if used for MFA/verification.
 
 ### Read-Only
 
