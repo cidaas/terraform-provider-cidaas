@@ -17,7 +17,7 @@ resource "cidaas_federation_provider" "example" {
   display_name           = "Federated OAuth2 Provider (v4)"
   standard_type          = "OAUTH2"
   client_id              = "v4-client-id"
-  client_secret          = "v4-client-secret"
+  client_secret          = var.federation_provider_client_secret
   authorization_endpoint = "https://auth.example.com/oauth/authorize"
   token_endpoint         = "https://auth.example.com/oauth/token"
   userinfo_endpoint      = "https://auth.example.com/oauth/userinfo"

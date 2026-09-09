@@ -20,8 +20,8 @@ Many cidaas resources reference IDs created by other resources. Express those li
 
 ```hcl
 resource "cidaas_scope" "profile" {
-  scope_name        = "profile_example"
-  scope_description = "Profile scope"
+  scope_key             = "profile_example"
+  required_user_consent = false
 }
 
 resource "cidaas_hosted_page" "default" {

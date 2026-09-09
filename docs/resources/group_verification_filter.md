@@ -54,10 +54,10 @@ resource "cidaas_group_verification_filter" "sample" {
 ### Optional
 
 - `filters` (Block List) List of group verification filters. (see [below for nested schema](#nestedblock--filters))
-- `id` (String) The unique identifier of the group verification filter. If omitted, a unique ID will be auto-generated.
 
 ### Read-Only
 
+- `id` (String) The unique identifier of the group verification filter.
 - `created_at` (String) Timestamp when the verification filter was created.
 - `updated_at` (String) Timestamp when the verification filter was last updated.
 
