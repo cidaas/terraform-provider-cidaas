@@ -50,9 +50,9 @@ var consentGroupSchema = schema.Schema{
 	MarkdownDescription: "The Consent Group resource in the provider allows you to define and manage consent groups in Cidaas." +
 		"\n Consent Groups are useful to organize and manage consents by grouping related consent items together." +
 		"\n\n Ensure that the below scopes are assigned to the client with the specified `client_id`:" +
-		"\n- cidaas:tenant_consent_read" +
-		"\n- cidaas:tenant_consent_write" +
-		"\n- cidaas:tenant_consent_delete",
+		"\n- cidaas:consent_read" +
+		"\n- cidaas:consent_write" +
+		"\n- cidaas:consent_delete",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,

@@ -113,8 +113,9 @@ func (r *ConsentVersionResource) ValidateConfig(ctx context.Context, req resourc
 var consentversionSchema = schema.Schema{
 	MarkdownDescription: "The Consent Version resource in the provider allows you to manage different versions of a specific consent in Cidaas." +
 		"\n\n Ensure that the below scopes are assigned to the client with the specified `client_id`:" +
-		"\n- cidaas:tenant_consent_read" +
-		"\n- cidaas:tenant_consent_write",
+		"\n- cidaas:consent_read" +
+		"\n- cidaas:consent_write" +
+		"\n- cidaas:consent_delete",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,

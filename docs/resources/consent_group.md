@@ -5,7 +5,9 @@ description: |-
   The Consent Group resource in the provider allows you to define and manage consent groups in Cidaas.
   Consent Groups are useful to organize and manage consents by grouping related consent items together.
   Ensure that the below scopes are assigned to the client with the specified client_id:
-  cidaas:tenant_consent_readcidaas:tenant_consent_writecidaas:tenant_consent_delete
+  - cidaas:consent_read
+  - cidaas:consent_write
+  - cidaas:consent_delete
 ---
 
 # cidaas_consent_group (Resource)
@@ -13,10 +15,15 @@ description: |-
 The Consent Group resource in the provider allows you to define and manage consent groups in Cidaas.
  Consent Groups are useful to organize and manage consents by grouping related consent items together.
 
- Ensure that the below scopes are assigned to the client with the specified `client_id`:
-- cidaas:tenant_consent_read
-- cidaas:tenant_consent_write
-- cidaas:tenant_consent_delete
+> **⚠️ Breaking Change (v4):** The required OAuth scopes were renamed. Update your OAuth client configuration:
+> - `cidaas:tenant_consent_read` -> `cidaas:consent_read`
+> - `cidaas:tenant_consent_write` -> `cidaas:consent_write`
+> - `cidaas:tenant_consent_delete` -> `cidaas:consent_delete`
+
+Ensure that the below scopes are assigned to the client with the specified `client_id`:
+- cidaas:consent_read
+- cidaas:consent_write
+- cidaas:consent_delete
 
 ## Example Usage
 
