@@ -97,8 +97,8 @@ type HostedPageConfig struct {
 	Translations        *TranslationsConfig `tfsdk:"translations"`
 	Layout              *LayoutConfig       `tfsdk:"layout"`
 	hostedPages         []*HostedPage
-	CreatedAt           types.String        `tfsdk:"created_at"`
-	UpdatedAt           types.String        `tfsdk:"updated_at"`
+	CreatedAt           types.String `tfsdk:"created_at"`
+	UpdatedAt           types.String `tfsdk:"updated_at"`
 }
 
 type HostedPage struct {
