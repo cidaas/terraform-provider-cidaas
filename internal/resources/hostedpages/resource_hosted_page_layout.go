@@ -125,7 +125,7 @@ func (r *hostedPageLayoutResource) Schema(_ context.Context, _ resource.SchemaRe
 				Attributes: map[string]schema.Attribute{
 					"hosted_page_group": schema.StringAttribute{
 						Required:            true,
-						MarkdownDescription: "Hosted page group id (`_id` from `cidaas_hosted_page_group`).",
+						MarkdownDescription: "Hosted page group name (`hosted_page_group_name` from `cidaas_hosted_page`).",
 					},
 					"theme":          schema.StringAttribute{Optional: true},
 					"logo_uri":       schema.StringAttribute{Optional: true},
@@ -230,6 +230,13 @@ func (r *hostedPageLayoutResource) toAPI(ctx context.Context, m hostedPageLayout
 		}
 	}
 	return out, nil
+}
+
+func stringOrNull(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(s)
 }
 
 func layoutFromAPI(l client.LayoutDetail) (types.Object, error) {

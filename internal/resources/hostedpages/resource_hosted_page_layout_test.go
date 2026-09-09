@@ -24,10 +24,9 @@ func TestAccHostedPageLayout_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: acctest.ProviderConfig() + fmt.Sprintf(`
-resource "cidaas_hosted_page_group" "grp" {
-  name           = %q
-  default_locale = "en"
-  group_owner    = "client"
+resource "cidaas_hosted_page" "grp" {
+  hosted_page_group_name = %q
+  default_locale         = "en"
   hosted_pages = [
     {
       hosted_page_id = "login"
@@ -45,7 +44,7 @@ resource "cidaas_theme" "css" {
 resource "cidaas_hosted_page_layout" "layout" {
   description = "acc-test-layout-%s"
   layout = {
-    hosted_page_group = cidaas_hosted_page_group.grp.name
+    hosted_page_group = cidaas_hosted_page.grp.hosted_page_group_name
     theme             = cidaas_theme.css.filename
     primary_color     = "#123456"
     accent_color      = "#abcdef"
@@ -69,10 +68,9 @@ resource "cidaas_hosted_page_layout" "layout" {
 			},
 			{
 				Config: acctest.ProviderConfig() + fmt.Sprintf(`
-resource "cidaas_hosted_page_group" "grp" {
-  name           = %q
-  default_locale = "en"
-  group_owner    = "client"
+resource "cidaas_hosted_page" "grp" {
+  hosted_page_group_name = %q
+  default_locale         = "en"
   hosted_pages = [
     {
       hosted_page_id = "login"
@@ -90,7 +88,7 @@ resource "cidaas_theme" "css" {
 resource "cidaas_hosted_page_layout" "layout" {
   description = "acc-test-layout-updated-%s"
   layout = {
-    hosted_page_group = cidaas_hosted_page_group.grp.name
+    hosted_page_group = cidaas_hosted_page.grp.hosted_page_group_name
     theme             = cidaas_theme.css.filename
     primary_color     = "#654321"
     accent_color      = "#fedcba"

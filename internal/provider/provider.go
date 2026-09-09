@@ -146,9 +146,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		// v4 Trustdesk & Hosted Pages Resources
 		hostedpages.NewThemeResource,
 		hostedpages.NewTranslationsResource,
-		hostedpages.NewHostedPageGroupResource,
 		hostedpages.NewHostedPageLayoutResource,
-		hostedpages.NewHostedPageLegacyResource,
+		hostedpages.NewHostedPageResource,
 		usersetup.NewUserSetupResource,
 		app.NewAppConfigurationResource,
 		app.NewLegacyAppResource,

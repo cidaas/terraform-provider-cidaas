@@ -1,5 +1,5 @@
 // Package hostedpages implements Terraform resources for hostedpages-srv:
-// cidaas_theme, cidaas_translations, cidaas_hosted_page_group, and cidaas_hosted_page_layout.
+// cidaas_theme, cidaas_translations, and cidaas_hosted_page_layout.
 package hostedpages
 
 import (

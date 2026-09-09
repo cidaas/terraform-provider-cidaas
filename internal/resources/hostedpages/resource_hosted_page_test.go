@@ -34,7 +34,6 @@ var hostedPages = []map[string]string{
 
 func TestAccHostedPageResource_Basic(t *testing.T) {
 	t.Parallel()
-	acctest.SkipIfV4(t)
 
 	updatedHostedPageURL := "https://cidaad.de/updated_register_success"
 	updatedHostedPages := []map[string]string{
@@ -86,7 +85,6 @@ func TestAccHostedPageResource_Basic(t *testing.T) {
 
 func TestAccHostedPageResource_InvalidLocale(t *testing.T) {
 	t.Parallel()
-	acctest.SkipIfV4(t)
 
 	invalidLocale := "invalid-locale"
 	hostedPageGroupName := acctest.RandString(10)
@@ -106,7 +104,6 @@ func TestAccHostedPageResource_InvalidLocale(t *testing.T) {
 
 func TestAccHostedPageResource_MissingRequiredFields(t *testing.T) {
 	t.Parallel()
-	acctest.SkipIfV4(t)
 
 	config1 := fmt.Sprintf(`
 		provider "cidaas" {
@@ -163,7 +160,6 @@ func TestAccHostedPageResource_MissingRequiredFields(t *testing.T) {
 
 func TestAccHostedPageResource_UniqueIdentifier(t *testing.T) {
 	t.Parallel()
-	acctest.SkipIfV4(t)
 
 	updatedHostedPageGroupName := "Updated Hosted Page Group"
 	resourceID := acctest.RandString(10)

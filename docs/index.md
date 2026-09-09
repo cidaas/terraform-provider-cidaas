@@ -1,14 +1,14 @@
 ---
 page_title: "cidaas Provider"
 description: |-
-  The cidaas provider manages cidaas v3 and v4 (Trustdesk) resources. Authenticate with TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET.
+  The cidaas provider manages cidaas v4 (Trustdesk) resources. Authenticate with TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET.
 ---
 
 # cidaas Provider
 
-The cidaas provider manages cidaas **v3** and **v4 (Trustdesk)** resources. Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+The cidaas provider manages cidaas **v4 (Trustdesk)** resources. Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
 
-Set the target major version with HCL `cidaas_version`, or environment variables `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`. One of these is **required**. Dual-version resources (`cidaas_app`, `cidaas_hosted_page`, `cidaas_social_provider`, `cidaas_custom_provider`, scopes, roles, etc.) operate on both `3.x` and `4.x`. Trustdesk-only resources (`cidaas_app_configuration`, `cidaas_federation_provider`, `cidaas_hosted_page_layout`, `cidaas_theme`, `cidaas_translations`, `cidaas_user_setup`, `cidaas_verification_options`, `cidaas_suggest_verification_method`, `cidaas_group_selection`, `cidaas_group_verification_filter`) error if target version is `3.x`.
+Set the target major version with HCL `cidaas_version`, or environment variables `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
 
 ## Example Usage
 

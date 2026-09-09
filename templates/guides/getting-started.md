@@ -65,5 +65,5 @@ terraform apply
 ## Next steps
 
 - [Authentication](authentication.md)
-- [Version targeting (v3 vs v4)](version-targeting.md)
+- [Provider configuration](version-targeting.md)
 - [Resource dependency order](resource-dependencies.md)

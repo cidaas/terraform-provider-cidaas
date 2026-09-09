@@ -12,7 +12,7 @@
   <img src="assets/terraform_accent.svg" alt="" width="100%"/>
 </p>
 
-# Terraform Provider for cidaas (v3 & v4)
+# Terraform Provider for cidaas (v4)
 
 <p align="center">
   <a href="https://registry.terraform.io/providers/Cidaas/cidaas/latest"><img src="https://img.shields.io/badge/Terraform_Registry-Cidaas%2Fcidaas-7B42BC?logo=terraform&logoColor=white" alt="Terraform Registry"/></a>
@@ -21,7 +21,7 @@
   <a href="docs/guides/getting-started.md"><img src="https://img.shields.io/badge/Guide-Getting_started-2B153E" alt="Getting started"/></a>
 </p>
 
-Manage cidaas **v3** and **v4 (Trustdesk)** tenants with Terraform: applications, scopes, roles, registration fields, hosted pages, notifications, identity providers, and more.
+Manage cidaas **v4 (Trustdesk)** tenants with Terraform: applications, scopes, roles, registration fields, hosted pages, notifications, identity providers, and more.
 
 Registry address: `registry.terraform.io/Cidaas/cidaas`
 
@@ -66,7 +66,7 @@ The Terraform provider for cidaas enables interaction with cidaas instances for 
 
 - [Getting started](docs/guides/getting-started.md)
 - [Authentication](docs/guides/authentication.md)
-- [Version targeting (v3 vs v4)](docs/guides/version-targeting.md)
+- [Provider configuration](docs/guides/version-targeting.md)
 - [Resource dependency order](docs/guides/resource-dependencies.md)
 
 </details>
@@ -84,7 +84,7 @@ Attribute schemas and Example Usage for each resource are generated into `docs/r
 
 - Ensure [Terraform](https://www.terraform.io/downloads.html) (>= 1.0) is installed on your local machine. Installation instructions for different operating systems are on the Terraform downloads page.
 - Go >= 1.25 (for building from source)
-- A cidaas **v3** or **v4** tenant and a non-interactive OAuth client (`client_id` / `client_secret`) with scopes for the resources you manage
+- A cidaas **v4** tenant and a non-interactive OAuth client (`client_id` / `client_secret`) with scopes for the resources you manage
 
 </details>
 
@@ -121,32 +121,11 @@ terraform {
 
 provider "cidaas" {
   base_url       = "https://your-tenant.cidaas.eu"
-  cidaas_version = "4.x" # or "3.x"
+  cidaas_version = "4.x"
 }
 ```
 
-Accepted version strings normalize to `3.x` or `4.x` (for example `3`, `v3`, `4.x`, `v4.x`).
-
-Details: [Authentication](docs/guides/authentication.md) · [Version targeting](docs/guides/version-targeting.md) · [Provider schema](docs/index.md)
-
-</details>
-
-<p align="center">
-  <img src="assets/terraform_accent.svg" alt="" width="100%"/>
-</p>
-
-## Dual versioning
-
-<details open>
-<summary><strong>v3 / v4 resource matrix</strong></summary>
-
-| Kind | Resources |
-|------|-----------|
-| **v3 only** | `cidaas_app`, `cidaas_hosted_page` |
-| **v4 only** | `cidaas_app_configuration`, hosted page group/layout/theme/translations, user setup, verification resources, federation provider, group selection / verification filter |
-| **Shared** | scopes, roles, groups, consent, notifications, webhooks, social/custom providers, registration fields, security settings, and more |
-
-Using a v4-only resource with `cidaas_version = "3.x"` (or the reverse) fails with an explicit configure/plan error. See [Version targeting](docs/guides/version-targeting.md).
+Details: [Authentication](docs/guides/authentication.md) · [Provider schema](docs/index.md)
 
 </details>
 
@@ -159,12 +138,12 @@ Using a v4-only resource with `cidaas_version = "3.x"` (or the reverse) fails wi
 Every registered resource is listed below. **Docs** = Registry page; **Example** = sample HCL (`resource.tf`).
 
 <details open>
-<summary><strong>Trustdesk (v4 only)</strong></summary>
+<summary><strong>Cidaas v4 Resources</strong></summary>
 
 | Resource | API / service | Description | Docs | Example |
 |----------|---------------|-------------|------|---------|
 | [`cidaas_app_configuration`](docs/resources/app_configuration.md) | `/app-srv/apps` | Application configuration (Trustdesk app model) | [docs](docs/resources/app_configuration.md) | [example](examples/resources/cidaas_app_configuration/resource.tf) |
-| [`cidaas_hosted_page_group`](docs/resources/hosted_page_group.md) | `/hostedpages-srv/hpgroup` | Hosted page groups | [docs](docs/resources/hosted_page_group.md) | [example](examples/resources/cidaas_hosted_page_group/resource.tf) |
+| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | `/hostedpages-srv/hpgroup` | Unified hosted page group & pages resource (supports inline theme, translations, layout) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/resource.tf) |
 | [`cidaas_hosted_page_layout`](docs/resources/hosted_page_layout.md) | `/hostedpages-srv/hosted-page-layouts` | Hosted page layouts | [docs](docs/resources/hosted_page_layout.md) | [example](examples/resources/cidaas_hosted_page_layout/resource.tf) |
 | [`cidaas_theme`](docs/resources/theme.md) | `/hostedpages-srv/themes` | Custom CSS themes | [docs](docs/resources/theme.md) | [example](examples/resources/cidaas_theme/resource.tf) |
 | [`cidaas_translations`](docs/resources/translations.md) | `/hostedpages-srv/translations` | Hosted page locale strings | [docs](docs/resources/translations.md) | [example](examples/resources/cidaas_translations/resource.tf) |
@@ -172,23 +151,10 @@ Every registered resource is listed below. **Docs** = Registry page; **Example**
 | [`cidaas_suggest_verification_method`](docs/resources/suggest_verification_method.md) | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods | [docs](docs/resources/suggest_verification_method.md) | [example](examples/resources/cidaas_suggest_verification_method/resource.tf) |
 | [`cidaas_verification_options`](docs/resources/verification_options.md) | `/verification-actions-srv/verification-options` | Verification options | [docs](docs/resources/verification_options.md) | [example](examples/resources/cidaas_verification_options/resource.tf) |
 | [`cidaas_federation_provider`](docs/resources/federation_provider.md) | `/federation/providers` | Enterprise federation providers | [docs](docs/resources/federation_provider.md) | [example](examples/resources/cidaas_federation_provider/resource.tf) |
+| [`cidaas_social_provider`](docs/resources/social_provider.md) | `/providers-srv/social` | Social identity providers (Google, Apple, …) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
+| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | `/providers-srv/custom` | Custom OIDC / OAuth2 identity providers | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
 | [`cidaas_group_selection`](docs/resources/group_selection.md) | `/groups-srv/selection` | Group login selection | [docs](docs/resources/group_selection.md) | [example](examples/resources/cidaas_group_selection/resource.tf) |
 | [`cidaas_group_verification_filter`](docs/resources/group_verification_filter.md) | `/groups-srv/verification-filter` | Group verification filters | [docs](docs/resources/group_verification_filter.md) | [example](examples/resources/cidaas_group_verification_filter/resource.tf) |
-
-</details>
-
-<details open>
-<summary><strong>Dual-Version Compatible Resources (v3 & v4)</strong></summary>
-
-| Resource | API / service | Description | Docs | Example |
-|----------|---------------|-------------|------|---------|
-| [`cidaas_hosted_page`](docs/resources/hosted_page.md) | `/hostedpages-srv/hpgroup` | Legacy hosted page resource (supported on both v3 & v4 backends) | [docs](docs/resources/hosted_page.md) | [example](examples/resources/cidaas_hosted_page/resource.tf) |
-| [`cidaas_social_provider`](docs/resources/social_provider.md) | `/providers-srv/social` | Social identity providers (Google, Apple, …; supported on both v3 & v4) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
-| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | `/providers-srv/custom` | Custom OIDC / OAuth2 identity providers (supported on both v3 & v4) | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
-| [`cidaas_app`](docs/resources/app.md) | `/apps-srv/apps` | Legacy v3 application (supported on v4 with deprecation notice; use `cidaas_app_configuration` for new v4 setups) | [docs](docs/resources/app.md) | [example](examples/resources/cidaas_app/resource.tf) |
-| [`cidaas_consent`](docs/resources/consent.md) | consent-management-srv | Consent definitions | [docs](docs/resources/consent.md) | [example](examples/resources/cidaas_consent/resource.tf) |
-| [`cidaas_consent_group`](docs/resources/consent_group.md) | consent-management-srv | Consent groups | [docs](docs/resources/consent_group.md) | [example](examples/resources/cidaas_consent_group/resource.tf) |
-| [`cidaas_consent_version`](docs/resources/consent_version.md) | consent-management-srv | Consent versions | [docs](docs/resources/consent_version.md) | [example](examples/resources/cidaas_consent_version/resource.tf) |
 | [`cidaas_registration_field`](docs/resources/registration_field.md) | registration-setup-srv | Registration fields & validators | [docs](docs/resources/registration_field.md) | [example](examples/resources/cidaas_registration_field/resource.tf) |
 | [`cidaas_role`](docs/resources/role.md) | roles-srv | Tenant roles | [docs](docs/resources/role.md) | [example](examples/resources/cidaas_role/resource.tf) |
 | [`cidaas_user_groups`](docs/resources/user_groups.md) | groups-srv | User groups | [docs](docs/resources/user_groups.md) | [example](examples/resources/cidaas_user_groups/resource.tf) |
@@ -220,7 +186,6 @@ make test       # unit tests
 make generate   # fmt examples + generate docs/
 
 # Acceptance tests (requires tenant credentials)
-CIDAAS_VERSION=3.x TF_ACC=1 BASE_URL=https://... make testacc
 CIDAAS_VERSION=4.x TF_ACC=1 BASE_URL=https://... make testacc
 ```
 
@@ -246,7 +211,7 @@ Acceptance tests (`acceptance_test` in `.gitlab-ci.yml`) create **real** resourc
 
 GitLab CI (`.gitlab-ci.yml`):
 
-- `acceptance_test` — `make test-ci` (v3/v4 via `CIDAAS_VERSION`)
+- `acceptance_test` — `make test-ci` (`CIDAAS_VERSION=4.x`)
 
 </details>
 
