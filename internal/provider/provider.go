@@ -178,8 +178,6 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		consent.NewConsentVersionResource,
 
 		webhook.NewWebhookResource,
-		identityprovider.NewCustomProviderResource,
-		identityprovider.NewSocialProviderResource,
 		identityprovider.NewFederationProviderResource,
 	}
 }

@@ -388,6 +388,18 @@ func (r *hostedPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	groupID := strings.ToLower(plan.HostedPageGroupName.ValueString())
+	if groupID == "default" || groupID == "admin" {
+		tflog.Warn(ctx, "rejecting update of reserved system hosted page group", util.H{
+			"hosted_page_group_name": groupID,
+		})
+		resp.Diagnostics.AddError(
+			"Reserved System Group Name",
+			fmt.Sprintf("Hosted page group name '%s' is a reserved system group and cannot be managed via Terraform. Please specify a custom group name (e.g. 'v4-custom-hpgroup').", plan.HostedPageGroupName.ValueString()),
+		)
+		return
+	}
 	hpPayload := prepareHostedPageModel(ctx, plan)
 	_, err := r.CidaasClient.HostedPages.Upsert(ctx, *hpPayload)
 	if err != nil {

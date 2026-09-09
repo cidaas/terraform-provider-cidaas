@@ -11,7 +11,7 @@ Many cidaas resources reference IDs created by other resources. Express those li
 1. **Access building blocks** — `cidaas_role`, `cidaas_scope` / `cidaas_scope_group`, `cidaas_group_type`, `cidaas_user_groups`
 2. **Application** — `cidaas_app_configuration` (often references scopes)
 3. **Hosted pages** — `cidaas_hosted_page` → `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations`
-4. **Identity providers** — `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_federation_provider`
+4. **Identity providers** — `cidaas_federation_provider`
 5. **Consent & registration** — `cidaas_consent` → `cidaas_consent_version` / groups; `cidaas_registration_field`
 6. **Notifications** — template types/groups → templates; `cidaas_notification_service_setup`
 7. **Webhooks & verification** — `cidaas_webhook`, verification resources

@@ -151,8 +151,6 @@ Every registered resource is listed below. **Docs** = Registry page; **Example**
 | [`cidaas_suggest_verification_method`](docs/resources/suggest_verification_method.md) | `/verification-actions-srv/suggest-verification-configs` | Suggested verification methods | [docs](docs/resources/suggest_verification_method.md) | [example](examples/resources/cidaas_suggest_verification_method/resource.tf) |
 | [`cidaas_verification_options`](docs/resources/verification_options.md) | `/verification-actions-srv/verification-options` | Verification options | [docs](docs/resources/verification_options.md) | [example](examples/resources/cidaas_verification_options/resource.tf) |
 | [`cidaas_federation_provider`](docs/resources/federation_provider.md) | `/federation/providers` | Enterprise federation providers | [docs](docs/resources/federation_provider.md) | [example](examples/resources/cidaas_federation_provider/resource.tf) |
-| [`cidaas_social_provider`](docs/resources/social_provider.md) | `/providers-srv/social` | Social identity providers (Google, Apple, …) | [docs](docs/resources/social_provider.md) | [example](examples/resources/cidaas_social_provider/resource.tf) |
-| [`cidaas_custom_provider`](docs/resources/custom_provider.md) | `/providers-srv/custom` | Custom OIDC / OAuth2 identity providers | [docs](docs/resources/custom_provider.md) | [example](examples/resources/cidaas_custom_provider/resource.tf) |
 | [`cidaas_group_selection`](docs/resources/group_selection.md) | `/groups-srv/selection` | Group login selection | [docs](docs/resources/group_selection.md) | [example](examples/resources/cidaas_group_selection/resource.tf) |
 | [`cidaas_group_verification_filter`](docs/resources/group_verification_filter.md) | `/groups-srv/verification-filter` | Group verification filters | [docs](docs/resources/group_verification_filter.md) | [example](examples/resources/cidaas_group_verification_filter/resource.tf) |
 | [`cidaas_registration_field`](docs/resources/registration_field.md) | registration-setup-srv | Registration fields & validators | [docs](docs/resources/registration_field.md) | [example](examples/resources/cidaas_registration_field/resource.tf) |
@@ -168,7 +166,7 @@ Every registered resource is listed below. **Docs** = Registry page; **Example**
 
 </details>
 
-Identity provider examples: [custom](examples/resources/cidaas_custom_provider/resource.tf) · [social](examples/resources/cidaas_social_provider/resource.tf) · [federation](examples/resources/cidaas_federation_provider/resource.tf). On Trustdesk, `owner` defaults to `client` for Admin UI visibility.
+Identity provider example: [federation](examples/resources/cidaas_federation_provider/resource.tf). On Trustdesk, `owner` defaults to `client` for Admin UI visibility.
 
 <p align="center">
   <img src="assets/terraform_accent.svg" alt="" width="100%"/>

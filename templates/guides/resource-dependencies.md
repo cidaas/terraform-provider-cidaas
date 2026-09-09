@@ -11,7 +11,7 @@ Many cidaas resources reference IDs created by other resources. Express those li
 1. **Access building blocks** — `cidaas_role`, `cidaas_scope` / `cidaas_scope_group`, `cidaas_group_type`, `cidaas_user_groups`
 2. **Application** — `cidaas_app_configuration` (often references scopes)
 3. **Hosted pages** — `cidaas_hosted_page` → `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations`
-4. **Identity providers** — `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_federation_provider`
+4. **Identity providers** — `cidaas_federation_provider`
 5. **Consent & registration** — `cidaas_consent` → `cidaas_consent_version` / groups; `cidaas_registration_field`
 6. **Notifications** — template types/groups → templates; `cidaas_notification_service_setup`
 7. **Webhooks & verification** — `cidaas_webhook`, verification resources
@@ -37,6 +37,7 @@ resource "cidaas_hosted_page_layout" "login" {
 
 Exact attribute names differ per resource — use each resource’s schema page under [docs/resources](../resources/).
 
-## Version notes
+## Dependency Best Practices
 
-`cidaas_app`, `cidaas_hosted_page`, `cidaas_social_provider`, and `cidaas_custom_provider` support both `3.x` and `4.x` target versions. On `4.x` (Trustdesk) environments, native resources such as `cidaas_app_configuration` and `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations` offer enhanced functionality, while legacy resources remain fully operational. Shared core resources (scopes, roles, group types, notification service setups, webhooks) follow identical dependency principles across both version targets.
+Ensure dependent resources reference primary resources using standard Terraform HCL attributes (e.g. `cidaas_hosted_page.default.hosted_page_group_name` or `cidaas_scope.profile.scope_name`) so that implicit dependencies are naturally created.
+

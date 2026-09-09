@@ -92,7 +92,7 @@ resource "cidaas_app" "sample_app" {
 - `consent_refs` (Set of String)
 - `contacts` (Set of String) The contacts of the client.
 - `content_align` (String) The alignment of the content of the client. e.g., `CENTER`. Allowed values are CENTER, LEFT and RIGHTThe default is set to `CENTER`.
-- `custom_providers` (Attributes List) A list of custom identity providers that users can authenticate with. A custom provider can be created with the help of the resource cidaas_custom_provider. (see [below for nested schema](#nestedatt--custom_providers))
+- `custom_providers` (Attributes List) A list of custom identity providers that users can authenticate with. (see [below for nested schema](#nestedatt--custom_providers))
 - `default_acr_values` (Set of String)
 - `default_max_age` (Number) The default maximum age for the token in seconds. Default is 86400 seconds (24 hours).
 - `default_roles` (Set of String)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -339,6 +340,9 @@ func (r *hostedPageLayoutResource) Read(ctx context.Context, req resource.ReadRe
 	}
 	out, err := r.client.Layouts.Get(ctx, state.ID.ValueString())
 	if err != nil {
+		if base.ReadHandleNotFound(ctx, resp, err) {
+			return
+		}
 		resp.Diagnostics.AddError("Read hosted page layout failed", err.Error())
 		return
 	}
