@@ -4,7 +4,9 @@ subcategory: "Consent"
 description: |-
   The consent resource in the provider is used to define and manage consents within the Cidaas system.
   Ensure that the below scopes are assigned to the client with the specified client_id:
-  cidaas:consent_readcidaas:consent_writecidaas:consent_delete
+  - cidaas:consent_read
+  - cidaas:consent_write
+  - cidaas:consent_delete
 ---
 
 # cidaas_consent (Resource)
