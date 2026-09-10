@@ -1,1 +1,0 @@
-terraform import cidaas_scope.resource_name scope_key

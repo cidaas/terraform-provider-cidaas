@@ -1,0 +1,21 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "{{ if or (eq .Name "cidaas_app") (eq .Name "cidaas_app_configuration") }}Apps{{ else if or (eq .Name "cidaas_consent") (eq .Name "cidaas_consent_group") (eq .Name "cidaas_consent_version") }}Consent{{ else if or (eq .Name "cidaas_hosted_page") (eq .Name "cidaas_hosted_page_layout") (eq .Name "cidaas_theme") (eq .Name "cidaas_translations") }}Hosted Pages{{ else if or (eq .Name "cidaas_notification_service_setup") (eq .Name "cidaas_notification_template") (eq .Name "cidaas_notification_template_type") (eq .Name "cidaas_notifications_template_group") (eq .Name "cidaas_notifications_template_group_locale") (eq .Name "cidaas_template") (eq .Name "cidaas_template_group") }}Notifications{{ else if or (eq .Name "cidaas_user_groups") (eq .Name "cidaas_group_type") (eq .Name "cidaas_group_selection") (eq .Name "cidaas_group_verification_filter") }}Groups{{ else if or (eq .Name "cidaas_password_policy") (eq .Name "cidaas_security_settings") (eq .Name "cidaas_registration_field") (eq .Name "cidaas_role") (eq .Name "cidaas_scope") (eq .Name "cidaas_scope_group") (eq .Name "cidaas_user_setup") (eq .Name "cidaas_verification_options") (eq .Name "cidaas_suggest_verification_method") }}Security{{ else if eq .Name "cidaas_federation_provider" }}Identity Providers{{ else if eq .Name "cidaas_webhook" }}Webhooks{{ end }}"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+{{ if .HasExamples -}}
+## Example Usage
+
+{{- range .ExampleFiles }}
+
+{{ tffile . }}
+{{- end }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}

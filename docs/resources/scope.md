@@ -1,6 +1,6 @@
 ---
 page_title: "cidaas_scope Resource - cidaas"
-subcategory: ""
+subcategory: "Security"
 description: |-
   The Scope resource allows to manage scopes in Cidaas system. Scopes define the level of access and permissions granted to an application (client).
   Ensure that the below scopes are assigned to the client with the specified client_id:
@@ -15,7 +15,6 @@ The Scope resource allows to manage scopes in Cidaas system. Scopes define the l
 - cidaas:scopes_read
 - cidaas:scopes_write
 - cidaas:scopes_delete
-
 
 ## Example Usage
 
@@ -75,11 +74,3 @@ Optional:
 
 - `description` (String) The description of the scope in the configured locale.
 - `locale` (String) The locale for the scope, e.g., `en-US`.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-terraform import cidaas_scope.resource_name scope_key
-```

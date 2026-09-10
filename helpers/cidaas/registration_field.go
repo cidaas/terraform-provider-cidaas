@@ -158,7 +158,7 @@ func (r *RegField) Upsert(ctx context.Context, rfc RegistrationFieldConfig) (*Re
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (r *RegField) UpdateOrder(ctx context.Context, order RegistrationFieldOrder
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return err
@@ -200,7 +200,7 @@ func (r *RegField) Get(ctx context.Context, fieldKey string) (*RegistrationField
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (r *RegField) Delete(ctx context.Context, fieldKey string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -234,7 +234,7 @@ func (r *RegField) GetAll(ctx context.Context) ([]RegistrationFieldConfig, error
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err

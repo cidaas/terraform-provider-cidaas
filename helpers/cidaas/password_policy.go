@@ -57,7 +57,7 @@ func (p *PasswordPolicy) Get(ctx context.Context, id string) (*PasswordPolicyRes
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (p *PasswordPolicy) Create(ctx context.Context, payload PasswordPolicyModel
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (p *PasswordPolicy) Update(ctx context.Context, payload PasswordPolicyModel
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
@@ -111,6 +111,6 @@ func (p *PasswordPolicy) Delete(ctx context.Context, id string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }

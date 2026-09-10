@@ -31,7 +31,7 @@ func (v UniqueIdentifier) MarkdownDescription(ctx context.Context) string {
 }
 
 func (v UniqueIdentifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() || req.PlanValue.IsUnknown() || req.ConfigValue.IsUnknown() {
+	if req.StateValue.IsNull() || req.PlanValue.IsUnknown() || req.ConfigValue.IsUnknown() || req.Plan.Raw.IsNull() {
 		return
 	}
 

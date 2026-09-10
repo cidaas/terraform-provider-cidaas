@@ -1,9 +1,9 @@
 ---
 page_title: "cidaas_template Resource - cidaas"
-subcategory: ""
+subcategory: "Notifications"
 description: |-
   Deprecated for new designs: this resource uses legacy templates-srv. For notification-srv (/{notifications_context_path}/templates), use cidaas_notification_template instead.
-  The Template resource in the provider is used to define and manage templates within the cidaas system. Templates are used for emails, SMS, IVR, and push notifications.
+  The Template resource in the provider is used to define and manage templates within the Cidaas system. Templates are used for emails, SMS, IVR, and push notifications.
   Ensure that the below scopes are assigned to the client with the specified client_id:
   cidaas:templates_readcidaas:templates_writecidaas:templates_delete
 ---
@@ -12,32 +12,23 @@ description: |-
 
 **Deprecated for new designs:** this resource uses legacy **templates-srv**. For notification-srv (`/{notifications_context_path}/templates`), use **`cidaas_notification_template`** instead.
 
-The Template resource in the provider is used to define and manage templates within the cidaas system. Templates are used for emails, SMS, IVR, and push notifications.
+The Template resource in the provider is used to define and manage templates within the Cidaas system. Templates are used for emails, SMS, IVR, and push notifications.
 
  Ensure that the below scopes are assigned to the client with the specified `client_id`:
 - cidaas:templates_read
 - cidaas:templates_write
 - cidaas:templates_delete
 
-### Managing System Templates:
-
-- To create system templates, set the **is_system_template** flag to `true`.
-By default, this value is `false` and creates custom templates when applied.
-- When creating system templates validation checks are applied and suggestions are
-provided in error messages to assist users in creating system templates.
-- System templates cannot be imported using the standard Terraform import command. Instead, users
-must create a configuration that matches the existing system template and run terraform apply.
-
 ## Example Usage
 
 ```terraform
 // custom template example
 resource "cidaas_template" "custom-template-1" {
-  locale        = "en-US"
+  locale        = "en-IN"
   template_key  = "TERRAFORM_TEMPLATE"
   template_type = "EMAIL"
-  content       = "Sample email body in US English"
-  subject       = "Email custom template subject (en-US)"
+  content       = "Indian sample content"
+  subject       = "Email custom template subject with Indian English locale"
 }
 
 // custom template example with same template_key as custom-template-1 but different template_type and locale
@@ -95,7 +86,7 @@ resource "cidaas_template" "system-template-2" {
 ### Required
 
 - `content` (String) The content of the template.
-- `locale` (String) The BCP47 locale of the template (e.g. `en-US`, `en-GB`, `de-DE`, or a language-only tag like `en`). Use lowercase for the language subtag and uppercase for the region when present. Find the allowed locales in the Allowed Locales section below. It cannot be updated for an existing state.
+- `locale` (String) The BCP47 locale of the template (e.g. `en-US`, `en-GB`, `de-DE`, or a language-only tag like `en`). Use lowercase for the language subtag and uppercase for the region when present. Must be one of the allowed locale tags; see the Allowed Locales section below. It cannot be updated for an existing state.
 - `template_key` (String) The unique name of the template. It cannot be updated for an existing state.
 - `template_type` (String) The type of the template. Allowed template_types are EMAIL, SMS, IVR and PUSH. Template types are case sensitive. It cannot be updated for an existing state.
 
@@ -114,21 +105,3 @@ resource "cidaas_template" "system-template-2" {
 - `id` (String) The unique identifier of the template resource.
 - `language` (String) The language based on the local provided in the configuration.
 - `template_owner` (String) The template owner of the template.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-# System templates cannot be imported using the standard Terraform import command.
-# Instead, users must create a configuration that matches the existing system template and run terraform apply.
-
-# V3 Change Note: The format of the import identifier is changed in V3. In V2, the import identifier was joined by the chracter "-"
-# However in V3, it is replaced by the chracter ":". Example: TERRAFORM_TEMPLATE:SMS:en-US
-
-# Below is the command to import a custom template
-# Here, template_key:template_type:locale is a combination of template_key, template_type and locale, joined by the special character ":".
-# For example, if the resource name is "sample" with template_key as "TERRAFORM_TEMPLATE", template_type as "SMS" and locale as "de-DE", the import statement would be:
-
-terraform import cidaas_template.sample TERRAFORM_TEMPLATE:SMS:de-DE
-```

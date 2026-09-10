@@ -45,7 +45,7 @@ func TestHTTPClient_MakeRequest(t *testing.T) {
 	// Mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": true}`))
+		_, _ = w.Write([]byte(`{"success": true}`))
 	}))
 	defer server.Close()
 
@@ -58,7 +58,7 @@ func TestHTTPClient_MakeRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -70,7 +70,7 @@ func TestHTTPClient_MakeRequest_WithBody(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		w.WriteHeader(http.StatusOK)
-		w.Write(body)
+		_, _ = w.Write(body)
 	}))
 	defer server.Close()
 
@@ -84,7 +84,7 @@ func TestHTTPClient_MakeRequest_WithBody(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Verify the body was sent correctly
 	var responseBody map[string]string
@@ -127,7 +127,7 @@ func TestHTTPClient_MakeRequest_DifferentMethods(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -186,7 +186,7 @@ func TestHTTPClient_MakeRequest_NoToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 }
 
 func TestHTTPClient_MakeRequest_InvalidJSON(t *testing.T) {
@@ -227,7 +227,7 @@ func TestHTTPClient_MakeRequest_ErrorStatusCodes(t *testing.T) {
 		t.Run(tt.method+"_"+http.StatusText(tt.statusCode), func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(`{"error": "test error"}`))
+				_, _ = w.Write([]byte(`{"error": "test error"}`))
 			}))
 			defer server.Close()
 
@@ -244,7 +244,7 @@ func TestHTTPClient_MakeRequest_ErrorStatusCodes(t *testing.T) {
 				t.Errorf("Expected no error, got %v", err)
 			}
 			if resp != nil {
-				resp.Body.Close()
+				_ = resp.Body.Close()
 			}
 		})
 	}

@@ -88,7 +88,7 @@ func (t *Template) Upsert(ctx context.Context, template TemplateModel, isSystemT
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	// handle empty response body
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -121,7 +121,7 @@ func (t *Template) Get(ctx context.Context, template TemplateModel, isSystemTemp
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode == 204 {
 		return nil, fmt.Errorf("%w: template not found for the  template_key %s with template type %s and locale %s", util.ErrResourceNotFound, template.TemplateKey, template.TemplateType, template.Locale)
 	}
@@ -152,7 +152,7 @@ func (t *Template) Delete(ctx context.Context, templateKey string, templateType 
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -167,7 +167,7 @@ func (t *Template) GetMasterList(ctx context.Context, groupID string) (*MasterLi
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err

@@ -51,7 +51,7 @@ func TestGroupType_Create_Success(t *testing.T) {
 
 		body, _ := io.ReadAll(r.Body)
 		var receivedGroupType GroupTypeData
-		json.Unmarshal(body, &receivedGroupType)
+		_ = json.Unmarshal(body, &receivedGroupType)
 
 		if receivedGroupType.GroupType != expectedGroupType.GroupType {
 			t.Errorf("Expected GroupType %s, got %s", expectedGroupType.GroupType, receivedGroupType.GroupType)

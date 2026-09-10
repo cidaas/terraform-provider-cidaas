@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="120" viewBox="0 0 1200 120" role="img" aria-label="Automate Infrastructure on Any Cloud">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2B153E"/>
+      <stop offset="55%" stop-color="#4A1F6D"/>
+      <stop offset="100%" stop-color="#7B42BC"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="120" rx="12" fill="url(#bg)"/>
+  <text x="36" y="72" fill="#FFFFFF" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="700">Automate Infrastructure on Any Cloud</text>
+</svg>

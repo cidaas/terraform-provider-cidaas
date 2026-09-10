@@ -41,7 +41,7 @@ func (c *ConsentGroup) Upsert(ctx context.Context, cg ConsentGroupConfig) (*Cons
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (c *ConsentGroup) Get(ctx context.Context, consentGroupID string) (*Consent
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -78,6 +78,6 @@ func (c *ConsentGroup) Delete(ctx context.Context, consentGroupID string) error 
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }

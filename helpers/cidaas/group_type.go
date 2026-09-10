@@ -49,7 +49,7 @@ func (c *GroupType) Create(ctx context.Context, gt GroupTypeData) (*GroupTypeRes
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c *GroupType) Get(ctx context.Context, groupType string) (*GroupTypeRespon
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (c *GroupType) Update(ctx context.Context, gt GroupTypeData) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (c *GroupType) Delete(ctx context.Context, groupType string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -115,7 +115,7 @@ func (c *GroupType) GetAll(ctx context.Context) ([]GroupTypeData, error) {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err

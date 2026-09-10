@@ -1,13 +1,13 @@
 ---
 page_title: "cidaas_group_type Resource - cidaas"
-subcategory: ""
+subcategory: "Groups"
 description: |-
   The Group Type, managed through the cidaas_group_type resource in the provider defines and configures categories for user groups within the Cidaas system.
   Ensure that the below scopes are assigned to the client with the specified client_id:
   cidaas:group_type_readcidaas:group_type_writecidaas:group_type_delete
 ---
 
-# cidaas_group_type (Resource)-Previously cidaas_user_group_category
+# cidaas_group_type (Resource)
 
 The Group Type, managed through the `cidaas_group_type` resource in the provider defines and configures categories for user groups within the Cidaas system.
 
@@ -16,19 +16,14 @@ The Group Type, managed through the `cidaas_group_type` resource in the provider
 - cidaas:group_type_write
 - cidaas:group_type_delete
 
-
-### V2 to V3 Migration:
-If you are migrating from v2 to v3, please note that `cidaas_user_group_category` has been renamed to `cidaas_group_type`.
-Please update your Terraform configuration files accordingly to ensure compatibility with the latest version(v3).
-
 ## Example Usage
 
 ```terraform
-resource "cidaas_group_type" "sample" {
-  role_mode     = "no_roles"
-  group_type    = "TerraformSampleGroupType"
-  description   = "terraform user group category description"
-  allowed_roles = ["developer"]
+resource "cidaas_group_type" "example" {
+  group_type    = "terraform_example"
+  role_mode     = "allowed_roles"
+  description   = "Example group type managed by Terraform"
+  allowed_roles = ["USER", "ADMIN"]
 }
 ```
 
@@ -50,11 +45,3 @@ resource "cidaas_group_type" "sample" {
 - `created_at` (String) The timestamp when the resource was created.
 - `id` (String) The ID of the resource.
 - `updated_at` (String) The timestamp when the resource was last updated.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-terraform import cidaas_group_type.resource_name group_type
-```
