@@ -29,10 +29,12 @@ The provider provides two operational pathways when managing resources in a v4 e
 | Category                  | Old Resource (v3 / Legacy)                              | New Resource (v4 / Standardized)                                                             | Migration Notes                                                                                                                                                                                    |
 | :------------------------ | :------------------------------------------------------ | :------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Applications**          | `cidaas_app`                                            | `cidaas_app_configuration`                                                                   | Deprecated in v4. Migrate to `cidaas_app_configuration` for native `/app-srv/apps` app management.                                                                                                 |
-| **Hosted Pages**          | `cidaas_hosted_page` (v3 flat)                          | `cidaas_hosted_page` (v4 Unified Schema)                                                     | Consolidates hosted page group, inline `theme`, `translations`, and `layout` into a single unified resource block. Reserved system groups (`default`, `admin`) are protected against API deletion. |
+| **Hosted Pages**          | `cidaas_hosted_page`                                    | `cidaas_hosted_page`                                                                         | Still exists on v3 and v4. Reserved system groups (`default`, `admin`) are protected against API deletion.                                                                                         |
+| **Hosted page layout, theme & translations** | N/A                                                     | `cidaas_hosted_page_layout`<br>`cidaas_theme`<br>`cidaas_translations`                       | Additional v4-only resources. They do not replace `cidaas_hosted_page`. Apps reference a layout via `hosted_pages_layout_id`.                                                                      |
 | **Identity Providers**    | `cidaas_social_provider`<br>`cidaas_custom_provider`    | `cidaas_federation_provider`                                                                 | Removed in v4. Standardize exclusively on `cidaas_federation_provider` (`OAUTH2`, `OPENID_CONNECT`, `SAML`, `LDAP`).                                                                               |
 | **Scopes & Roles**        | `cidaas_scope`<br>`cidaas_scope_group`<br>`cidaas_role` | `cidaas_scope`<br>`cidaas_scope_group`<br>`cidaas_role`                                      | Standardized across v3 and v4.                                                                                                                                                                     |
-| **Groups & Verification** | `cidaas_group_type`<br>`cidaas_user_groups`             | `cidaas_group_selection`<br>`cidaas_group_verification_filter`                               | v4 native group selection and verification request filters.                                                                                                                                        |
+| **Groups**                | `cidaas_group_type`<br>`cidaas_user_groups`             | `cidaas_group_type`<br>`cidaas_user_groups`                                                  | Unchanged. Both resources still exist and are shared across v3 and v4.                                                                                                                             |
+| **Group selection & filters** | Nested on `cidaas_app` (`group_selection`, `group_role_restriction`) | `cidaas_group_selection`<br>`cidaas_group_verification_filter`                               | Additional v4-only resources. They do not replace `cidaas_group_type` / `cidaas_user_groups`.                                                                                                       |
 | **User Setup & MFA**      | N/A                                                     | `cidaas_user_setup`<br>`cidaas_verification_options`<br>`cidaas_suggest_verification_method` | Native v4 user setup & MFA option features.                                                                                                                                                        |
 
 ---
@@ -66,7 +68,7 @@ Below is the complete, zero-omissions mapping table showing how all fields from 
 | `disable_insecure_pkce_method`                                                                         | `disable_insecure_pkce_method`                       | Bool               | Disables insecure `plain` PKCE challenge method (requires `S256`).                                                                       |
 | `token_endpoint_auth_method`                                                                           | `client_auth_config.token_endpoint_auth_method`      | String             | Moved into `client_auth_config` block (`none`, `client_secret_basic`, `private_key_jwt`, `tls_client_auth`).                             |
 | `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers`                                 | List(Object)       | Standardized under `identity_providers` list in v4, linking `cidaas_federation_provider` instances.                                      |
-| `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` / `cidaas_hosted_page` ID.                                                                    |
+| `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` that includes `cidaas_hosted_page` ID.                                                                    |
 | `auto_login_after_register`, `enable_deduplication`, `allow_disposable_email`, `validate_phone_number` | `user_setup_id`                                      | String (Extdep ID) | In v4, user registration & deduplication policies are managed via `cidaas_user_setup` resource.                                          |
 | `mfa`, `suggest_verification_methods`, `smart_mfa`, `allowed_mfa`                                      | `authentication_setup.verification_options_id`       | String (Extdep ID) | In v4, MFA settings and policies are managed via `cidaas_verification_options` resource.                                                 |
 | `group_selection`                                                                                      | `authentication_setup.group_selection_id`            | String (Extdep ID) | In v4, group selection policies are managed via `cidaas_group_selection` resource.                                                       |
@@ -241,89 +243,110 @@ resource "cidaas_federation_provider" "custom_oidc" {
 
 ---
 
-## Hosted Pages Migration (Unified `cidaas_hosted_page` Schema)
+## Hosted Pages Migration
 
-In Cidaas v4, hosted page management is consolidated into a **single unified resource block (`cidaas_hosted_page`)**. Separate declarations for hosted page groups, themes, translations, and layout parameters are merged directly into inline nested blocks within `cidaas_hosted_page`.
+`cidaas_hosted_page` still manages the hosted page **group** (URLs and page content), on both v3 and v4. It was not split or replaced.
+
+v4 adds separate resources around that group:
+
+1. `cidaas_hosted_page` — group + `hosted_pages` entries (same role as in v3)
+2. `cidaas_theme` — CSS upload
+3. `cidaas_translations` — locale dictionaries
+4. `cidaas_hosted_page_layout` — branding; **references** the group via `layout.hosted_page_group`
+
+`cidaas_app_configuration` does not take a group name. It references the layout: `hosted_pages_layout_id`.
 
 > [!IMPORTANT]
 > **Reserved System Group Protection**: System reserved hosted page groups (`default` and `admin`) are hard-protected against accidental API deletion during `terraform destroy` or state teardowns.
 
-### Exhaustive Hosted Pages Attribute Mapping
+### Hosted Pages Attribute Mapping
 
-| Legacy / Separate Field                                                | Standardized Unified v4 Field (`cidaas_hosted_page`) | Attribute Type | Description & Migration Guidance                                                                                                                                                                        |
-| :--------------------------------------------------------------------- | :--------------------------------------------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `hosted_page_group_name`                                               | `hosted_page_group_name`                             | String         | Unique hosted page group identifier. `default` and `admin` are system-reserved and protected.                                                                                                           |
-| `default_locale`                                                       | `default_locale`                                     | String         | Default locale for the hosted page group (e.g. `en-US`).                                                                                                                                                |
-| `theme.filename`, `theme.css_content`                                  | `theme`                                              | SingleNested   | Inline custom CSS theme block (`filename`, `css_content`).                                                                                                                                              |
-| `translations.locale_id`, `translations.translations`                  | `translations`                                       | SingleNested   | Inline locale translation dictionary map.                                                                                                                                                               |
-| `layout.primary_color`, `layout.accent_color`, `layout.logo_uri`, etc. | `layout`                                             | SingleNested   | Inline UI branding & layout parameters (`primary_color`, `accent_color`, `content_align`, `media_type`, `video_url`, `logo_uri`, `background_uri`, `policy_uri`, `tos_uri`, `imprint_uri`, `fav_icon`). |
-| `hosted_pages`                                                         | `hosted_pages`                                       | List(Object)   | List of hosted page definitions (`hosted_page_id`, `content`, `locale`).                                                                                                                                |
+| v3 / Legacy                                              | v4                                                                 | Notes                                                                                          |
+| :------------------------------------------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| `cidaas_hosted_page.hosted_page_group_name`              | `cidaas_hosted_page.hosted_page_group_name`                        | Same resource. Referenced from the layout as `layout.hosted_page_group`.                       |
+| `cidaas_hosted_page.default_locale`                      | `cidaas_hosted_page.default_locale`                                | Unchanged.                                                                                     |
+| `cidaas_hosted_page.hosted_pages`                        | `cidaas_hosted_page.hosted_pages`                                  | Unchanged (`hosted_page_id`, `url`, `locale`, `content`).                                      |
+| `cidaas_app.hosted_page_group`                           | `cidaas_app_configuration.hosted_pages_layout_id`                  | App now points at a `cidaas_hosted_page_layout` ID, not the group name.                        |
+| App-level branding (`accent_color`, `logo_uri`, …)       | `cidaas_hosted_page_layout.layout`                                 | Additional v4 resource.                                                                        |
+| N/A                                                      | `cidaas_theme`                                                     | Additional v4 resource. Filename is referenced from `layout.theme` / `resources.*.theme`.      |
+| N/A                                                      | `cidaas_translations`                                              | Additional v4 resource. Locale set is referenced from `resources.*.translation_set`.           |
 
 ### Hosted Pages Before / After HCL Comparison
 
-#### Legacy / Separate Declarations (v3 / Early v4)
+#### Legacy v3 (`cidaas_hosted_page` + group name on the app)
 
 ```hcl
-# Separate Hosted Page Group
-resource "cidaas_hosted_page_group" "custom_group" {
-  group_name     = "custom_group"
-  default_locale = "en-US"
+resource "cidaas_hosted_page" "custom_group" {
+  hosted_page_group_name = "custom_group"
+  default_locale         = "en-US"
+
+  hosted_pages = [
+    {
+      hosted_page_id = "login"
+      locale         = "en-US"
+      url            = "https://example.com/login"
+    }
+  ]
 }
 
-# Separate Theme Definition
+resource "cidaas_app" "legacy_app" {
+  # ...
+  hosted_page_group = cidaas_hosted_page.custom_group.hosted_page_group_name
+}
+```
+
+#### v4 (`cidaas_hosted_page` plus layout, theme, translations)
+
+```hcl
+resource "cidaas_hosted_page" "custom_group" {
+  hosted_page_group_name = "custom_group"
+  default_locale         = "en-US"
+
+  hosted_pages = [
+    {
+      hosted_page_id = "login"
+      locale         = "en-US"
+      url            = "https://example.com/login"
+    }
+  ]
+}
+
 resource "cidaas_theme" "custom_theme" {
   filename    = "custom.css"
   css_content = ".login-card { background-color: #ffffff; }"
 }
 
-# Separate Layout Definition
-resource "cidaas_hosted_page_layout" "custom_layout" {
-  primary_color = "#ef4923"
-  accent_color  = "#f7941d"
-  content_align = "CENTER"
-  logo_uri      = "https://example.com/logo.png"
-}
-```
-
-#### Standardized Unified v4 (`cidaas_hosted_page`)
-
-```hcl
-# Single Unified Hosted Page Resource
-resource "cidaas_hosted_page" "custom_group" {
-  hosted_page_group_name = "custom_group"
-  default_locale         = "en-US"
-
-  # Inline Custom CSS Theme
-  theme = {
-    filename    = "custom.css"
-    css_content = ".login-card { background-color: #ffffff; }"
-  }
-
-  # Inline Translations Dictionary
+resource "cidaas_translations" "en" {
+  locale_id = "en-US"
+  enabled   = true
   translations = {
-    locale_id = "en-US"
-    enabled   = true
-    translations = {
-      "login_title" = "Welcome to Example Portal"
-    }
+    "login.title" = "Welcome to Example Portal"
   }
+}
 
-  # Inline Branding & Layout Parameters
+resource "cidaas_hosted_page_layout" "custom_layout" {
+  description = "Example branding layout"
+
   layout = {
-    primary_color = "#ef4923"
-    accent_color  = "#f7941d"
-    content_align = "CENTER"
-    media_type    = "IMAGE"
-    logo_uri      = "https://example.com/logo.png"
+    hosted_page_group = cidaas_hosted_page.custom_group.hosted_page_group_name
+    theme             = cidaas_theme.custom_theme.filename
+    primary_color     = "#ef4923"
+    accent_color      = "#f7941d"
+    content_align     = "CENTER"
+    media_type        = "IMAGE"
+    logo_uri          = "https://example.com/logo.png"
   }
 
-  # Hosted Page Content Definitions
-  hosted_pages = [
-    {
-      hosted_page_id = "login"
-      locale         = "en-US"
-      content        = "<h1>Login</h1><form>...</form>"
+  resources = {
+    "default-hosted-pages-webapp" = {
+      translation_set = cidaas_translations.en.locale_id
+      theme           = cidaas_theme.custom_theme.filename
     }
-  ]
+  }
+}
+
+resource "cidaas_app_configuration" "v4_app" {
+  # ...
+  hosted_pages_layout_id = cidaas_hosted_page_layout.custom_layout.id
 }
 ```
