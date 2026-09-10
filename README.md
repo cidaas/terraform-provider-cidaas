@@ -57,6 +57,7 @@ The Terraform provider for cidaas enables interaction with cidaas instances for 
 | Provider overview | [docs/index.md](docs/index.md) |
 | Resource reference | [docs/resources/](docs/resources/) |
 | Guides | [docs/guides/](docs/guides/) |
+| v3 to v4 Migration | [docs/guides/v3-to-v4-migration.md](docs/guides/v3-to-v4-migration.md) |
 | Examples (HCL) | [examples/](examples/) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Contributing (docs workflow) | [CONTRIBUTING.md](CONTRIBUTING.md) |
@@ -68,6 +69,7 @@ The Terraform provider for cidaas enables interaction with cidaas instances for 
 - [Authentication](docs/guides/authentication.md)
 - [Provider configuration](docs/guides/version-targeting.md)
 - [Resource dependency order](docs/guides/resource-dependencies.md)
+- [v3 to v4 Migration](docs/guides/v3-to-v4-migration.md)
 
 </details>
 
