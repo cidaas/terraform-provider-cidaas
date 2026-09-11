@@ -161,7 +161,7 @@ var consentversionSchema = schema.Schema{
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"content": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
 						MarkdownDescription: "The content of the consent for the specified locale.",
 					},
 					"locale": schema.StringAttribute{
