@@ -16,24 +16,27 @@ type Client struct {
 	NotificationsSrvTemplate       *NotificationsSrvTemplate
 	NotificationsSrvServiceSetup   *NotificationsSrvServiceSetup
 	NotificationsSrvProviderConfig *NotificationsSrvProviderConfig
-	CustomProvider                 *CustomProvider
-	SocialProvider                 *SocialProvider
 	Scopes                         *Scope
 	ScopeGroup                     *ScopeGroup
-	ConsentGroup                   *ConsentGroup
 	GroupType                      *GroupType
 	UserGroup                      *UserGroup
-	HostedPages                    *HostedPage
 	Webhook                        *Webhook
-	Apps                           *App
 	RegFields                      *RegField
+	Consent                        *Consent
+	ConsentGroup                   *ConsentGroup
+	ConsentVersion                 *ConsentVersion
 	TemplateGroup                  *TemplateGroup
 	Templates                      *Template
 	TemplateType                   *TemplateTypeServiceImpl
 	PasswordPolicy                 *PasswordPolicy
 	SecuritySettings               *SecuritySettings
-	Consent                        *Consent
-	ConsentVersion                 *ConsentVersion
+	GroupSelection                 *GroupSelection
+	GroupVerificationFilter        *GroupVerificationFilter
+	CustomProvider                 *CustomProvider
+	SocialProvider                 *SocialProvider
+	FederationProvider             *FederationProvider
+	HostedPages                    *HostedPage
+	Apps                           *App
 }
 
 type ClientConfig struct {
@@ -42,7 +45,6 @@ type ClientConfig struct {
 	BaseURL      string
 	AccessToken  string
 	// NotificationsContextPath is the URL segment for notification-srv APIs (default: notifications-srv).
-	// Used by notification-srv template groups, templates, template types, and service setups; legacy template resources ignore this.
 	NotificationsContextPath string
 }
 
@@ -81,10 +83,10 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		"grant_type":    "client_credentials",
 	}
 	res, err := httpClient.MakeRequest(ctx, payload)
-	if err := util.HandleResponseError(res, err); err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token %s", err.Error())
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	var response TokenResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, fmt.Errorf("failed to generate access token %s", err.Error())
@@ -96,24 +98,27 @@ func NewClient(ctx context.Context, config ClientConfig) (*Client, error) {
 		NotificationsSrvTemplate:       NewNotificationsSrvTemplate(config),
 		NotificationsSrvServiceSetup:   NewNotificationsSrvServiceSetup(config),
 		NotificationsSrvProviderConfig: NewNotificationsSrvProviderConfig(config),
-		CustomProvider:                 NewCustomProvider(config),
 		Scopes:                         NewScope(config),
 		ScopeGroup:                     NewScopeGroup(config),
 		GroupType:                      NewGroupType(config),
 		UserGroup:                      NewUserGroup(config),
-		HostedPages:                    NewHostedPage(config),
 		Webhook:                        NewWebhook(config),
-		Apps:                           NewApp(config),
 		RegFields:                      NewRegField(config),
+		Consent:                        NewConsent(config),
+		ConsentGroup:                   NewConsentGroup(config),
+		ConsentVersion:                 NewConsentVersion(config),
 		TemplateGroup:                  NewTemplateGroup(config),
 		Templates:                      NewTemplate(config),
 		TemplateType:                   NewTemplateType(config),
-		SocialProvider:                 NewSocialProvider(config),
 		PasswordPolicy:                 NewPasswordPolicy(config),
 		SecuritySettings:               NewSecuritySettings(config),
-		ConsentGroup:                   NewConsentGroup(config),
-		Consent:                        NewConsent(config),
-		ConsentVersion:                 NewConsentVersion(config),
+		GroupSelection:                 NewGroupSelection(config),
+		GroupVerificationFilter:        NewGroupVerificationFilter(config),
+		CustomProvider:                 NewCustomProvider(config),
+		SocialProvider:                 NewSocialProvider(config),
+		FederationProvider:             NewFederationProvider(config),
+		HostedPages:                    NewHostedPage(config),
+		Apps:                           NewApp(config),
 	}
 	return client, nil
 }

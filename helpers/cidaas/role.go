@@ -41,7 +41,7 @@ func (r *Role) UpsertRole(ctx context.Context, role RoleModel) (*RoleResponse, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to upsert role: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response RoleResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -59,7 +59,7 @@ func (r *Role) GetRole(ctx context.Context, role string) (*RoleResponse, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response RoleResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -77,7 +77,7 @@ func (r *Role) DeleteRole(ctx context.Context, role string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete role: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (r *Role) GetAll(ctx context.Context) ([]RoleModel, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all roles: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response AllRoleResponse
 	if err := util.ProcessResponse(res, &response); err != nil {

@@ -1,13 +1,32 @@
-coverage.out
-.coverage.txt
-coverage.html
-internal.md
-samples
+# Binaries
 terraform-provider-cidaas
 terraform-provider-cidaas_*
-darwin_arm64/
-.golangci.yml
+bin/
+dist/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Coverage / test
 .coverage.txt
 coverage.html
 coverage.out
-gl-code-quality-report.json
+*.test
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Go
+vendor/
+.golangci.yml

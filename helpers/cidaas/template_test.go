@@ -479,7 +479,7 @@ func TestTemplate_Upsert_ReadBodyError(t *testing.T) {
 		hj, ok := w.(http.Hijacker)
 		if ok {
 			conn, _, _ := hj.Hijack()
-			conn.Close()
+			_ = conn.Close()
 		}
 	}))
 	defer server.Close()

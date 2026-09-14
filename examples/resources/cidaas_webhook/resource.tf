@@ -1,4 +1,3 @@
-
 # This is a sample configuration for setting up a webhook with multiple authentication options.
 # The available authentication types include apikey_config, totp_config, and cidaas_auth_config.
 

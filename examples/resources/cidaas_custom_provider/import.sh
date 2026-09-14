@@ -1,1 +1,0 @@
-terraform import cidaas_custom_provider.resource_name provider_name

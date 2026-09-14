@@ -1,37 +1,9 @@
-// To create a template group, only the attribute group_id is required in the configuration.
-// The attributes shown in sample-tg-2 are optional and can be configured as needed.
-// If these properties are not configured in the .tf file, the provider/cidaas will compute
-// and assign values to them.
+# Deprecated for new designs: prefer cidaas_notifications_template_group on v4+.
+resource "cidaas_template_group" "example" {
+  group_id = "example_group"
 
-// sample1
-resource "cidaas_template_group" "sample-tg-1" {
-  group_id = "sample_group"
-}
-
-// sample2
-resource "cidaas_template_group" "sample-tg-2" {
-  group_id = "group_another"
   email_sender_config = {
-    from_email = "noreply@cidaas.de"
-    from_name  = "Kube-dev"
-    reply_to   = "noreply@cidaas.de"
-    sender_names = [
-      "System",
-    ]
-  }
-  ivr_sender_config = {
-    sender_names = [
-      "System",
-    ]
-  }
-  push_sender_config = {
-    sender_names = [
-      "System",
-    ]
-  }
-  sms_sender_config = {
-    sender_names = [
-      "System",
-    ]
+    from_email = "noreply@example.com"
+    from_name  = "Example"
   }
 }

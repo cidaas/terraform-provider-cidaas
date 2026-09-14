@@ -58,4 +58,3 @@ resource "cidaas_notification_template_type" "simple_notification" {
 
   communication_methods = ["email"]
 }
-

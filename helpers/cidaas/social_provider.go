@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 )
@@ -44,15 +45,15 @@ type UserInfoFieldsModel struct {
 }
 
 type SocialProviderResponse struct {
-	Success bool `json:"success,omitempty"`
-	Status  int  `json:"status,omitempty"`
-	Data    SocialProviderModel
+	Success bool                `json:"success,omitempty"`
+	Status  int                 `json:"status,omitempty"`
+	Data    SocialProviderModel `json:"data"`
 }
 
 type AllSocialProviderResponse struct {
-	Success bool `json:"success,omitempty"`
-	Status  int  `json:"status,omitempty"`
-	Data    []SocialProviderModel
+	Success bool                  `json:"success,omitempty"`
+	Status  int                   `json:"status,omitempty"`
+	Data    []SocialProviderModel `json:"data"`
 }
 
 type SocialProvider struct {
@@ -63,18 +64,42 @@ func NewSocialProvider(clientConfig ClientConfig) *SocialProvider {
 	return &SocialProvider{clientConfig}
 }
 
-func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*SocialProviderResponse, error) { //nolint:dupl
+//nolint:dupl
+func makeRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
+	var res *http.Response
+	var err error
+	maxAttempts := 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		res, err = client.MakeRequest(ctx, body)
+		if err == nil {
+			err = util.HandleResponseError(res, nil)
+			if err == nil {
+				return res, nil
+			}
+		}
+		if uErr, ok := err.(*util.UnexpectedStatusError); ok && uErr.StatusCode >= 500 {
+			if attempt < maxAttempts {
+				time.Sleep(time.Duration(attempt) * time.Second)
+				continue
+			}
+		}
+		return res, err
+	}
+	return res, err
+}
+
+func (s *SocialProvider) Upsert(ctx context.Context, sp *SocialProviderModel) (*SocialProviderResponse, error) {
 	var response SocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/multi/providers")
 	client, err := util.NewHTTPClient(url, http.MethodPost, s.AccessToken)
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, sp)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, sp)
+	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -89,11 +114,11 @@ func (s *SocialProvider) Get(ctx context.Context, providerName, providerID strin
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -107,15 +132,16 @@ func (s *SocialProvider) Delete(ctx context.Context, providerName, providerID st
 	if err != nil {
 		return err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
-func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, error) { //nolint:dupl
+//nolint:dupl
+func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, error) {
 	var response AllSocialProviderResponse
 	url := fmt.Sprintf("%s/%s", s.BaseURL, "providers-srv/providers/enabled/list")
 	client, err := util.NewHTTPClient(url, http.MethodGet, s.AccessToken)
@@ -126,7 +152,7 @@ func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, err
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
