@@ -11,6 +11,7 @@ resource "cidaas_user_groups" "sample" {
 }
 
 resource "cidaas_group_verification_filter" "sample" {
+  id              = "sample_verification_filter"
   description     = "Filter verifying user group and role access"
   match_condition = "OR"
 

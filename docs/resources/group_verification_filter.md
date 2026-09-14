@@ -25,6 +25,7 @@ resource "cidaas_user_groups" "sample" {
 }
 
 resource "cidaas_group_verification_filter" "sample" {
+  id              = "sample_verification_filter"
   description     = "Filter verifying user group and role access"
   match_condition = "OR"
 
@@ -49,12 +50,12 @@ resource "cidaas_group_verification_filter" "sample" {
 ### Required
 
 - `description` (String) Description of the functionality this group verification filter restricts (max 600 characters).
+- `id` (String) Client-chosen filter id sent to group-srv (`POST /verifications/requests`). Must match `[a-zA-Z0-9_-]+`. Stored lowercase; changing this value replaces the resource.
 - `match_condition` (String) Match condition for top-level filters. Must be either `AND` or `OR`.
 
 ### Optional
 
 - `filters` (Block List) List of group verification filters. (see [below for nested schema](#nestedblock--filters))
-- `id` (String) The unique identifier of the group verification filter. If set, the provided value is used as the resource ID; if omitted, a unique ID will be auto-generated. Changing this value forces resource re-creation.
 
 ### Read-Only
 

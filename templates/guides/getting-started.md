@@ -29,7 +29,7 @@ terraform {
   required_providers {
     cidaas = {
       source  = "Cidaas/cidaas"
-      version = ">= 4.0.0-alpha.1"
+      version = ">= 4.0.0"
     }
   }
 }
@@ -52,7 +52,7 @@ resource "cidaas_scope" "sample" {
 }
 ```
 
-Copy-paste examples for every resource live under [`examples/resources/`](../../examples/resources/) in this repository. Full attribute docs are under [Resource Reference](../resources/).
+Copy-paste HCL and full attribute docs are on each resource page. Start from the [provider overview](../index.md) or [cidaas_scope](../resources/scope.md).
 
 ## 5. Plan and apply
 
@@ -66,4 +66,5 @@ terraform apply
 
 - [Authentication](authentication.md)
 - [Provider configuration](version-targeting.md)
+- [Cidaas v3 to v4 migration guide](v3-to-v4-migration.md)
 - [Resource dependency order](resource-dependencies.md)

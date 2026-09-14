@@ -35,7 +35,7 @@ resource "cidaas_hosted_page_layout" "login" {
 }
 ```
 
-Exact attribute names differ per resource — use each resource’s schema page under [docs/resources](../resources/).
+Exact attribute names differ per resource — use each resource’s schema page (for example [cidaas_scope](../resources/scope.md) or the [provider overview](../index.md)).
 
 ## Dependency Best Practices
 

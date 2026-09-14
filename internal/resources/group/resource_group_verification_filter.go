@@ -3,6 +3,7 @@ package group
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
@@ -60,12 +61,17 @@ var groupVerificationFilterSchema = schema.Schema{
 	MarkdownDescription: "Resource for managing group verification request filters in cidaas v4.x (Trustdesk).",
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
-			Optional:            true,
-			Computed:            true,
-			MarkdownDescription: "The unique identifier of the group verification filter. If omitted, a unique ID will be auto-generated.",
+			Required: true,
+			MarkdownDescription: "Client-chosen filter id sent to group-srv (`POST /verifications/requests`). " +
+				"Must match `[a-zA-Z0-9_-]+`. Stored lowercase; changing this value replaces the resource.",
+			Validators: []validator.String{
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(`^[a-zA-Z0-9_-]+$`),
+					"must contain only letters, digits, underscores, or hyphens",
+				),
+			},
 			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-				stringplanmodifier.RequiresReplaceIfConfigured(),
+				stringplanmodifier.RequiresReplace(),
 			},
 		},
 		"description": schema.StringAttribute{
@@ -177,6 +183,7 @@ func (r *GroupVerificationFilterResource) Create(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	keepConfiguredFilterID(plan.ID, &state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -198,6 +205,7 @@ func (r *GroupVerificationFilterResource) Read(ctx context.Context, req resource
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	keepConfiguredFilterID(state.ID, &newState)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
 
@@ -213,8 +221,6 @@ func (r *GroupVerificationFilterResource) Update(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiReq.ID = plan.ID.ValueString()
-
 	res, err := r.CidaasClient.GroupVerificationFilter.Update(ctx, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update group verification filter", util.FormatErrorMessage(err))
@@ -225,6 +231,7 @@ func (r *GroupVerificationFilterResource) Update(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	keepConfiguredFilterID(plan.ID, &state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -244,6 +251,15 @@ func (r *GroupVerificationFilterResource) Delete(ctx context.Context, req resour
 
 func (r *GroupVerificationFilterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func keepConfiguredFilterID(configured types.String, m *groupVerificationFilterModel) {
+	if configured.IsNull() || configured.IsUnknown() {
+		return
+	}
+	if strings.EqualFold(configured.ValueString(), m.ID.ValueString()) {
+		m.ID = configured
+	}
 }
 
 func groupVerificationFilterModelToAPI(ctx context.Context, m groupVerificationFilterModel, diags *diag.Diagnostics) cidaas.GroupVerificationRequestModel {
@@ -268,13 +284,8 @@ func groupVerificationFilterModelToAPI(ctx context.Context, m groupVerificationF
 		})
 	}
 
-	id := strings.ToLower(m.ID.ValueString())
-	if id == "" {
-		id = strings.ToLower(util.GenerateUUID())
-	}
-
 	return cidaas.GroupVerificationRequestModel{
-		ID:             id,
+		ID:             strings.ToLower(m.ID.ValueString()),
 		Description:    m.Description.ValueString(),
 		MatchCondition: strings.ToLower(m.MatchCondition.ValueString()),
 		Filters:        filtersWire,

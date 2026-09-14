@@ -52,7 +52,7 @@ resource "cidaas_scope" "sample" {
 }
 ```
 
-Copy-paste examples for every resource live under [`examples/resources/`](../../examples/resources/) in this repository. Full attribute docs are under [Resource Reference](../resources/).
+Copy-paste HCL and full attribute docs are on each resource page. Start from the [provider overview](../index.md) or [cidaas_scope](../resources/scope.md).
 
 ## 5. Plan and apply
 

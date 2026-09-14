@@ -24,7 +24,7 @@ func TestAccGroupVerificationFilter_Basic(t *testing.T) {
 			{
 				Config: testAccGroupVerificationFilterConfig(testResourceID, description, "or"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet(testResourceName, "id"),
+					resource.TestCheckResourceAttr(testResourceName, "id", testResourceID),
 					resource.TestCheckResourceAttr(testResourceName, "description", description),
 					resource.TestCheckResourceAttr(testResourceName, "match_condition", "or"),
 				),
@@ -51,6 +51,7 @@ func testAccGroupVerificationFilterConfig(resourceID, description, matchConditio
 			base_url = "%s"
 		}
 		resource "cidaas_group_verification_filter" "%s" {
+			id = "%s"
 			description = "%s"
 			match_condition = "%s"
 			filters {
@@ -61,5 +62,5 @@ func testAccGroupVerificationFilterConfig(resourceID, description, matchConditio
 				}
 			}
 		}
-	`, acctest.GetBaseURL(), resourceID, description, matchCondition)
+	`, acctest.GetBaseURL(), resourceID, resourceID, description, matchCondition)
 }

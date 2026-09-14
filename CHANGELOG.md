@@ -30,6 +30,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 - Provider implementation moved to Terraform Plugin Framework. Existing state should upgrade, but plan/refresh behavior can differ from 3.5.x.
 - Shared resources work on both `3.x` and `4.x`: `cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template`, `cidaas_notification_template_type`, `cidaas_notification_service_setup`, `cidaas_hosted_page`, and consent resources.
 - Consent OAuth scopes renamed: `cidaas:tenant_consent_*` → `cidaas:consent_read` / `cidaas:consent_write` / `cidaas:consent_delete`. Update the Terraform client's assigned scopes.
+- **`cidaas_template_group` (breaking):** If `email_sender_config` is set, `from_email` and `from_name` are now **required** (they were optional+computed in 3.5.x). If `sms_sender_config` is set, `from_name` is now **required**. Configs that declare those blocks without the sender fields will fail validation. The blocks themselves remain optional. This resource is deprecated; prefer `cidaas_notifications_template_group` on v4.
 
 ### Deprecated
 
@@ -41,6 +42,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 
 - `cidaas_social_provider` and `cidaas_custom_provider`. Use `cidaas_federation_provider`. Existing state for the old resources must be removed or replaced; they are not registered in 4.0.0.
 - All data sources. Look up IDs from managed resources or the cidaas APIs.
+- Provider attribute `notifications_context_path`. Notification-srv URLs always use `notifications-srv`. Remove it from the `provider "cidaas"` block; 4.0.0 rejects unknown provider attributes.
 
 ### 3.5.20
 
