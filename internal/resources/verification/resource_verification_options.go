@@ -89,7 +89,6 @@ type appAttestIOSConfig struct {
 	GCPServiceAccount types.String `tfsdk:"gcp_service_account"`
 	ProjectID         types.String `tfsdk:"project_id"`
 	IOSAppID          types.String `tfsdk:"ios_app_id"`
-	AndroidAppID      types.String `tfsdk:"android_app_id"`
 }
 
 // NewVerificationOptionsResource returns the cidaas_verification_options resource.
@@ -121,7 +120,6 @@ func iosAttrTypes() map[string]attr.Type {
 		"gcp_service_account": types.StringType,
 		"project_id":          types.StringType,
 		"ios_app_id":          types.StringType,
-		"android_app_id":      types.StringType,
 	}
 }
 
@@ -248,7 +246,6 @@ func (r *verificationOptionsResource) Schema(_ context.Context, _ resource.Schem
 									"gcp_service_account": schema.StringAttribute{Optional: true, Sensitive: true},
 									"project_id":          schema.StringAttribute{Optional: true},
 									"ios_app_id":          schema.StringAttribute{Optional: true},
-									"android_app_id":      schema.StringAttribute{Optional: true},
 								},
 							},
 						},
@@ -394,7 +391,6 @@ func (c *verificationOptionsConfig) toModel(ctx context.Context) (client.Verific
 				GCPServiceAccount: i.GCPServiceAccount.ValueString(),
 				ProjectID:         i.ProjectID.ValueString(),
 				IOSAppID:          i.IOSAppID.ValueString(),
-				AndroidAppID:      i.AndroidAppID.ValueString(),
 			}
 		}
 	}
@@ -453,7 +449,6 @@ func flattenVerificationOptions(model client.VerificationOptionsModel) (verifica
 				"gcp_service_account": stringOrNull(i.GCPServiceAccount),
 				"project_id":          stringOrNull(i.ProjectID),
 				"ios_app_id":          stringOrNull(i.IOSAppID),
-				"android_app_id":      stringOrNull(i.AndroidAppID),
 			})
 			diags.Append(d...)
 			appAttrs["ios"] = obj

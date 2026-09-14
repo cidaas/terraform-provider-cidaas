@@ -68,11 +68,11 @@ resource "cidaas_consent_version" "v1" {
 
 - `consent_id` (String) The `consent_id` to which the consent version belongs.
 - `consent_locales` (Attributes Set) Set of locales for the consent version. (see [below for nested schema](#nestedatt--consent_locales))
-- `consent_type` (String) The consent_type defines whether consent is URL or SCOPES. Allowed values are `URL`, `SCOPES`.
 - `version` (Number) The version number of the consent. It can not be updated for a specific consent version.
 
 ### Optional
 
+- `consent_type` (String) The consent_type defines whether consent is URL or SCOPES. Allowed values are `URL`, `SCOPES`. It can not be updated for a specific consent version.
 - `required_fields` (Set of String) Set of required fields associated with the consent version. Required when `consent_type` is `SCOPES`.
 - `scopes` (Set of String) Set of scopes associated with the consent version. Required when `consent_type` is `SCOPES`.
 

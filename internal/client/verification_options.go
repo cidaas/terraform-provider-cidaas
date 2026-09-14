@@ -65,7 +65,6 @@ type AppAttestIOSEntry struct {
 	GCPServiceAccount string `json:"gcp_service_account,omitempty"`
 	ProjectID         string `json:"project_id,omitempty"`
 	IOSAppID          string `json:"ios_app_id,omitempty"`
-	AndroidAppID      string `json:"android_app_id,omitempty"`
 }
 
 // VerificationOptionsResponse is the standard {success,status,data} envelope.

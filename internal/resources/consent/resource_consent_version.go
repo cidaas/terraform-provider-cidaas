@@ -142,10 +142,13 @@ var consentversionSchema = schema.Schema{
 			},
 		},
 		"consent_type": schema.StringAttribute{
-			Required:            true,
-			MarkdownDescription: "The consent_type defines whether consent is URL or SCOPES. Allowed values are `URL`, `SCOPES`.",
+			Optional:            true,
+			MarkdownDescription: "The consent_type defines whether consent is URL or SCOPES. Allowed values are `URL`, `SCOPES`. It can not be updated for a specific consent version.",
 			Validators: []validator.String{
 				stringvalidator.OneOf(SCOPES, URL),
+			},
+			PlanModifiers: []planmodifier.String{
+				validators.UniqueIdentifier{},
 			},
 		},
 		"scopes": schema.SetAttribute{

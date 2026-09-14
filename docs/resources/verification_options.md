@@ -106,7 +106,6 @@ Required:
 
 Optional:
 
-- `android_app_id` (String)
 - `apple_root_cert` (String, Sensitive)
 - `gcp_service_account` (String, Sensitive)
 - `ios_app_id` (String)
