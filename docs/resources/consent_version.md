@@ -85,9 +85,9 @@ resource "cidaas_consent_version" "v1" {
 
 Required:
 
-- `content` (String) The content of the consent for the specified locale.
 - `locale` (String) The locale tag (e.g. `en-US`, `de-DE`).
 
 Optional:
 
+- `content` (String) The content of the consent for the specified locale.
 - `url` (String) The URL associated with the consent for the specified locale. Required when `consent_type` is `URL`.

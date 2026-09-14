@@ -87,6 +87,9 @@ func (r *ConsentVersionResource) ValidateConfig(ctx context.Context, req resourc
 			if _, exists := localeMap[locale]; exists {
 				res.Diagnostics.AddError("Duplicate locale not allowed", fmt.Sprintf("Duplicate locale '%s' found in consent_locales", locale))
 			}
+			if config.ConsentType.ValueString() == SCOPES && (loc.Content.IsNull() || loc.Content.ValueString() == "") {
+				res.Diagnostics.AddError("Missing required attribute", "attribute 'consent_locales.content' is required or can't be empty when consent_type is 'SCOPES'")
+			}
 			if config.ConsentType.ValueString() == SCOPES && !loc.URL.IsNull() && !loc.URL.IsUnknown() {
 				res.Diagnostics.AddError("Unsupported attribute", "attribute 'consent_locales.url' not supported when consent_type is 'SCOPES'")
 			}
@@ -161,7 +164,7 @@ var consentversionSchema = schema.Schema{
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"content": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
 						MarkdownDescription: "The content of the consent for the specified locale.",
 					},
 					"locale": schema.StringAttribute{
@@ -238,10 +241,12 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 	}
 	if len(plan.consentLocale) > 0 {
 		consentVersion.ConsentLocale = cidaas.ConsentLocale{
-			Locale:  plan.consentLocale[0].Locale.ValueString(),
-			Content: plan.consentLocale[0].Content.ValueString(),
+			Locale: plan.consentLocale[0].Locale.ValueString(),
 		}
-		if plan.ConsentType.ValueString() == URL {
+		if !plan.consentLocale[0].Content.IsNull() && !plan.consentLocale[0].Content.IsUnknown() {
+			consentVersion.ConsentLocale.Content = plan.consentLocale[0].Content.ValueString()
+		}
+		if plan.ConsentType.ValueString() == URL && !plan.consentLocale[0].URL.IsNull() && !plan.consentLocale[0].URL.IsUnknown() {
 			consentVersion.ConsentLocale.URL = plan.consentLocale[0].URL.ValueString()
 		}
 	}
@@ -266,10 +271,12 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 		consentLocal := cidaas.ConsentLocalModel{
 			ConsentID:        plan.ConsentID.ValueString(),
 			ConsentVersionID: res.Data.ID,
-			Content:          pcl.Content.ValueString(),
 			Locale:           pcl.Locale.ValueString(),
 		}
-		if plan.ConsentType.ValueString() == URL {
+		if !pcl.Content.IsNull() && !pcl.Content.IsUnknown() {
+			consentLocal.Content = pcl.Content.ValueString()
+		}
+		if plan.ConsentType.ValueString() == URL && !pcl.URL.IsNull() && !pcl.URL.IsUnknown() {
 			consentLocal.URL = pcl.URL.ValueString()
 		}
 		_, err := r.cidaasClient.ConsentVersion.UpsertLocal(ctx, consentLocal)
@@ -446,10 +453,12 @@ func (r *ConsentVersionResource) Update(ctx context.Context, req resource.Update
 		consentLocal := cidaas.ConsentLocalModel{
 			ConsentID:        state.ConsentID.ValueString(),
 			ConsentVersionID: state.ID.ValueString(),
-			Content:          pcl.Content.ValueString(),
 			Locale:           pcl.Locale.ValueString(),
 		}
-		if plan.ConsentType.ValueString() == URL {
+		if !pcl.Content.IsNull() && !pcl.Content.IsUnknown() {
+			consentLocal.Content = pcl.Content.ValueString()
+		}
+		if plan.ConsentType.ValueString() == URL && !pcl.URL.IsNull() && !pcl.URL.IsUnknown() {
 			consentLocal.URL = pcl.URL.ValueString()
 		}
 		_, err := r.cidaasClient.ConsentVersion.UpsertLocal(ctx, consentLocal)
