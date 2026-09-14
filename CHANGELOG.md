@@ -1,4 +1,48 @@
-## Changelog
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [4.0.0]
+
+Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md).
+
+### Added
+
+- **Dual platform support:** one provider binary for cidaas v3 (legacy) and v4 (Trustdesk). Target version is required: HCL `cidaas_version`, or `TERRAFORM_PROVIDER_CIDAAS_VERSION`, or `CIDAAS_VERSION` (precedence in that order). Values: `3.x` / `4.x` (optional `v` prefix).
+- **`cidaas_app_configuration`:** v4 Trustdesk app model (`/app-srv/apps`).
+- **Hosted pages (v4):**
+  - `cidaas_hosted_page`: unified hosted page group (`/hostedpages-srv/hpgroup`); system groups `default` and `admin` cannot be deleted.
+  - `cidaas_hosted_page_layout`: layouts (`/hostedpages-srv/hosted-page-layouts`); apps reference a layout via `hosted_pages_layout_id`.
+  - `cidaas_theme`: custom CSS (`/hostedpages-srv/themes`).
+  - `cidaas_translations`: locale strings (`/hostedpages-srv/translations`).
+- **`cidaas_user_setup`:** registration flows, deduplication, allowed fields, and group role assignments (`/user-srv/usersetup`).
+- **Verification / MFA (v4):**
+  - `cidaas_suggest_verification_method` (`/verification-actions-srv/suggest-verification-configs`).
+  - `cidaas_verification_options` (`/verification-actions-srv/verification-options`).
+- **Group access (v4):** `cidaas_group_selection` and `cidaas_group_verification_filter` (replaces nested `group_selection` / `group_role_restriction` on `cidaas_app`).
+- **`cidaas_federation_provider`:** OAuth2, OpenID Connect, SAML, and LDAP federation (`/federation/providers`).
+
+### Changed
+
+- Provider implementation moved to Terraform Plugin Framework. Existing state should upgrade, but plan/refresh behavior can differ from 3.5.x.
+- Shared resources work on both `3.x` and `4.x`: `cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template`, `cidaas_notification_template_type`, `cidaas_notification_service_setup`, `cidaas_hosted_page`, and consent resources.
+- Consent OAuth scopes renamed: `cidaas:tenant_consent_*` → `cidaas:consent_read` / `cidaas:consent_write` / `cidaas:consent_delete`. Update the Terraform client's assigned scopes.
+- **`cidaas_template_group` (breaking):** If `email_sender_config` is set, `from_email` and `from_name` are now **required** (they were optional+computed in 3.5.x). If `sms_sender_config` is set, `from_name` is now **required**. Configs that declare those blocks without the sender fields will fail validation. The blocks themselves remain optional. This resource is deprecated; prefer `cidaas_notifications_template_group` on v4.
+
+### Deprecated
+
+- `cidaas_app`: legacy v3 appv1 resource. On v4 tenants use `cidaas_app_configuration`.
+- `cidaas_template`: use `cidaas_notification_template`.
+- `cidaas_template_group`: use `cidaas_notifications_template_group`.
+
+### Removed
+
+- `cidaas_social_provider` and `cidaas_custom_provider`. Use `cidaas_federation_provider`. Existing state for the old resources must be removed or replaced; they are not registered in 4.0.0.
+- All data sources. Look up IDs from managed resources or the cidaas APIs.
+- Provider attribute `notifications_context_path`. Notification-srv URLs always use `notifications-srv`. Remove it from the `provider "cidaas"` block; 4.0.0 rejects unknown provider attributes.
 
 ### 3.5.20
 
@@ -504,3 +548,5 @@ Despite these improvements, some breaking changes are present. Users need to be 
 - Fix added to address the issue where updating an existing cidaas_app without the `client_id` attribute throws error **client id is missing**.
 
 - Improved error handling in terraform cidaas_app destroy. This solves the issue **invalid memory address or nil pointer dereference** while deleting client in cidaas.
+
+[4.0.0]: https://gitlab.widas.de/cidaas-management/terraform/-/compare/v3.5.20...v4.0.0

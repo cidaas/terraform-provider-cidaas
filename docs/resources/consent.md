@@ -1,28 +1,45 @@
 ---
 page_title: "cidaas_consent Resource - cidaas"
-subcategory: ""
+subcategory: "Consent"
 description: |-
-  The Consent resource in the provider allows you to manage different consents within a specific consent group in Cidaas.
+  The consent resource in the provider is used to define and manage consents within the Cidaas system.
   Ensure that the below scopes are assigned to the client with the specified client_id:
-  cidaas:tenant_consent_readcidaas:tenant_consent_writecidaas:tenant_consent_delete
+  - cidaas:consent_read
+  - cidaas:consent_write
+  - cidaas:consent_delete
 ---
 
 # cidaas_consent (Resource)
 
-The Consent resource in the provider allows you to manage different consents within a specific consent group in Cidaas.
+The consent resource in the provider is used to define and manage consents within the Cidaas system.
 
- Ensure that the below scopes are assigned to the client with the specified `client_id`:
-- cidaas:tenant_consent_read
-- cidaas:tenant_consent_write
-- cidaas:tenant_consent_delete
+> **⚠️ Breaking Change (v4):** The required OAuth scopes were renamed. Update your OAuth client configuration:
+> - `cidaas:tenant_consent_read` -> `cidaas:consent_read`
+> - `cidaas:tenant_consent_write` -> `cidaas:consent_write`
+> - `cidaas:tenant_consent_delete` -> `cidaas:consent_delete`
+
+Ensure that the below scopes are assigned to the client with the specified `client_id`:
+- cidaas:consent_read
+- cidaas:consent_write
+- cidaas:consent_delete
 
 ## Example Usage
 
 ```terraform
+# Example: cidaas_consent Resource (v3.x)
+#
+# Manages consent items associated with a cidaas_consent_group.
+# Note for v4.x: Set cidaas_version = "3.x" in the provider block to manage v3 consents.
+
+resource "cidaas_consent_group" "sample" {
+  group_name  = "customer_terms"
+  description = "Customer Terms of Service Group"
+}
+
 resource "cidaas_consent" "sample" {
   consent_group_id = cidaas_consent_group.sample.id
   name             = "sample_consent"
-  enabled          = true # By default enabled is set to 'true'
+  enabled          = true
 }
 ```
 
@@ -36,20 +53,10 @@ resource "cidaas_consent" "sample" {
 
 ### Optional
 
-- `enabled` (Boolean) The flag to enable or disable a speicific consent. By default, the value is set to `true`
+- `enabled` (Boolean) The flag to enable or disable a specific consent. By default, the value is set to `true`
 
 ### Read-Only
 
 - `created_at` (String) The timestamp when the consent version was created.
 - `id` (String) The unique identifier of the consent resource.
 - `updated_at` (String) The timestamp when the consent version was last updated.
-
-## Import
-
-In the import statement, the identifier is the combination of `consent_group_id` and `consent_name` joined by the special character ":".
-
-Below is an exmaple of import command to import a consent:
-
-```shell
-terraform import cidaas_consent.sample a0508317-cec9-4f3e-afa4:sample_consent
-```

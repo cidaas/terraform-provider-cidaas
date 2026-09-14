@@ -48,7 +48,7 @@ func (c *Consent) Upsert(ctx context.Context, consentConfig ConsentModel) (*Cons
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (c *Consent) GetConsentInstances(ctx context.Context, consentGroupID string
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *Consent) Delete(ctx context.Context, consentID string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (c *Consent) GetAll(ctx context.Context) ([]ConsentModel, error) { //nolint
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}

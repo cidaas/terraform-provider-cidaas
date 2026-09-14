@@ -95,7 +95,7 @@ func (s *NotificationsSrvServiceSetup) Get(ctx context.Context, id string) (*Not
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read servicesetup response body: %w", err)
@@ -114,7 +114,7 @@ func (s *NotificationsSrvServiceSetup) List(ctx context.Context) ([]Notification
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read servicesetups body: %w", err)
@@ -164,7 +164,7 @@ func (s *NotificationsSrvServiceSetup) Update(ctx context.Context, update Notifi
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read servicesetup update body: %w", err)

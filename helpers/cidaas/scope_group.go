@@ -44,7 +44,7 @@ func (c *ScopeGroup) Upsert(ctx context.Context, sg ScopeGroupConfig) (*ScopeGro
 	if err != nil {
 		return nil, fmt.Errorf("failed to upsert scope group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response ScopeGroupResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -62,7 +62,7 @@ func (c *ScopeGroup) Get(ctx context.Context, scopeGroupName string) (*ScopeGrou
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scope group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response ScopeGroupResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -80,7 +80,7 @@ func (c *ScopeGroup) Delete(ctx context.Context, scopeGroupName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete scope group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
@@ -90,7 +90,7 @@ func (c *ScopeGroup) GetAll(ctx context.Context) ([]ScopeGroupConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scope group list: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response AllScopeGroupResp
 	if err := util.ProcessResponse(res, &response); err != nil {

@@ -7,13 +7,14 @@ stages:
   - test
   - release
 
+# Acceptance test
 acceptance_test:
   image: golang:1.25.8
   stage: test
   before_script:
     - echo "machine gitlab.widas.de login $GITLAB_LOGIN password $GITLAB_TOKEN" > ~/.netrc
   script:
-    - export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID=$CI_ID TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET=$CI_SECRET BASE_URL=$BASE_URL
+    - export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID=$CI_ID TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET=$CI_SECRET BASE_URL=$BASE_URL CIDAAS_VERSION=$CIDAAS_VERSION
     - make test-ci
   coverage: '/total:\s+\(statements\)\s+(\d+(?:\.\d+)?%)/'
   artifacts:
@@ -23,13 +24,11 @@ acceptance_test:
 dependency_scanning:
   image: golang:1.25.8
 
-# get_version is not required as we don't create tag by CI anymore
 get_version:
   stage: prepare
   only:
     - never
 
-# Manually create releases for better changelog and tag maintenance.
 release:
   stage: release
   only:
@@ -39,4 +38,3 @@ lint:
   allow_failure: true
 lint:diff:
   allow_failure: true
-

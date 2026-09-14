@@ -55,7 +55,7 @@ func (c *UserGroup) Create(ctx context.Context, ug UserGroupData) (*UserGroupRes
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response UserGroupResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -73,7 +73,7 @@ func (c *UserGroup) Get(ctx context.Context, groupID string) (*UserGroupResponse
 	if err != nil {
 		return nil, fmt.Errorf("failed to ger user group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response UserGroupResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -87,7 +87,7 @@ func (c *UserGroup) Update(ctx context.Context, ug UserGroupData) (*UserGroupRes
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response UserGroupResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -105,7 +105,7 @@ func (c *UserGroup) Delete(ctx context.Context, groupID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete user group: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
@@ -123,7 +123,7 @@ func (c *UserGroup) GetSubGroups(ctx context.Context, parentID string) ([]UserGr
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch sub groups: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response SubGroupResponse
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {

@@ -1,4 +1,4 @@
-package util
+package util //nolint:revive
 
 import (
 	"encoding/json"
@@ -7,10 +7,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// GenerateUUID generates a new UUID v4 string.
+func GenerateUUID() string {
+	return uuid.New().String()
+}
 
 const (
 	ISO8601TimeFormat = "2006-01-02T15:04:05Z"
@@ -127,7 +133,7 @@ func ProcessResponse(res *http.Response, target interface{}) error {
 func HandleResponseError(res *http.Response, err error) error {
 	if err != nil {
 		if res != nil && res.Body != nil {
-			defer res.Body.Close()
+			defer func() { _ = res.Body.Close() }()
 		}
 		return err
 	}

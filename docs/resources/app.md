@@ -1,6 +1,6 @@
 ---
 page_title: "cidaas_app Resource - cidaas"
-subcategory: ""
+subcategory: "Apps"
 description: |-
   The App resource allows creation and management of clients in Cidaas system. When creating a client with a custom client_id and client_secret you can include the configuration in the resource. If not provided, Cidaas will generate a set for you. client_secret is sensitive data. Refer to the article Terraform Sensitive Variables https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables to properly handle sensitive information.
   Ensure that the below scopes are assigned to the client with the specified client_id:
@@ -17,176 +17,28 @@ The App resource allows creation and management of clients in Cidaas system. Whe
 - cidaas:apps_write
 - cidaas:apps_delete
 
+-> **Deprecated:** The `cidaas_app` resource is deprecated in v4. Use `cidaas_app_configuration` (backed by appv3 `/app-srv/apps`) for native app management in v4 environments.
+
 -> **Note:** Write-Only argument `client_secret_wo` is available to use in place of `client_secret`. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. [Learn more](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments).
-
-From version 3.3.0, the attribute `common_configs` is not supported anymore. Instead, we encourage you to use the custom module **terraform-cidaas-app**.
-The module provides a variable with the same name `common_configs` which
-supports all the attributes in the resource app except `client_name`. With this module you can avoid the repeated configuration and assign the common properties
-of multiple apps to a common variable and inherit the properties.
-
-Link to the custom module https://github.com/cidaas/terraform-cidaas-app
-
-##### Module usage:
-
-```hcl
-// local.tfvars
-common_configs = {
-  client_type     = "SINGLE_PAGE"
-  company_address = "Wimsheim"
-  company_name    = "WidasConcepts GmbH"
-  company_address = "Maybachstraße 2, 71299 Wimsheim, Germany"
-  company_website = "https://widas.com"
-  redirect_uris = [
-    "https://cidaas.de/callback",
-  ]
-  allowed_logout_urls = [
-    "https://cidaas.de/logout"
-  ]
-  allowed_scopes = [
-    "openid",
-  ]
-}
-
-// main.tf
-provider "cidaas" {
-  base_url = "https://cidaas.de"
-}
-
-module "app1" {
-  source = "git@github.com:cidaas/terraform-cidaas-app.git"
-
-  providers = {
-    cidaas = cidaas
-  }
-  client_name    = "Demo App"
-  common_configs = var.common_configs
-}
-
-module "app2" {
-  source = "git@github.com:cidaas/terraform-cidaas-app.git"
-  providers = {
-    cidaas = cidaas
-  }
-  client_name    = "Demo IOS App"
-  client_type    = "IOS"
-  common_configs = var.common_configs
-}
-```
-You can explore more on the module in the github repo.
 
 ## Example Usage
 
 ```terraform
-resource "cidaas_app" "sample" {
-  client_name                     = "Test Terraform Application" // unique
-  client_type                     = "SINGLE_PAGE"
-  accent_color                    = "#ef4923"                        // Default: #ef4923
-  primary_color                   = "#ef4923"                        // Default: #f7941d
-  media_type                      = "IMAGE"                          // Default: IMAGE
-  allow_login_with                = ["EMAIL", "MOBILE", "USER_NAME"] // Default: ["EMAIL", "MOBILE", "USER_NAME"]
-  redirect_uris                   = ["https://cidaas.com"]
-  allowed_logout_urls             = ["https://cidaas.com"]
-  enable_deduplication            = true      // Default: false
-  auto_login_after_register       = true      // Default: false
-  enable_passwordless_auth        = false     // Default: true
-  register_with_login_information = false     // Default: false
-  hosted_page_group               = "default" // Default: default
-  company_name                    = "Widas ID GmbH"
-  company_address                 = "01"
-  company_website                 = "https://cidaas.com"
-  allowed_scopes                  = ["openid", "cidaas:register", "profile"]
-  client_display_name             = "Display Name of the app" // unique
-  content_align                   = "CENTER"                  // Default: CENTER
-  post_logout_redirect_uris       = ["https://cidaas.com"]
-  logo_align                      = "CENTER" // Default: CENTER
-  allow_disposable_email          = false    // Default: false
-  validate_phone_number           = false    // Default: false
-  additional_access_token_payload = ["sample_payload"]
-  required_fields                 = ["email"]
-  mobile_settings = {
-    team_id      = "sample-team-id"
-    bundle_id    = "sample-bundle-id"
-    package_name = "sample-package-name"
-    key_hash     = "sample-key-hash"
-  }
-  // For custom client credentials set client_id and either client_secret or client_secret_wo.
-  // Omit both to have cidaas auto-generate client_secret (only with the non-Write-Only attribute).
-  //
-  // variable "app_client_secret" {
-  //   type      = string
-  //   sensitive = true
-  //   ephemeral = true
-  // }
-  # client_id                       = ""
-  # client_secret                   = "" # stored in the state file
-  # client_secret_wo                = var.app_client_secret # Write-Only (Terraform 1.11+)
-  # client_secret_wo_version        = "1"
-  policy_uri                        = "https://cidaas.com"
-  tos_uri                           = "https://cidaas.com"
-  imprint_uri                       = "https://cidaas.com"
-  contacts                          = ["support@cidas.de"]
-  token_endpoint_auth_method        = "client_secret_post" // Default: client_secret_post
-  token_endpoint_auth_signing_alg   = "RS256"              // Default: RS256
-  default_acr_values                = ["default"]
-  web_message_uris                  = ["https://cidaas.com"]
-  allowed_fields                    = ["email"]
-  smart_mfa                         = false // Default: false
-  captcha_ref                       = "sample-captcha-ref"
-  captcha_refs                      = ["sample"]
-  consent_refs                      = ["sample"]
-  communication_medium_verification = "email_verification_required_on_usage"
-  enable_bot_detection              = false // Default: false
-  allow_guest_login_groups = [{
-    group_id      = "developer101"
-    roles         = ["developer", "qa", "admin"]
-    default_roles = ["developer"]
-  }]
-  is_login_success_page_enabled    = false // Default: false
-  is_register_success_page_enabled = false // Default: false
-  group_ids                        = ["sample"]
-  group_selection = {
-    selectable_groups      = ["developer-users"]
-    selectable_group_types = ["sample"]
-  }
-  group_types                     = ["sample"]
-  logo_uri                        = "https://cidaas.com"
-  initiate_login_uri              = "https://cidaas.com"
-  registration_client_uri         = "https://cidaas.com"
-  registration_access_token       = "registration access token"
-  client_uri                      = "https://cidaas.com"
-  jwks_uri                        = "https://cidaas.com"
-  jwks                            = "https://cidaas.com/jwks"
-  sector_identifier_uri           = "https://cidaas.com"
-  subject_type                    = "sample subject type"
-  id_token_signed_response_alg    = "RS256"
-  id_token_encrypted_response_alg = "RS256"
-  id_token_encrypted_response_enc = "example"
-  userinfo_signed_response_alg    = "RS256"
-  userinfo_encrypted_response_alg = "RS256"
-  userinfo_encrypted_response_enc = "example"
-  request_object_signing_alg      = "RS256"
-  request_object_encryption_alg   = "RS256"
-  request_object_encryption_enc   = "userinfo_encrypted_response_enc"
-  request_uris                    = ["sample"]
-  description                     = "app description"
-  consent_page_group              = "sample-consent-page-group"
-  password_policy_ref             = "password-policy-ref"
-  blocking_mechanism_ref          = "blocking-mechanism-ref"
-  sub                             = "sample-sub"
-  role                            = "sample-role"
-  mfa_configuration               = "sample-configuration"
-  suggest_mfa                     = ["OFF"]
-  login_spi = {
-    oauth_client_id = "bcb-4a6b-9777-8a64abe6af"
-    spi_url         = "https://cidaas.com/spi-url"
-  }
-  background_uri  = "https://cidaas.com"
-  video_url       = "https://cidaas.com"
-  bot_captcha_ref = "sample-bot-captcha-ref"
-  application_meta_data = {
-    status : "active"
-    version : "1.0.0"
-  }
+resource "cidaas_app" "sample_app" {
+  client_name      = "sample_app"
+  client_type      = "SINGLE_PAGE"
+  company_name     = "Widas"
+  company_address  = "01"
+  company_website  = "https://example.com"
+  client_id        = "sample_app_client_id"
+  client_secret    = "sample_app_client_secret"
+  allowed_scopes   = ["openid"]
+  redirect_uris = [
+    "https://example.com/callback"
+  ]
+  allowed_logout_urls = [
+    "https://example.com/logout"
+  ]
 }
 ```
 
@@ -243,7 +95,7 @@ resource "cidaas_app" "sample" {
 - `consent_refs` (Set of String)
 - `contacts` (Set of String) The contacts of the client.
 - `content_align` (String) The alignment of the content of the client. e.g., `CENTER`. Allowed values are CENTER, LEFT and RIGHTThe default is set to `CENTER`.
-- `custom_providers` (Attributes List) A list of custom identity providers that users can authenticate with. A custom provider can be created with the help of the resource cidaas_custom_provider. (see [below for nested schema](#nestedatt--custom_providers))
+- `custom_providers` (Attributes List) A list of custom identity providers that users can authenticate with. (see [below for nested schema](#nestedatt--custom_providers))
 - `default_acr_values` (Set of String)
 - `default_max_age` (Number) The default maximum age for the token in seconds. Default is 86400 seconds (24 hours).
 - `default_roles` (Set of String)
@@ -397,7 +249,7 @@ Optional:
 
 - `group_id` (String) The unique ID of the user group.
 - `group_type` (String) The unique ID of the user group.
-- `role_filter` (Attributes) A filter for roles within the group. (see [below for nested schema](#nestedatt--group_role_restriction--filters--role_filter))
+- `role_filter` (Attributes) A filter for roles within the group. Omit when unused. Empty API responses (`{}`) are normalized to null in state. (see [below for nested schema](#nestedatt--group_role_restriction--filters--role_filter))
 
 <a id="nestedatt--group_role_restriction--filters--role_filter"></a>
 ### Nested Schema for `group_role_restriction.filters.role_filter`
@@ -508,13 +360,3 @@ Optional:
 Optional:
 
 - `methods` (Set of String) List of optional verification methods.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-# The import identifier in this command is the client_id of the app to be imported.
-
-terraform import cidaas_app.sample client_id
-```

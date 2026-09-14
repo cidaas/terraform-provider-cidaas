@@ -1,60 +1,61 @@
 ---
 page_title: "cidaas_consent_version Resource - cidaas"
-subcategory: ""
+subcategory: "Consent"
 description: |-
   The Consent Version resource in the provider allows you to manage different versions of a specific consent in Cidaas.
-  This resource also supports managing consent versions across multiple locales enabling different configurations such as URLs and content for each locale.
   Ensure that the below scopes are assigned to the client with the specified client_id:
-  cidaas:tenant_consent_readcidaas:tenant_consent_writecidaas:tenant_consent_delete
+  - cidaas:consent_read
+  - cidaas:consent_write
+  - cidaas:consent_delete
 ---
 
 # cidaas_consent_version (Resource)
 
 The Consent Version resource in the provider allows you to manage different versions of a specific consent in Cidaas.
- This resource also supports managing consent versions across multiple locales enabling different configurations such as URLs and content for each locale.
 
- Ensure that the below scopes are assigned to the client with the specified `client_id`:
-- cidaas:tenant_consent_read
-- cidaas:tenant_consent_write
-- cidaas:tenant_consent_delete
+> **⚠️ Breaking Change (v4):** The required OAuth scopes were renamed. Update your OAuth client configuration:
+> - `cidaas:tenant_consent_read` -> `cidaas:consent_read`
+> - `cidaas:tenant_consent_write` -> `cidaas:consent_write`
+> - `cidaas:tenant_consent_delete` -> `cidaas:consent_delete`
+
+Ensure that the below scopes are assigned to the client with the specified `client_id`:
+- cidaas:consent_read
+- cidaas:consent_write
+- cidaas:consent_delete
 
 ## Example Usage
 
 ```terraform
-# cidaas_consent_version sample for consent_type "SCOPES"
+# Example: cidaas_consent_version Resource (v3.x)
+#
+# Manages versioned consent content and locale mappings (SCOPES or URL mode).
+# Note for v4.x: Set cidaas_version = "3.x" in the provider block to manage v3 consents.
+
+resource "cidaas_consent_group" "sample" {
+  group_name  = "sample_consent_group"
+  description = "sample description"
+}
+
+resource "cidaas_consent" "sample" {
+  consent_group_id = cidaas_consent_group.sample.id
+  name             = "sample_consent"
+  enabled          = true
+}
+
 resource "cidaas_consent_version" "v1" {
   version         = 1
   consent_id      = cidaas_consent.sample.id
   consent_type    = "SCOPES"
-  scopes          = ["developer"]
+  scopes          = ["openid", "profile"]
   required_fields = ["name"]
   consent_locales = [
     {
-      content = "consent version in German"
+      content = "Consent version in German"
       locale  = "de"
     },
     {
-      content = "consent version in English"
+      content = "Consent version in English"
       locale  = "en"
-    }
-  ]
-}
-
-# cidaas_consent_version sample for consent_type "URL"
-resource "cidaas_consent_version" "v2" {
-  version      = 2
-  consent_id   = cidaas_consent.sample.id
-  consent_type = "URL"
-  consent_locales = [
-    {
-      content = "consent version in German"
-      locale  = "de"
-      url     = "https://cidaas.de/de"
-    },
-    {
-      content = "consent version in English"
-      locale  = "en"
-      url     = "https://cidaas.de/en"
     }
   ]
 }
@@ -65,43 +66,28 @@ resource "cidaas_consent_version" "v2" {
 
 ### Required
 
-- `consent_id` (String) The `consent_id` for which the consent version is created. It can not be updated for a specific consent version.
-- `consent_locales` (Attributes Set) (see [below for nested schema](#nestedatt--consent_locales))
+- `consent_id` (String) The `consent_id` to which the consent version belongs.
+- `consent_locales` (Attributes Set) Set of locales for the consent version. (see [below for nested schema](#nestedatt--consent_locales))
 - `version` (Number) The version number of the consent. It can not be updated for a specific consent version.
 
 ### Optional
 
-- `consent_type` (String) Specifies the type of consent. The allowed values are `SCOPES` or `URL`. It can not be updated for a specific consent version.
-- `required_fields` (Set of String) A set of fields that are required for the consent. It can not be updated for a specific consent version.
-Note that the attribute `required_fields` is required only if the `consent_type` is set to **SCOPES**.
-- `scopes` (Set of String) A set of scopes related to the consent. It can not be updated for a specific consent version.
-Note that the attribute `scopes` is required only if the `consent_type` is set to **SCOPES**.
+- `consent_type` (String) The consent_type defines whether consent is URL or SCOPES. Allowed values are `URL`, `SCOPES`. It can not be updated for a specific consent version.
+- `required_fields` (Set of String) Set of required fields associated with the consent version. Required when `consent_type` is `SCOPES`.
+- `scopes` (Set of String) Set of scopes associated with the consent version. Required when `consent_type` is `SCOPES`.
 
 ### Read-Only
 
-- `id` (String) The unique identifier of the consent version.
+- `id` (String) The unique identifier of the consent version resource.
 
 <a id="nestedatt--consent_locales"></a>
 ### Nested Schema for `consent_locales`
 
 Required:
 
-- `locale` (String) The locale for which the consent version is created. e.g. `en-us`, `de`.
+- `locale` (String) The locale tag (e.g. `en-US`, `de-DE`).
 
 Optional:
 
-- `content` (String) The content of the consent version associated with a specific locale.
-- `url` (String) The url to the consent page of the created consent version.
-Note that the attribute `url` is required only if the `consent_type` is set to **URL**.
-
-## Import
-
-In the import statement, the identifier is the combination of `consent_id`, `consent_version_id` and `locale` joined by the special character ":".
-To import a consent version for multiple locales, you need to append the locales separated by ":".
-For example, the identifier "3f453233-92d4-475b-b10e:813fbd47-6c50-4fc4-881a:en-us:de:en" imports the consent version for the locales `en-us`, `de` and `en`.
-
-Below is an exmaple of import command to import a consent version:
-
-```shell
-terraform import cidaas_consent_version.v1 3f453233-92d4-475b-b10e:813fbd47-6c50-4fc4-881a:en-us
-```
+- `content` (String) The content of the consent for the specified locale.
+- `url` (String) The URL associated with the consent for the specified locale. Required when `consent_type` is `URL`.

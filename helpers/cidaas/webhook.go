@@ -13,6 +13,7 @@ import (
 var (
 	AllowedAuthType          = []string{"APIKEY", "TOTP", "CIDAAS_OAUTH2"}
 	AllowedKeyPlacementValue = []string{"query", "header"}
+	AllowedPlacement         = AllowedKeyPlacementValue
 )
 
 type WebhookModel struct {
@@ -39,6 +40,7 @@ type TotpDetails struct {
 	TotpPlacement   string `json:"totp_placement,omitempty"`
 	TotpKey         string `json:"totpkey,omitempty"`
 }
+
 type AuthDetails struct {
 	ClientID string `json:"client_id,omitempty"`
 }
@@ -49,7 +51,6 @@ type WebhookResponse struct {
 	Data    WebhookModel `json:"data,omitempty"`
 }
 
-// EventDescriptionModel is a subset of webhook-srv event description fields used by Terraform.
 type EventDescriptionModel struct {
 	ID             string `json:"_id"`
 	ObjectType     string `json:"objectType"`
@@ -81,7 +82,7 @@ func (w *Webhook) Upsert(ctx context.Context, wb WebhookModel) (*WebhookResponse
 	if err != nil {
 		return nil, fmt.Errorf("failed to upsert webhook: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var response WebhookResponse
 	if err := util.ProcessResponse(res, &response); err != nil {
@@ -100,7 +101,7 @@ func (w *Webhook) Get(ctx context.Context, id string) (*WebhookResponse, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
@@ -117,12 +118,10 @@ func (w *Webhook) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
-// ListEventDescriptions returns event descriptions for the given category
-// (e.g. "webhook"). A 204 No Content response is treated as an empty list.
 func (w *Webhook) ListEventDescriptions(ctx context.Context, category string) ([]EventDescriptionModel, error) {
 	q := url.Values{}
 	if category != "" {
@@ -162,7 +161,6 @@ func (w *Webhook) ListEventDescriptions(ctx context.Context, category string) ([
 	}
 }
 
-// ListWebhookEventIDs returns the _id values of webhook-capable event descriptions.
 func (w *Webhook) ListWebhookEventIDs(ctx context.Context) ([]string, error) {
 	eds, err := w.ListEventDescriptions(ctx, webhookEventCategory)
 	if err != nil {

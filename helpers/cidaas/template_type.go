@@ -71,7 +71,7 @@ func (t *TemplateTypeServiceImpl) Upsert(templateType TemplateTypeModel) (*Templ
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -102,7 +102,7 @@ func (t *TemplateTypeServiceImpl) Get(id string) (*TemplateTypeResponse, error) 
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("template type not found with id %s", id)
@@ -137,7 +137,7 @@ func (t *TemplateTypeServiceImpl) Patch(patch TemplateTypePatchModel) (*Template
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -167,11 +167,10 @@ func (t *TemplateTypeServiceImpl) Delete(id string) error {
 	if err := util.HandleResponseError(res, err); err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	return nil
 }
 
-// FindGraphTemplateTypes POST /graph/templatetypes/ with graph filter body.
 func (t *TemplateTypeServiceImpl) FindGraphTemplateTypes(ctx context.Context, filter json.RawMessage) ([]TemplateTypeModel, error) {
 	u := SegmentNotificationsURL(t.ClientConfig, "graph", "templatetypes")
 	httpClient, err := util.NewHTTPClient(u, http.MethodPost, t.AccessToken)
@@ -186,7 +185,7 @@ func (t *TemplateTypeServiceImpl) FindGraphTemplateTypes(ctx context.Context, fi
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read graph/templatetypes body: %w", err)

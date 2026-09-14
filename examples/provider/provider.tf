@@ -1,12 +1,17 @@
 terraform {
   required_providers {
     cidaas = {
-      source  = "hashicorp.com/Cidaas/cidaas"
-      version = "3.0.0"
+      source  = "Cidaas/cidaas"
+      version = ">= 4.0.0-alpha.1"
     }
   }
 }
 
 provider "cidaas" {
-  base_url = "https://cidaas.de"
+  # Authenticate with:
+  #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID
+  #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET
+  # Target version (required): HCL or TERRAFORM_PROVIDER_CIDAAS_VERSION / CIDAAS_VERSION
+  base_url       = "https://your-tenant.cidaas.eu"
+  cidaas_version = "4.x"
 }
