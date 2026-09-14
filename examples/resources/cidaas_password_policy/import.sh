@@ -1,0 +1,1 @@
+terraform import cidaas_password_policy.resource_name id

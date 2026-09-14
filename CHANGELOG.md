@@ -35,12 +35,12 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 ### Deprecated
 
 - `cidaas_app`: legacy v3 appv1 resource. On v4 tenants use `cidaas_app_configuration`.
+- `cidaas_social_provider` and `cidaas_custom_provider`: legacy v3 identity provider resources. On v4 tenants recommend `cidaas_federation_provider`.
 - `cidaas_template`: use `cidaas_notification_template`.
 - `cidaas_template_group`: use `cidaas_notifications_template_group`.
 
 ### Removed
 
-- `cidaas_social_provider` and `cidaas_custom_provider`. Use `cidaas_federation_provider`. Existing state for the old resources must be removed or replaced; they are not registered in 4.0.0.
 - All data sources. Look up IDs from managed resources or the cidaas APIs.
 - Provider attribute `notifications_context_path`. Notification-srv URLs always use `notifications-srv`. Remove it from the `provider "cidaas"` block; 4.0.0 rejects unknown provider attributes.
 

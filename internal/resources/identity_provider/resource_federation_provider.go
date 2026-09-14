@@ -7,6 +7,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -26,6 +27,19 @@ func NewFederationProviderResource() resource.Resource {
 			base.BaseResourceConfig{
 				Name: base.RESOURCE_FEDERATION_PROVIDER,
 			},
+		),
+	}
+}
+
+func (r *FederationProviderResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("client_secret_wo"),
+			path.MatchRoot("client_secret_wo_version"),
+		),
+		resourcevalidator.PreferWriteOnlyAttribute(
+			path.MatchRoot("client_secret"),
+			path.MatchRoot("client_secret_wo"),
 		),
 	}
 }
@@ -61,6 +75,16 @@ func (r *FederationProviderResource) Schema(_ context.Context, _ resource.Schema
 				Optional:    true,
 				Sensitive:   true,
 				Description: "Client secret of the provider.",
+			},
+			"client_secret_wo": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				WriteOnly:   true,
+				Description: "Write-only client secret. Sent to cidaas on create/update without saving to state.",
+			},
+			"client_secret_wo_version": schema.StringAttribute{
+				Optional:    true,
+				Description: "Used together with client_secret_wo to trigger an update.",
 			},
 			"authorization_endpoint": schema.StringAttribute{
 				Optional:    true,
@@ -172,6 +196,8 @@ type federationProviderModel struct {
 	StandardType          types.String `tfsdk:"standard_type"`
 	ClientID              types.String `tfsdk:"client_id"`
 	ClientSecret          types.String `tfsdk:"client_secret"`
+	ClientSecretWO        types.String `tfsdk:"client_secret_wo"`
+	ClientSecretWOVersion types.String `tfsdk:"client_secret_wo_version"`
 	AuthorizationEndpoint types.String `tfsdk:"authorization_endpoint"`
 	TokenEndpoint         types.String `tfsdk:"token_endpoint"`
 	UserinfoEndpoint      types.String `tfsdk:"userinfo_endpoint"`
@@ -185,13 +211,17 @@ func prepareFederationProviderModel(_ context.Context, plan federationProviderMo
 	if ownerVal == "" {
 		ownerVal = "client"
 	}
+	secretVal := plan.ClientSecret.ValueString()
+	if secretVal == "" && !plan.ClientSecretWO.IsNull() {
+		secretVal = plan.ClientSecretWO.ValueString()
+	}
 	return &cidaas.ProviderConfigModel{
 		ID:                    plan.ID.ValueString(),
 		ProviderName:          plan.ProviderName.ValueString(),
 		DisplayName:           plan.DisplayName.ValueString(),
 		StandardType:          plan.StandardType.ValueString(),
 		ClientID:              plan.ClientID.ValueString(),
-		ClientSecret:          plan.ClientSecret.ValueString(),
+		ClientSecret:          secretVal,
 		AuthorizationEndpoint: plan.AuthorizationEndpoint.ValueString(),
 		TokenEndpoint:         plan.TokenEndpoint.ValueString(),
 		UserinfoEndpoint:      plan.UserinfoEndpoint.ValueString(),

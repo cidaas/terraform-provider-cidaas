@@ -1,0 +1,1 @@
+terraform import cidaas_hosted_page.resource_name hosted_page_id

@@ -172,6 +172,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		notification.NewNotificationTemplateTypeResource,
 		notification.NewNotificationsTemplateGroupResource,
 		notification.NewNotificationsTemplateGroupLocaleResource,
+		notification.NewNotificationProviderConfigResource,
 
 		consent.NewConsentResource,
 		consent.NewConsentGroupResource,
@@ -179,6 +180,8 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 
 		webhook.NewWebhookResource,
 		identityprovider.NewFederationProviderResource,
+		identityprovider.NewSocialProviderResource,
+		identityprovider.NewCustomProviderResource,
 	}
 }
 
