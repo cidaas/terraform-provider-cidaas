@@ -1,11 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [4.0.0]
+### 4.0.0 
 
 Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md).
 
@@ -37,10 +32,9 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 - `cidaas_app`: legacy v3 appv1 resource. On v4 tenants use `cidaas_app_configuration`.
 - `cidaas_template`: use `cidaas_notification_template`.
 - `cidaas_template_group`: use `cidaas_notifications_template_group`.
-
-### Removed
-
 - `cidaas_social_provider` and `cidaas_custom_provider`. Use `cidaas_federation_provider`. Existing state for the old resources must be removed or replaced; they are not registered in 4.0.0.
+
+## Removed
 - All data sources. Look up IDs from managed resources or the cidaas APIs.
 - Provider attribute `notifications_context_path`. Notification-srv URLs always use `notifications-srv`. Remove it from the `provider "cidaas"` block; 4.0.0 rejects unknown provider attributes.
 
