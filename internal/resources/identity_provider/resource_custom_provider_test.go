@@ -14,7 +14,6 @@ func TestAccCustomProvider_Basic(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
 	}
-	acctest.SkipIfV4(t)
 
 	testResourceID := acctest.RandString(8)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_CUSTOM_PROVIDER, testResourceID)
@@ -53,7 +52,6 @@ resource "cidaas_custom_provider" "%s" {
   userinfo_endpoint      = "https://idp.example.com/oauth2/v1/userinfo"
   logo_url               = "https://cdn.example.com/logo.png"
   domains                = ["example.com"]
-  owner                  = "client"
 }
 `, acctest.GetBaseURL(), resourceID, providerName)
 }

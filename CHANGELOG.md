@@ -23,7 +23,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
   - `cidaas_suggest_verification_method` (`/verification-actions-srv/suggest-verification-configs`).
   - `cidaas_verification_options` (`/verification-actions-srv/verification-options`).
 - **Group access (v4):** `cidaas_group_selection` and `cidaas_group_verification_filter` (replaces nested `group_selection` / `group_role_restriction` on `cidaas_app`).
-- **`cidaas_federation_provider`:** OAuth2, OpenID Connect, SAML, and LDAP federation (`/federation/providers`).
+- **`cidaas_federation_provider` (v4):** New resource for OAuth2, OpenID Connect, SAML, and LDAP federation via `/federation/providers`. This is the recommended identity-provider resource on Trustdesk (`cidaas_version = "4.x"`). Supports `client_secret_wo` / `client_secret_wo_version`, `domains`, and `owner` (defaults to `client`).
 
 ### Changed
 
@@ -31,11 +31,12 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 - Shared resources work on both `3.x` and `4.x`: `cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template`, `cidaas_notification_template_type`, `cidaas_notification_service_setup`, `cidaas_hosted_page`, and consent resources.
 - Consent OAuth scopes renamed: `cidaas:tenant_consent_*` → `cidaas:consent_read` / `cidaas:consent_write` / `cidaas:consent_delete`. Update the Terraform client's assigned scopes.
 - **`cidaas_template_group` (breaking):** If `email_sender_config` is set, `from_email` and `from_name` are now **required** (they were optional+computed in 3.5.x). If `sms_sender_config` is set, `from_name` is now **required**. Configs that declare those blocks without the sender fields will fail validation. The blocks themselves remain optional. This resource is deprecated; prefer `cidaas_notifications_template_group` on v4.
+- **Identity providers:** `cidaas_social_provider` and `cidaas_custom_provider` remain registered and usable on both `3.x` and `4.x` (deprecated). On `4.x`, prefer migrating to `cidaas_federation_provider`. Schema parity with 3.5.x is restored (`claims` / `userinfo_fields` on social including state UpgradeState v0→v1; `userinfo_fields`, `scopes`, `amr_config`, auth-detail nests on custom). Write-only `client_secret_wo` is enforced the same way as on `cidaas_app` / `cidaas_federation_provider`.
 
 ### Deprecated
 
 - `cidaas_app`: legacy v3 appv1 resource. On v4 tenants use `cidaas_app_configuration`.
-- `cidaas_social_provider` and `cidaas_custom_provider`: legacy v3 identity provider resources. On v4 tenants recommend `cidaas_federation_provider`.
+- `cidaas_social_provider` and `cidaas_custom_provider`: still available on 3.x and 4.x; migrate to `cidaas_federation_provider` on v4 when possible. Will be removed in a future major release.
 - `cidaas_template`: use `cidaas_notification_template`.
 - `cidaas_template_group`: use `cidaas_notifications_template_group`.
 

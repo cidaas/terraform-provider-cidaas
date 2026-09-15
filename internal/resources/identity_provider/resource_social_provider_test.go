@@ -14,7 +14,6 @@ func TestAccSocialProvider_Basic(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
 	}
-	acctest.SkipIfV4(t)
 
 	testResourceID := acctest.RandString(8)
 	testResourceName := fmt.Sprintf("%s.%s", base.RESOURCE_SOCIAL_PROVIDER, testResourceID)
@@ -48,7 +47,6 @@ resource "cidaas_social_provider" "%s" {
   enabled                  = true
   enabled_for_admin_portal = false
   scopes                   = ["openid", "email", "profile"]
-  owner                    = "client"
 }
 `, acctest.GetBaseURL(), resourceID)
 }

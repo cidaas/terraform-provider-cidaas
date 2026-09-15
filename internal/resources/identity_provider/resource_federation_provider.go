@@ -8,12 +8,21 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+var (
+	_ resource.Resource                     = (*FederationProviderResource)(nil)
+	_ resource.ResourceWithConfigure        = (*FederationProviderResource)(nil)
+	_ resource.ResourceWithImportState      = (*FederationProviderResource)(nil)
+	_ resource.ResourceWithConfigValidators = (*FederationProviderResource)(nil)
 )
 
 //nolint:revive
@@ -33,6 +42,10 @@ func NewFederationProviderResource() resource.Resource {
 
 func (r *FederationProviderResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
+		resourcevalidator.ExactlyOneOf(
+			path.MatchRoot("client_secret"),
+			path.MatchRoot("client_secret_wo"),
+		),
 		resourcevalidator.RequiredTogether(
 			path.MatchRoot("client_secret_wo"),
 			path.MatchRoot("client_secret_wo_version"),
@@ -46,7 +59,9 @@ func (r *FederationProviderResource) ConfigValidators(_ context.Context) []resou
 
 func (r *FederationProviderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages Native Federated Identity Providers (v4.x) via /federation/providers.",
+		Description: "Manages federated identity providers on cidaas v4 (Trustdesk) via `/federation/providers` " +
+			"(OAuth2, OpenID Connect, SAML, LDAP). Preferred replacement for deprecated `cidaas_social_provider` and `cidaas_custom_provider`. " +
+			"Exactly one of `client_secret` or `client_secret_wo` must be set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -65,7 +80,7 @@ func (r *FederationProviderResource) Schema(_ context.Context, _ resource.Schema
 			},
 			"standard_type": schema.StringAttribute{
 				Required:    true,
-				Description: "Standard type (e.g. OAUTH2, OIDC, SAML, LDAP).",
+				Description: "Standard type (e.g. OAUTH2, OPENID_CONNECT, SAML, LDAP).",
 			},
 			"client_id": schema.StringAttribute{
 				Required:    true,
@@ -74,13 +89,13 @@ func (r *FederationProviderResource) Schema(_ context.Context, _ resource.Schema
 			"client_secret": schema.StringAttribute{
 				Optional:    true,
 				Sensitive:   true,
-				Description: "Client secret of the provider.",
+				Description: "Client secret of the provider. Exactly one of `client_secret` or `client_secret_wo` must be set. Stored in state.",
 			},
 			"client_secret_wo": schema.StringAttribute{
 				Optional:    true,
 				Sensitive:   true,
 				WriteOnly:   true,
-				Description: "Write-only client secret. Sent to cidaas on create/update without saving to state.",
+				Description: "Write-only client secret. Sent on create/update without saving to state. Requires `client_secret_wo_version`.",
 			},
 			"client_secret_wo_version": schema.StringAttribute{
 				Optional:    true,
@@ -110,6 +125,7 @@ func (r *FederationProviderResource) Schema(_ context.Context, _ resource.Schema
 			"owner": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
+				Default:     stringdefault.StaticString("client"),
 				Description: "Owner of the provider (defaults to client for Admin UI compatibility).",
 			},
 		},
@@ -117,13 +133,18 @@ func (r *FederationProviderResource) Schema(_ context.Context, _ resource.Schema
 }
 
 func (r *FederationProviderResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan federationProviderModel
+	var plan, config federationProviderModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	apiReq := prepareFederationProviderModel(ctx, plan)
+	apiReq := prepareFederationProviderModel(ctx, plan, config, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	res, err := r.CidaasClient.FederationProvider.Create(ctx, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create federation provider", util.FormatErrorMessage(err))
@@ -131,6 +152,9 @@ func (r *FederationProviderResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	plan.ID = types.StringValue(res.Data.ID)
+	if usingFederationWriteOnlySecret(config) {
+		plan.ClientSecret = types.StringNull()
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -144,23 +168,45 @@ func (r *FederationProviderResource) Read(ctx context.Context, req resource.Read
 
 	res, err := r.CidaasClient.FederationProvider.Get(ctx, state.ID.ValueString())
 	if err != nil {
+		if util.IsResourceNotFound(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Failed to read federation provider", util.FormatErrorMessage(err))
 		return
 	}
 
+	isImport := state.ClientID.IsNull()
+	state.ID = types.StringValue(res.Data.ID)
+	state.ProviderName = types.StringValue(res.Data.ProviderName)
 	state.DisplayName = types.StringValue(res.Data.DisplayName)
 	state.StandardType = types.StringValue(res.Data.StandardType)
+	state.ClientID = types.StringValue(res.Data.ClientID)
+	if !state.ClientSecret.IsNull() || isImport {
+		state.ClientSecret = util.StringValueOrNull(&res.Data.ClientSecret)
+	}
+	state.AuthorizationEndpoint = util.StringValueOrNull(&res.Data.AuthorizationEndpoint)
+	state.TokenEndpoint = util.StringValueOrNull(&res.Data.TokenEndpoint)
+	state.UserinfoEndpoint = util.StringValueOrNull(&res.Data.UserinfoEndpoint)
+	state.LogoURL = util.StringValueOrNull(&res.Data.LogoURL)
+	state.Owner = util.StringValueOrNull(&res.Data.Owner)
+	state.Domains = listStringOrNull(res.Data.Domains)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *FederationProviderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan federationProviderModel
+	var plan, config federationProviderModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	apiReq := prepareFederationProviderModel(ctx, plan)
+	apiReq := prepareFederationProviderModel(ctx, plan, config, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	res, err := r.CidaasClient.FederationProvider.Update(ctx, plan.ID.ValueString(), apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update federation provider", util.FormatErrorMessage(err))
@@ -168,6 +214,9 @@ func (r *FederationProviderResource) Update(ctx context.Context, req resource.Up
 	}
 
 	plan.ID = types.StringValue(res.Data.ID)
+	if usingFederationWriteOnlySecret(config) {
+		plan.ClientSecret = types.StringNull()
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -179,7 +228,7 @@ func (r *FederationProviderResource) Delete(ctx context.Context, req resource.De
 	}
 
 	err := r.CidaasClient.FederationProvider.Delete(ctx, state.ID.ValueString())
-	if err != nil {
+	if err != nil && !util.IsResourceNotFound(err) {
 		resp.Diagnostics.AddError("Failed to delete federation provider", util.FormatErrorMessage(err))
 		return
 	}
@@ -206,16 +255,20 @@ type federationProviderModel struct {
 	Owner                 types.String `tfsdk:"owner"`
 }
 
-func prepareFederationProviderModel(_ context.Context, plan federationProviderModel) *cidaas.ProviderConfigModel {
+func usingFederationWriteOnlySecret(config federationProviderModel) bool {
+	return !config.ClientSecretWO.IsNull() && !config.ClientSecretWO.IsUnknown()
+}
+
+func prepareFederationProviderModel(ctx context.Context, plan, config federationProviderModel, diags *diag.Diagnostics) *cidaas.ProviderConfigModel {
 	ownerVal := plan.Owner.ValueString()
 	if ownerVal == "" {
 		ownerVal = "client"
 	}
 	secretVal := plan.ClientSecret.ValueString()
-	if secretVal == "" && !plan.ClientSecretWO.IsNull() {
-		secretVal = plan.ClientSecretWO.ValueString()
+	if usingFederationWriteOnlySecret(config) {
+		secretVal = config.ClientSecretWO.ValueString()
 	}
-	return &cidaas.ProviderConfigModel{
+	pc := &cidaas.ProviderConfigModel{
 		ID:                    plan.ID.ValueString(),
 		ProviderName:          plan.ProviderName.ValueString(),
 		DisplayName:           plan.DisplayName.ValueString(),
@@ -228,4 +281,10 @@ func prepareFederationProviderModel(_ context.Context, plan federationProviderMo
 		LogoURL:               plan.LogoURL.ValueString(),
 		Owner:                 ownerVal,
 	}
+	if !plan.Domains.IsNull() && !plan.Domains.IsUnknown() {
+		var domains []string
+		diags.Append(plan.Domains.ElementsAs(ctx, &domains, false)...)
+		pc.Domains = domains
+	}
+	return pc
 }
