@@ -17,12 +17,12 @@ provider "cidaas" {
 }
 ```
 
-## Strategy: Standardized v4 Resources vs. Legacy v3 Compatibility
+## Strategy: Trustdesk resources vs shared/legacy configs
 
-The provider provides two operational pathways when managing resources in a v4 environment:
+Provider 4.x is **Trustdesk-first**, not dual-platform compatibility for staying on cidaas v3 indefinitely (keep provider **3.5.x** for that).
 
-1. **Legacy & Deprecated Resources**: `cidaas_app` is deprecated in v4 in favor of `cidaas_app_configuration`. `cidaas_social_provider` and `cidaas_custom_provider` are deprecated in favor of `cidaas_federation_provider`.
-2. **Native v4 Standardized Resources**: Native v4 resources (`cidaas_app_configuration`, `cidaas_hosted_page`, `cidaas_federation_provider`, `cidaas_user_setup`, `cidaas_verification_options`) offer enhanced fine-grained microservice capabilities on `/apps-srv`, `/hostedpages-srv`, `/federation/providers`, `/usersetup-srv`, and `/verification-srv`.
+1. **New Trustdesk resources** (`cidaas_app_configuration`, `cidaas_federation_provider`, layouts/themes/translations, user setup, verification, group selection/filter) require `cidaas_version = "4.x"`.
+2. **Shared / legacy resources** may gain optional structure for Trustdesk, but **existing customer HCL must keep working** (no newly Required attributes that invalidate old configs). Prefer modern replacements where documented (`cidaas_app` → `cidaas_app_configuration`, social/custom → `cidaas_federation_provider`).
 
 ## Resource Mapping Matrix
 

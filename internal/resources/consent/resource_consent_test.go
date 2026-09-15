@@ -197,26 +197,3 @@ func TestAccConsentResource_MissingRequired(t *testing.T) {
 		},
 	})
 }
-
-func TestAccConsentResource_V4ComingSoon(t *testing.T) {
-	t.Parallel()
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(`
-				provider "cidaas" {
-					base_url = "%s"
-					cidaas_version = "4.x"
-				}
-				resource "cidaas_consent" "test" {
-					consent_group_id = "test-group"
-					name             = "test-name"
-				}
-				`, acctest.GetBaseURL()),
-				ExpectError: regexp.MustCompile(`Consent Resource Coming Soon on v4`),
-			},
-		},
-	})
-}

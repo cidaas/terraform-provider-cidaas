@@ -3,10 +3,12 @@ package identity_provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/base"
+	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -38,6 +40,24 @@ func NewFederationProviderResource() resource.Resource {
 			},
 		),
 	}
+}
+
+func (r *FederationProviderResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	c, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *client.Client, got: %T.", req.ProviderData),
+		)
+		return
+	}
+	if !c.RequireV4("cidaas_federation_provider", &resp.Diagnostics) {
+		return
+	}
+	r.BaseResource.Configure(ctx, req, resp)
 }
 
 func (r *FederationProviderResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

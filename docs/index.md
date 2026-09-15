@@ -6,9 +6,11 @@ description: |-
 
 # cidaas Provider
 
-The cidaas provider manages cidaas **v4 (Trustdesk)** resources. Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+The cidaas provider **4.x** manages cidaas **v4 (Trustdesk)** resources. Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
 
-Set the target major version with HCL `cidaas_version`, or environment variables `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
+Set `cidaas_version = "4.x"` (or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`). Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
+
+Customers who are **not** moving to Trustdesk should stay on **provider 3.5.x**. Shared/legacy resource configs that already work on 3.5.x remain valid on 4.x; new Trustdesk-only resources require `cidaas_version = "4.x"`. See [Provider configuration](guides/version-targeting.md) and the [v3 to v4 migration guide](guides/v3-to-v4-migration.md).
 
 ## Example Usage
 
