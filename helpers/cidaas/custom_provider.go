@@ -50,9 +50,14 @@ type UserInfoField struct {
 	Default     string `json:"default,omitempty"`
 }
 
+type UserInfoFieldBoolean struct {
+	ExtFieldKey string `json:"extFieldKey"`
+	Default     bool   `json:"default"`
+}
+
 type AmrConfig struct {
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
+	AmrValue    string `json:"amrValue"`
+	ExtAmrValue string `json:"extAmrValue"`
 }
 
 type CustomProviderResponse struct {

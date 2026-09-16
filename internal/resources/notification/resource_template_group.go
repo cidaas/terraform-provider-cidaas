@@ -127,13 +127,28 @@ var templateGroupSchema = schema.Schema{
 			MarkdownDescription: "The `email_sender_config` is used to configure your email sender.",
 			Attributes: map[string]schema.Attribute{
 				"from_email": schema.StringAttribute{
-					Required: true,
+					Optional:            true,
+					Computed:            true,
+					MarkdownDescription: "The email from address from which the emails will be sent when the specific group is configured.",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"from_name": schema.StringAttribute{
-					Required: true,
+					Optional:            true,
+					Computed:            true,
+					MarkdownDescription: "The `from_name` attribute is the display name that appears in the 'From' field of the emails.",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"reply_to": schema.StringAttribute{
-					Optional: true,
+					Optional:            true,
+					Computed:            true,
+					MarkdownDescription: "The `reply_to` attribute is the email address where replies should be directed.",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"sender_names": schema.SetAttribute{
 					ElementType: types.StringType,
@@ -150,7 +165,11 @@ var templateGroupSchema = schema.Schema{
 			MarkdownDescription: "The `sms_sender_config` is used to configure your SMS sender.",
 			Attributes: map[string]schema.Attribute{
 				"from_name": schema.StringAttribute{
-					Required: true,
+					Optional: true,
+					Computed: true,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"sender_names": schema.SetAttribute{
 					ElementType: types.StringType,

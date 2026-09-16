@@ -25,6 +25,8 @@ Manage cidaas **v4 (Trustdesk)** tenants with Terraform: applications, scopes, r
 
 Registry address: `registry.terraform.io/Cidaas/cidaas`
 
+Provider **4.x is for Trustdesk**. Existing **cidaas v3** Terraform customers should remain on **provider 3.5.x**. Shared/legacy resource HCL stays valid when you do move to 4.x; new Trustdesk-only resources require `cidaas_version = "4.x"`.
+
 The Terraform provider for cidaas enables interaction with cidaas instances for CRUD operations on applications, custom providers, registration fields, and many other capabilities. From managing applications to configuring custom providers, it helps you define, provision, and manipulate cidaas resources as infrastructure as code.
 
 <p align="center">

@@ -48,6 +48,9 @@ resource "cidaas_hosted_page" "sample_hosted_page" {
 ### Optional
 
 - `default_locale` (String) The default locale for hosted pages e.g. `en-US`.
+- `layout` (Attributes) Optional inline branding layout configuration. (see [below for nested schema](#nestedatt--layout))
+- `theme` (Attributes) Optional inline custom CSS theme configuration. (see [below for nested schema](#nestedatt--theme))
+- `translations` (Attributes) Optional inline localized translations dictionary. (see [below for nested schema](#nestedatt--translations))
 
 ### Read-Only
 
@@ -68,3 +71,40 @@ Optional:
 
 - `content` (String) The conent of the hosted page.
 - `locale` (String) The locale for the hosted page, e.g., `en-US`.
+
+<a id="nestedatt--layout"></a>
+
+### Nested Schema for `layout`
+
+Optional:
+
+- `accent_color` (String) Accent branding color hex code.
+- `background_uri` (String) Background image URL.
+- `content_align` (String) Content alignment e.g. `CENTER`.
+- `fav_icon` (String) Favicon URL.
+- `imprint_uri` (String) Imprint URL.
+- `logo_uri` (String) Logo image URL.
+- `media_type` (String) Media type e.g. `IMAGE` or `VIDEO`.
+- `policy_uri` (String) Privacy policy URL.
+- `primary_color` (String) Primary branding color hex code.
+- `tos_uri` (String) Terms of service URL.
+- `video_url` (String) Background video URL if media_type is VIDEO.
+
+<a id="nestedatt--theme"></a>
+
+### Nested Schema for `theme`
+
+Optional:
+
+- `css_content` (String) Custom CSS stylesheet content.
+- `filename` (String) Theme filename.
+
+<a id="nestedatt--translations"></a>
+
+### Nested Schema for `translations`
+
+Optional:
+
+- `enabled` (Boolean) Whether translations are enabled.
+- `locale_id` (String) Locale code e.g. `fr` or `de-DE`.
+- `translations` (Map of String) Key-value pair map of translated strings.
