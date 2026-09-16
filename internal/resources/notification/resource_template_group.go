@@ -166,6 +166,10 @@ var templateGroupSchema = schema.Schema{
 			Attributes: map[string]schema.Attribute{
 				"from_name": schema.StringAttribute{
 					Optional: true,
+					Computed: true,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"sender_names": schema.SetAttribute{
 					ElementType: types.StringType,

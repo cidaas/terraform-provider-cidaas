@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Provider **4.x targets cidaas v4 (Trustdesk)**. Set `cidaas_version = "4.x"` (or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`). Existing **v3-only Terraform customers should remain on provider 3.5.x**. Follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) when moving a tenant to Trustdesk.
 
-> **Release note:** Prefer publishing the post-review tip as **`4.0.1`** if Registry already consumed an earlier `4.0.0` tag that lacked IdP restores / gating fixes. Do not force-move a consumed tag.
-
 ### Added
 
 - **Trustdesk (v4) resources** — require `cidaas_version = "4.x"` (Configure fails on `3.x`):

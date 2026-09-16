@@ -35,4 +35,7 @@ func TestTemplateGroupSenderFieldsRemainOptional(t *testing.T) {
 	if fromName.Required || !fromName.Optional {
 		t.Fatal("sms from_name must remain Optional")
 	}
+	if !fromName.Computed {
+		t.Fatal("sms from_name must be Computed")
+	}
 }

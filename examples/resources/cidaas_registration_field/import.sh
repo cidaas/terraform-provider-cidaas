@@ -1,1 +1,1 @@
-terraform import cidaas_registration_page_field.resource_name field_key
+terraform import cidaas_registration_field.resource_name field_key
