@@ -49,7 +49,7 @@ var registrationFieldsFilter = FilterConfig{
 var fieldSchema = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Computed:            true,
-		MarkdownDescription: "The unique identifier of the group type.",
+		MarkdownDescription: "The unique identifier of the registration field.",
 	},
 	"parent_group_id": schema.StringAttribute{
 		Computed:            true,
