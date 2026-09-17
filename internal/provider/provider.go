@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
+	cidaasDataSources "github.com/Cidaas/terraform-provider-cidaas/internal/datasources"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/app"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/consent"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/group"
@@ -186,5 +187,20 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 }
 
 func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		cidaasDataSources.NewRole,
+		cidaasDataSources.NewGroupType,
+		cidaasDataSources.NewScope,
+		cidaasDataSources.NewScopeGroup,
+		cidaasDataSources.NewSystemTemplateOption,
+		cidaasDataSources.NewConsent,
+		cidaasDataSources.NewSocialProvider,
+		cidaasDataSources.NewCustomProvider,
+		cidaasDataSources.NewRegistrationField,
+		cidaasDataSources.NewNotificationServiceSetups,
+		cidaasDataSources.NewNotificationServiceSetup,
+		cidaasDataSources.NewNotificationTemplates,
+		cidaasDataSources.NewNotificationTemplateGroupsGraph,
+		cidaasDataSources.NewWebhookEvents,
+	}
 }

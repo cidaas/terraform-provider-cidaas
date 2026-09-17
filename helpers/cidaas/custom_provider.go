@@ -176,3 +176,23 @@ func (c *CustomProvider) DeleteCustomProvider(ctx context.Context, providerName 
 	defer func() { _ = res.Body.Close() }()
 	return nil
 }
+
+//nolint:dupl
+func (c *CustomProvider) GetAll(ctx context.Context) ([]CustomProviderModel, error) {
+	var response AllCustomProviderResponse
+	url := fmt.Sprintf("%s/%s", c.BaseURL, "providers-srv/custom")
+	client, err := util.NewHTTPClient(url, http.MethodGet, c.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+	res, err := makeCustomProviderRequestWithRetry(ctx, client, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = res.Body.Close() }()
+
+	if err := util.ProcessResponse(res, &response); err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}
