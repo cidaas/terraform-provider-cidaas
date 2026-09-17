@@ -73,7 +73,7 @@ var scopeSchema = map[string]schema.Attribute{
 		MarkdownDescription: "The owner of the scope. e.g. `ADMIN`.",
 	},
 	"localized_descriptions": schema.ListNestedAttribute{
-		Optional: true,
+		Computed: true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"locale": schema.StringAttribute{

@@ -46,7 +46,7 @@ var systemTemplateFilter = FilterConfig{
 }
 
 var verificationTypes = schema.ListNestedAttribute{
-	Optional: true,
+	Computed: true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"verification_type": schema.StringAttribute{
@@ -63,7 +63,7 @@ var verificationTypes = schema.ListNestedAttribute{
 }
 
 var processingTypes = schema.ListNestedAttribute{
-	Optional: true,
+	Computed: true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"processing_type": schema.StringAttribute{
@@ -92,15 +92,15 @@ var processingTypes = schema.ListNestedAttribute{
 
 var systemTemplateSchema = map[string]schema.Attribute{
 	"template_key": schema.StringAttribute{
-		Required:            true,
+		Computed:            true,
 		MarkdownDescription: "The key of the template.",
 	},
 	"enabled": schema.BoolAttribute{
-		Required:            true,
+		Computed:            true,
 		MarkdownDescription: "The flag to identify if a system template is enabled.",
 	},
 	"template_types": schema.ListNestedAttribute{
-		Optional: true,
+		Computed: true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"template_type": schema.StringAttribute{
@@ -394,7 +394,7 @@ func (th *TemaplateTagHandler) getTemplateTags(text string) TemplateTags {
 		}
 	case "NEW_DEVICE", "NEW_LOCATION", "NEW_NETWORK":
 		tags = TemplateTags{
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		}
 	case "USER_CREATED":
 		tags = th.TagsListPayload.UserCreatedEmailSMS
@@ -422,57 +422,57 @@ func (th *TemaplateTagHandler) addSupportedTags() {
 	th.TagsListPayload = TagsListPayload{
 		VerifyAccountEmailSMSLink: TemplateTags{
 			Required: []string{"{{{verify_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		VerifyAccountEmailSMSCode: TemplateTags{
 			Required: []string{"{{code}}", "{{{verify_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		VerifyAccountIVRCode: TemplateTags{
 			Required: []string{"{{code}}"},
 		},
 		WelcomeUserEmailSMSLink: TemplateTags{
 			Required: []string{"{{{login_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		WelcomeUserIVRLink: TemplateTags{
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		InviteUserEmail: TemplateTags{
 			Required: []string{"{{{invite_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}", "{{{invited_by}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}", "{{{invited_by}}}"},
 		},
 		ResetPasswordEmailLink: TemplateTags{
 			Required: []string{"{{{reset_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		ResetPasswordEmailCode: TemplateTags{
 			Required: []string{"{{code}}, {{{reset_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		ResetPasswordSMS: TemplateTags{
 			Required: []string{"{{code}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		ResetPasswordIVR: TemplateTags{
 			Required: []string{"{{code}}"},
 		},
 		AfterChangePasswordEmailSMS: TemplateTags{
 			Required: []string{"{{{reset_link}}}"},
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		AfterChangePasswordIVR: TemplateTags{
-			Optional: []string{"{{name}}", "{{account_name}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}"},
 		},
 		UserCreatedEmailSMS: TemplateTags{
-			Optional: []string{"{{name}}", "{{account_name}}}", "{{user_name}}", "{{password}}", "{{{login_link}}}"},
+			Optional: []string{"{{name}}", "{{account_name}}", "{{user_name}}", "{{password}}", "{{{login_link}}}"},
 		},
 		VerifyUserEmailLink: TemplateTags{
-			Optional: []string{"{{name}}", "{{code}}}"},
+			Optional: []string{"{{name}}", "{{code}}"},
 			Required: []string{"{{verify_link}}"},
 		},
 		VerifyUserCodeGeneral: TemplateTags{
-			Optional: []string{"{{name}}", "{{verify_link}}}"},
+			Optional: []string{"{{name}}", "{{verify_link}}"},
 			Required: []string{"{{code}}"},
 		},
 		VerifyUserSMSIVR: TemplateTags{
@@ -483,7 +483,7 @@ func (th *TemaplateTagHandler) addSupportedTags() {
 			Required: []string{"{{address}}"},
 		},
 		NotifyCommunicationChange: TemplateTags{
-			Optional: []string{"{{name}}", "{{account_name}}}", "{{communication_medium_value}}"},
+			Optional: []string{"{{name}}", "{{account_name}}", "{{communication_medium_value}}"},
 		},
 	}
 }

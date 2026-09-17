@@ -150,10 +150,7 @@ func (d *SocialProviderDataSource) Read( //nolint:dupl
 func listSocialProviders(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	sps, err := client.SocialProvider.GetAll(ctx)
 	if err != nil {
-		tflog.Warn(ctx, "failed to get social providers from API; treating as empty list", util.H{
-			"error": err.Error(),
-		})
-		return []any{}, nil
+		return nil, err
 	}
 	return TypedSliceToAny(sps), nil
 }

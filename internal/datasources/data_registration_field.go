@@ -64,7 +64,7 @@ var fieldSchema = map[string]schema.Attribute{
 		MarkdownDescription: "The data type of the field.",
 	},
 	"field_key": schema.StringAttribute{
-		Required:            true,
+		Computed:            true,
 		MarkdownDescription: "The unique name of the registration field.",
 	},
 	"required": schema.BoolAttribute{

@@ -290,7 +290,7 @@ func resolveStructFieldByJSON(val any, field string) (reflect.StructField, diag.
 
 	for i := 0; i < rType.NumField(); i++ {
 		currentField := rType.Field(i)
-		if tag, ok := currentField.Tag.Lookup("json"); ok && tag == field {
+		if tag, ok := currentField.Tag.Lookup("json"); ok && strings.SplitN(tag, ",", 2)[0] == field {
 			return currentField, nil
 		}
 
