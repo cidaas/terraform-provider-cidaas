@@ -130,6 +130,11 @@ func (c *CustomProvider) CreateCustomProvider(ctx context.Context, cp *CustomPro
 }
 
 func (c *CustomProvider) UpdateCustomProvider(ctx context.Context, cp *CustomProviderModel) error {
+	if len(cp.UserinfoFields) == 0 {
+		cp.UserinfoFields = map[string]interface{}{
+			"sub": map[string]string{"extFieldKey": "sub"},
+		}
+	}
 	url := fmt.Sprintf("%s/%s", c.BaseURL, "providers-srv/custom")
 	client, err := util.NewHTTPClient(url, http.MethodPut, c.AccessToken)
 	if err != nil {
