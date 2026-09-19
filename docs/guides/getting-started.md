@@ -14,6 +14,8 @@ This guide walks through the minimum steps to manage a cidaas tenant with Terraf
 
 ## 2. Configure credentials
 
+Credentials can be configured directly in the `provider "cidaas"` block or passed via environment variables (`TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`).
+
 ```bash
 export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID="your-client-id"
 export TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET="your-client-secret"
@@ -35,8 +37,10 @@ terraform {
 }
 
 provider "cidaas" {
-  base_url       = "https://your-tenant.cidaas.eu"
+  base_url      = "https://your-tenant.cidaas.eu"
   cidaas_version = "4.x"
+  client_id     = var.cidaas_client_id
+  client_secret = var.cidaas_client_secret
 }
 ```
 

@@ -30,10 +30,16 @@ func TestProvider_Configure_MissingCredentials(t *testing.T) {
 
 	raw := tftypes.NewValue(tftypes.Object{
 		AttributeTypes: map[string]tftypes.Type{
-			"base_url": tftypes.String,
+			"base_url":       tftypes.String,
+			"cidaas_version": tftypes.String,
+			"client_id":      tftypes.String,
+			"client_secret":  tftypes.String,
 		},
 	}, map[string]tftypes.Value{
-		"base_url": tftypes.NewValue(tftypes.String, "https://example.cidaas.eu"),
+		"base_url":       tftypes.NewValue(tftypes.String, "https://example.cidaas.eu"),
+		"cidaas_version": tftypes.NewValue(tftypes.String, "4.x"),
+		"client_id":      tftypes.NewValue(tftypes.String, nil),
+		"client_secret":  tftypes.NewValue(tftypes.String, nil),
 	})
 
 	config := tfsdk.Config{
@@ -45,6 +51,79 @@ func TestProvider_Configure_MissingCredentials(t *testing.T) {
 	p.Configure(context.Background(), provider.ConfigureRequest{Config: config}, &resp)
 	if !resp.Diagnostics.HasError() {
 		t.Fatal("expected missing credentials error")
+	}
+}
+
+func TestProvider_Configure_ExplicitCredentials(t *testing.T) {
+	t.Setenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID", "env-client-id")
+	t.Setenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET", "env-client-secret")
+
+	p := New("test")().(*cidaasProvider)
+	schemaResp := &provider.SchemaResponse{}
+	p.Schema(context.Background(), provider.SchemaRequest{}, schemaResp)
+
+	raw := tftypes.NewValue(tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"base_url":       tftypes.String,
+			"cidaas_version": tftypes.String,
+			"client_id":      tftypes.String,
+			"client_secret":  tftypes.String,
+		},
+	}, map[string]tftypes.Value{
+		"base_url":       tftypes.NewValue(tftypes.String, "https://example.cidaas.eu"),
+		"cidaas_version": tftypes.NewValue(tftypes.String, "4.x"),
+		"client_id":      tftypes.NewValue(tftypes.String, "hcl-client-id"),
+		"client_secret":  tftypes.NewValue(tftypes.String, "hcl-client-secret"),
+	})
+
+	config := tfsdk.Config{
+		Schema: schemaResp.Schema,
+		Raw:    raw,
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), provider.ConfigureRequest{Config: config}, &resp)
+	// Even without network access, diagnostics should not complain about missing credentials
+	for _, diag := range resp.Diagnostics.Errors() {
+		if diag.Summary() == "Missing credentials" {
+			t.Fatalf("unexpected missing credentials error when explicit credentials set: %v", diag.Detail())
+		}
+	}
+}
+
+func TestProvider_Configure_EnvFallback(t *testing.T) {
+	t.Setenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID", "env-client-id")
+	t.Setenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET", "env-client-secret")
+
+	p := New("test")().(*cidaasProvider)
+	schemaResp := &provider.SchemaResponse{}
+	p.Schema(context.Background(), provider.SchemaRequest{}, schemaResp)
+
+	raw := tftypes.NewValue(tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"base_url":       tftypes.String,
+			"cidaas_version": tftypes.String,
+			"client_id":      tftypes.String,
+			"client_secret":  tftypes.String,
+		},
+	}, map[string]tftypes.Value{
+		"base_url":       tftypes.NewValue(tftypes.String, "https://example.cidaas.eu"),
+		"cidaas_version": tftypes.NewValue(tftypes.String, "4.x"),
+		"client_id":      tftypes.NewValue(tftypes.String, nil),
+		"client_secret":  tftypes.NewValue(tftypes.String, nil),
+	})
+
+	config := tfsdk.Config{
+		Schema: schemaResp.Schema,
+		Raw:    raw,
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), provider.ConfigureRequest{Config: config}, &resp)
+	for _, diag := range resp.Diagnostics.Errors() {
+		if diag.Summary() == "Missing credentials" {
+			t.Fatalf("unexpected missing credentials error when env fallback set: %v", diag.Detail())
+		}
 	}
 }
 

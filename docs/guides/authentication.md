@@ -8,12 +8,14 @@ The provider authenticates with a non-interactive OAuth client against your cida
 
 ## Required credentials
 
-| Variable | Purpose |
-|----------|---------|
-| `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` | OAuth client ID |
-| `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` | OAuth client secret |
+Credentials can be configured directly in the `provider "cidaas"` block (`client_id` and `client_secret`) or set via environment variables.
 
-Both must be set in the environment (or CI/CD variables). They are **not** provider HCL attributes.
+| HCL Attribute | Environment Variable Fallback | Purpose | Sensitive |
+|---------------|-------------------------------|---------|-----------|
+| `client_id` | `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` | OAuth client ID | No |
+| `client_secret` | `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` | OAuth client secret | Yes (`Sensitive: true`) |
+
+Provider HCL block attributes take precedence over environment variables if specified. Note that `client_secret` is marked `Sensitive: true` in the provider schema to prevent leaking in logs and state diffs.
 
 ## Version selection (also required)
 
@@ -31,12 +33,18 @@ Grant only the scopes listed on each resource documentation page (for example `c
 
 ## Example
 
+### HCL Configuration (Recommended)
+
 ```hcl
 provider "cidaas" {
-  base_url       = "https://your-tenant.cidaas.eu"
+  base_url      = "https://your-tenant.cidaas.eu"
   cidaas_version = "4.x"
+  client_id     = var.cidaas_client_id
+  client_secret = var.cidaas_client_secret
 }
 ```
+
+### Environment Variable Configuration (Fallback)
 
 ```bash
 export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID="..."
