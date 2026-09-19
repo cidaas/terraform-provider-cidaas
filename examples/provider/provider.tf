@@ -12,8 +12,8 @@ provider "cidaas" {
   #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID
   #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET
   # Target version (required): HCL or TERRAFORM_PROVIDER_CIDAAS_VERSION / CIDAAS_VERSION
-  base_url      = "https://your-tenant.cidaas.eu"
+  base_url       = "https://your-tenant.cidaas.eu"
   cidaas_version = "4.x"
-  client_id     = var.cidaas_client_id
-  client_secret = var.cidaas_client_secret
+  client_id      = var.cidaas_client_id
+  client_secret  = var.cidaas_client_secret
 }
