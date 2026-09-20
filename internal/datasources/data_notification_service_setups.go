@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -128,7 +127,7 @@ func (d *notificationServiceSetupsDataSource) Read(ctx context.Context, req data
 		return
 	}
 	out := notificationServiceSetupsModel{
-		ID:     types.StringValue(uuid.New().String()),
+		ID:     types.StringValue("cidaas-notification-service-setups"),
 		Setups: setups,
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &out)...)

@@ -177,6 +177,7 @@ func parseScope(scope cidaas.ScopeModel) Scope {
 		GroupName:           util.SetValueOrNull(scope.GroupName),
 		SecurityLevel:       types.StringValue(scope.SecurityLevel),
 		RequiredUserConsent: types.BoolValue(scope.RequiredUserConsent),
+		ScopeOwner:          types.StringValue(scope.ScopeOwner),
 	}
 
 	var objectValues []attr.Value

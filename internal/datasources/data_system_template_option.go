@@ -114,7 +114,7 @@ var systemTemplateSchema = map[string]schema.Attribute{
 }
 
 var systemTemplateDataSourceSchema = schema.Schema{
-	MarkdownDescription: fmt.Sprintf("The data source `%s` returns a list of system templates optionsa that can be"+
+	MarkdownDescription: fmt.Sprintf("The data source `%s` returns a list of system template options that can be"+
 		"\nconfigured to create a system template in your Cidaas instance. "+
 		"\nYou can apply filters using the `filter` block in your Terraform configuration.", SYSTEM_TEMPLATE_DATASOURCE),
 	Attributes: map[string]schema.Attribute{

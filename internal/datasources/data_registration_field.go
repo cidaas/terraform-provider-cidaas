@@ -133,7 +133,7 @@ func (d *RegistrationFieldsDataSource) Read(ctx context.Context, req datasource.
 	}
 
 	data.ID = types.StringValue(uuid.New().String())
-	result, diag := registrationFieldsFilter.GetAndFilter(ctx, d.Client, data.Filters, listRegistrationFieldss)
+	result, diag := registrationFieldsFilter.GetAndFilter(ctx, d.Client, data.Filters, listRegistrationFields)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter registration_field data", util.H{
 			"error":  diag.Summary(),
@@ -158,7 +158,7 @@ func (d *RegistrationFieldsDataSource) Read(ctx context.Context, req datasource.
 	tflog.Info(ctx, "successfully read registration_field data source")
 }
 
-func listRegistrationFieldss(ctx context.Context, client *cidaas.Client) ([]any, error) {
+func listRegistrationFields(ctx context.Context, client *cidaas.Client) ([]any, error) {
 	rfs, err := client.RegFields.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -175,6 +175,7 @@ func parseRegistrationField(rf cidaas.RegistrationFieldConfig) RegistrationField
 		Required:      types.BoolValue(rf.Required),
 		ReadOnly:      types.BoolValue(rf.ReadOnly),
 		Internal:      types.BoolValue(rf.Internal),
+		Enabled:       types.BoolValue(rf.Enabled),
 		ParentGroupID: types.StringValue(rf.ParentGroupID),
 		Order:         types.Int64Value(rf.Order),
 	}

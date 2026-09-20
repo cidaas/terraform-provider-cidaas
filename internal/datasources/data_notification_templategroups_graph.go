@@ -3,9 +3,10 @@ package datasources
 import (
 	"context"
 	"encoding/json"
+	"hash/fnv"
+	"strconv"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -112,9 +113,15 @@ func (d *notificationTemplateGroupsGraphDataSource) Read(ctx context.Context, re
 		return
 	}
 	out := notificationTemplateGroupsGraphModel{
-		ID:          types.StringValue(uuid.New().String()),
+		ID:          types.StringValue(notificationTemplateGroupsDatasourceID(config.GraphFilter.ValueString())),
 		GraphFilter: config.GraphFilter,
 		Groups:      groups,
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &out)...)
+}
+
+func notificationTemplateGroupsDatasourceID(graphFilter string) string {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(graphFilter))
+	return strconv.FormatUint(uint64(h.Sum32()), 10)
 }

@@ -2,7 +2,6 @@ package datasources_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	acctest "github.com/Cidaas/terraform-provider-cidaas/internal/test"
@@ -24,7 +23,7 @@ func TestAccDataSourceConsent_basic(t *testing.T) {
 				}
 				data "cidaas_consent" "sample" {
 				}
-				`, os.Getenv("BASE_URL")), // replace with acctest.BaseURL or have a init func to set the base URL
+				`, acctest.GetBaseURL()),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "consent.#"),
 					resource.TestCheckResourceAttrSet(resourceName, "consent.0.id"),

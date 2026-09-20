@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -97,7 +96,7 @@ func (d *webhookEventsDataSource) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	out := webhookEventsModel{
-		ID:     types.StringValue(uuid.New().String()),
+		ID:     types.StringValue("cidaas-webhook-events"),
 		Events: events,
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &out)...)

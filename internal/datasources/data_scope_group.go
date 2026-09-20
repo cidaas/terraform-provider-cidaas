@@ -35,7 +35,7 @@ var scopeGroupFilter = FilterConfig{
 var scopeGroupSchema = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Computed:            true,
-		MarkdownDescription: "The ID of th resource.",
+		MarkdownDescription: "The ID of the resource.",
 	},
 	"group_name": schema.StringAttribute{
 		Computed:            true,
@@ -49,7 +49,7 @@ var scopeGroupSchema = map[string]schema.Attribute{
 
 var scopeGroupDataSourceSchema = schema.Schema{
 	MarkdownDescription: fmt.Sprintf("The data source `%s` returns a list of scope groups available in your Cidaas instance."+
-		"\nYou can apply filters using the `filter` block in your Terraform configuration.", SCOPE_GRUOP_DATASOURCE),
+		"\nYou can apply filters using the `filter` block in your Terraform configuration.", SCOPE_GROUP_DATASOURCE),
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Description: "The data source's unique ID.",
@@ -71,7 +71,7 @@ func NewScopeGroup() datasource.DataSource {
 	return &ScopeGroupDataSource{
 		BaseDataSource: NewBaseDataSource(
 			BaseDataSourceConfig{
-				Name:   SCOPE_GRUOP_DATASOURCE,
+				Name:   SCOPE_GROUP_DATASOURCE,
 				Schema: &scopeGroupDataSourceSchema,
 			},
 		),

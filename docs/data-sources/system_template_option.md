@@ -3,14 +3,14 @@
 page_title: "cidaas_system_template_option Data Source - cidaas"
 subcategory: ""
 description: |-
-  The data source cidaas_system_template_option returns a list of system templates optionsa that can be
+  The data source cidaas_system_template_option returns a list of system template options that can be
   configured to create a system template in your Cidaas instance.
   You can apply filters using the filter block in your Terraform configuration.
 ---
 
 # cidaas_system_template_option (Data Source)
 
-The data source `cidaas_system_template_option` returns a list of system templates optionsa that can be
+The data source `cidaas_system_template_option` returns a list of system template options that can be
 configured to create a system template in your Cidaas instance. 
 You can apply filters using the `filter` block in your Terraform configuration.
 
