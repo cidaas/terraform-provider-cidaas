@@ -261,9 +261,7 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 	})
 
 	plan.ID = util.StringValueOrNull(&res.Data.ID)
-	if res.Data.Version != 0 {
-		plan.Version = types.Float64Value(res.Data.Version)
-	}
+	plan.Version = types.Float64Value(res.Data.Version)
 
 	for _, pcl := range plan.consentLocale {
 		consentLocal := cidaas.ConsentLocalModel{
