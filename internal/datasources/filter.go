@@ -3,8 +3,10 @@ package datasources
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -336,4 +338,23 @@ func (f FilterConfig) validateFilterable() filterNameValidator {
 	return filterNameValidator{
 		FilterConfig: f,
 	}
+}
+
+// filterDatasourceID returns a deterministic ID for filter-based datasources.
+// Filter blocks are a set, so name/values/match_by are sorted before hashing.
+func filterDatasourceID(prefix string, filters FiltersModelType) string {
+	parts := make([]string, 0, len(filters))
+	for _, f := range filters {
+		vals := make([]string, len(f.Values))
+		for i, v := range f.Values {
+			vals[i] = v.ValueString()
+		}
+		sort.Strings(vals)
+		parts = append(parts, fmt.Sprintf("%s\x00%s\x00%s",
+			f.Name.ValueString(), f.MatchBy.ValueString(), strings.Join(vals, "\x00")))
+	}
+	sort.Strings(parts)
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(strings.Join(parts, "\x01")))
+	return fmt.Sprintf("%s-%08x", prefix, h.Sum32())
 }

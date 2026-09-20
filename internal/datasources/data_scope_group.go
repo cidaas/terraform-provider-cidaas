@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,7 +92,7 @@ func (d *ScopeGroupDataSource) Read( //nolint:dupl
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(SCOPE_GROUP_DATASOURCE, data.Filters))
 	result, diag := scopeGroupFilter.GetAndFilter(ctx, d.Client, data.Filters, listScopeGroups)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter scope_group data", util.H{

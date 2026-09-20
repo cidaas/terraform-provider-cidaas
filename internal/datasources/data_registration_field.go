@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -132,7 +131,7 @@ func (d *RegistrationFieldsDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(REG_FIELD_DATASOURCE, data.Filters))
 	result, diag := registrationFieldsFilter.GetAndFilter(ctx, d.Client, data.Filters, listRegistrationFields)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter registration_field data", util.H{

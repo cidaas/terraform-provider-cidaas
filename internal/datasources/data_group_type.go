@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -104,7 +103,7 @@ func (d *GroupTypeDataSource) Read( //nolint:dupl
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(GROUP_TYPE_DATASOURCE, data.Filters))
 	result, diag := groupTypeFilter.GetAndFilter(ctx, d.Client, data.Filters, listGroupTypes)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter group_type data", util.H{

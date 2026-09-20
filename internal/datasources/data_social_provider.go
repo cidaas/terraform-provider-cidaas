@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -123,7 +122,7 @@ func (d *SocialProviderDataSource) Read( //nolint:dupl
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(SOCIAL_PROVIDER_DATASOURCE, data.Filters))
 	result, diag := socialProviderFilter.GetAndFilter(ctx, d.Client, data.Filters, listSocialProviders)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter social_provider data", util.H{

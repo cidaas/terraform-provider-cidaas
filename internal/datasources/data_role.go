@@ -6,8 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,7 +91,7 @@ func (d *RoleDataSource) Read( //nolint:dupl
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(ROLE_DATASOURCE, data.Filters))
 	result, diag := roleFilter.GetAndFilter(ctx, d.Client, data.Filters, listRoles)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter role data", util.H{

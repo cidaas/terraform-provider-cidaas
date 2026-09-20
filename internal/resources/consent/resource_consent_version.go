@@ -337,9 +337,7 @@ func (r *ConsentVersionResource) Read(ctx context.Context, req resource.ReadRequ
 			if version.ID == state.ID.ValueString() {
 				isAvailable = true
 				consentType := version.ConsentType
-				if version.Version != 0 && (state.Version.IsNull() || state.Version.IsUnknown() || version.Version == state.Version.ValueFloat64()) {
-					state.Version = types.Float64Value(version.Version)
-				}
+				state.Version = types.Float64Value(version.Version)
 				state.ConsentType = util.StringValueOrNull(&consentType)
 				break
 			}

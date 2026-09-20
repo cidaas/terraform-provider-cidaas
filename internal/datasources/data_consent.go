@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -86,7 +85,7 @@ func (d *ConsentDataSource) Read(
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(CONSENT_DATASOURCE, data.Filters))
 	result, diag := consentFilter.GetAndFilter(ctx, d.Client, data.Filters, listConsents)
 	if diag != nil {
 		tflog.Error(ctx, "failed to filter consent data", util.H{

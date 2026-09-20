@@ -6,7 +6,6 @@ import (
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -160,7 +159,7 @@ func (d *SystemTemplateOptionsDataSource) Read( //nolint:dupl
 		return
 	}
 
-	data.ID = types.StringValue(uuid.New().String())
+	data.ID = types.StringValue(filterDatasourceID(SYSTEM_TEMPLATE_DATASOURCE, data.Filters))
 	result, diag := systemTemplateFilter.GetAndFilter(
 		ctx,
 		d.Client,
