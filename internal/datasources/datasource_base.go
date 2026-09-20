@@ -20,7 +20,7 @@ const (
 	GROUP_TYPE_DATASOURCE      = "cidaas_group_type"             //nolint:revive
 	REG_FIELD_DATASOURCE       = "cidaas_registration_field"     //nolint:revive
 	ROLE_DATASOURCE            = "cidaas_role"                   //nolint:revive
-	SCOPE_GROUP_DATASOURCE      = "cidaas_scope_group"            //nolint:revive
+	SCOPE_GROUP_DATASOURCE     = "cidaas_scope_group"            //nolint:revive
 	SCOPE_DATASOURCE           = "cidaas_scope"                  //nolint:revive
 	SOCIAL_PROVIDER_DATASOURCE = "cidaas_social_provider"        //nolint:revive
 	SYSTEM_TEMPLATE_DATASOURCE = "cidaas_system_template_option" //nolint:revive
