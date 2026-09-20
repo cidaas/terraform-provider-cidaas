@@ -32,7 +32,7 @@ var notificationServiceSetupsSchema = schema.Schema{
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Stable datasource instance id (random UUID).",
+			MarkdownDescription: "Stable datasource instance id (fixed value `cidaas-notification-service-setups`).",
 		},
 		"setups": schema.ListNestedAttribute{
 			Computed: true,

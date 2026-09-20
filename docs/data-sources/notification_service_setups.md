@@ -17,7 +17,7 @@ Lists **active** service setups from notification-srv `GET /{notifications_conte
 
 ### Read-Only
 
-- `id` (String) Stable datasource instance id (random UUID).
+- `id` (String) Stable datasource instance id (fixed value `cidaas-notification-service-setups`).
 - `setups` (Attributes List) (see [below for nested schema](#nestedatt--setups))
 
 <a id="nestedatt--setups"></a>

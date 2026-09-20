@@ -36,7 +36,7 @@ var notificationTemplateGroupsGraphSchema = schema.Schema{
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Stable datasource id (random UUID).",
+			MarkdownDescription: "Stable datasource id derived from `graph_filter` (same filter → same id across runs).",
 		},
 		"graph_filter": schema.StringAttribute{
 			Required:            true,

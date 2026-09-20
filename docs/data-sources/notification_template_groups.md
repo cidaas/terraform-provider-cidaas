@@ -22,7 +22,7 @@ Runs **POST** `/{notifications_context_path}/graph/templategroups/` with a graph
 ### Read-Only
 
 - `groups` (Attributes List) (see [below for nested schema](#nestedatt--groups))
-- `id` (String) Stable datasource id (random UUID).
+- `id` (String) Stable datasource id derived from `graph_filter` (same filter → same id across runs).
 
 <a id="nestedatt--groups"></a>
 ### Nested Schema for `groups`

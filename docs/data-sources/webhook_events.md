@@ -23,7 +23,7 @@ The data source `cidaas_webhook_events` returns webhook-capable event IDs from y
 ### Read-Only
 
 - `events` (Attributes List) Webhook-capable event descriptions. (see [below for nested schema](#nestedatt--events))
-- `id` (String) Stable datasource instance id (random UUID).
+- `id` (String) Stable datasource instance id (fixed value `cidaas-webhook-events`).
 
 <a id="nestedatt--events"></a>
 ### Nested Schema for `events`

@@ -33,7 +33,7 @@ var webhookEventsSchema = schema.Schema{
 	Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Stable datasource instance id (random UUID).",
+			MarkdownDescription: "Stable datasource instance id (fixed value `cidaas-webhook-events`).",
 		},
 		"events": schema.ListNestedAttribute{
 			Computed:            true,
