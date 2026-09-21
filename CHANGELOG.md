@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1]
+
+Patch after `v4.0.0`. Existing 3.5.x / 4.0.0 state stays valid. Prefer HCL `cidaas_version` plus either provider-block credentials or the existing env vars.
+
+### Added
+
+- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"` ([5208](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5208)). `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+- **Data sources** restored (4.0.0 shipped none): `cidaas_role`, `cidaas_group_type`, `cidaas_scope`, `cidaas_scope_group`, `cidaas_system_template_option`, `cidaas_consent`, `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_registration_field`, `cidaas_notification_service_setup`, `cidaas_notification_service_setups`, `cidaas_notification_templates`, `cidaas_notification_template_groups`, `cidaas_webhook_events`.
+
+### Changed
+
+- **`cidaas_social_provider`** and **`cidaas_custom_provider`** are registered again (deprecated). Schema matches 3.5.x (`claims` / `userinfo_fields` including UpgradeState v0→v1; custom nests; `client_secret_wo`). Prefer `cidaas_federation_provider` on Trustdesk.
+- Import docs (`import.sh`) restored for remaining resources.
+- GitHub GoReleaser workflow restored so `v*` tags publish again.
+
+### Fixed
+
+- **`cidaas_federation_provider`:** Create and Update send the same payload (`provider` + nested `oauth2`), so updates no longer fail with P10003 when those fields were dropped by `omitempty`.
+- **`cidaas_custom_provider`:** Update initializes empty `userInfoFields` with a default `sub` mapping.
+- **`cidaas_consent_version`:** `consent_locales.content` is optional; `consent_type` remains optional. Version assignment no longer depends on a zero-value check.
+
 ## [4.0.0]
 
 Provider **4.x targets cidaas v4 (Trustdesk)**. Set `cidaas_version = "4.x"` (or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`). Existing **v3-only Terraform customers should remain on provider 3.5.x**. Follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) when moving a tenant to Trustdesk.
