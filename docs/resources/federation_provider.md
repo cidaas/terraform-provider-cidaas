@@ -2,12 +2,12 @@
 page_title: "cidaas_federation_provider Resource - cidaas"
 subcategory: "Identity Providers"
 description: |-
-  Manages Native Federated Identity Providers (v4.x) via /federation/providers.
+  Manages federated identity providers on cidaas v4 (Trustdesk) via /federation/providers (OAuth2, OpenID Connect, SAML, LDAP). Preferred replacement for deprecated cidaas_social_provider and cidaas_custom_provider. Exactly one of client_secret or client_secret_wo must be set.
 ---
 
 # cidaas_federation_provider (Resource)
 
-Manages Native Federated Identity Providers (v4.x) via /federation/providers.
+Manages federated identity providers on cidaas v4 (Trustdesk) via `/federation/providers` (OAuth2, OpenID Connect, SAML, LDAP). Preferred replacement for deprecated `cidaas_social_provider` and `cidaas_custom_provider`. Exactly one of `client_secret` or `client_secret_wo` must be set.
 
 ## Example Usage
 
@@ -35,12 +35,16 @@ resource "cidaas_federation_provider" "example" {
 - `client_id` (String) Client ID of the provider.
 - `display_name` (String) Display name of the provider.
 - `provider_name` (String) Unique provider name.
-- `standard_type` (String) Standard type (e.g. OAUTH2, OIDC, SAML, LDAP).
+- `standard_type` (String) Standard type (e.g. OAUTH2, OPENID_CONNECT, SAML, LDAP).
 
 ### Optional
 
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
+
 - `authorization_endpoint` (String) Authorization endpoint URL.
-- `client_secret` (String, Sensitive) Client secret of the provider.
+- `client_secret` (String, Sensitive) Client secret of the provider. Exactly one of `client_secret` or `client_secret_wo` must be set. Stored in state.
+- `client_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Write-only client secret. Sent on create/update without saving to state. Requires `client_secret_wo_version`.
+- `client_secret_wo_version` (String) Used together with client_secret_wo to trigger an update.
 - `domains` (List of String) Allowed domains for provider.
 - `logo_url` (String) Logo URL of the provider.
 - `owner` (String) Owner of the provider (defaults to client for Admin UI compatibility).

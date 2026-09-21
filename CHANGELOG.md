@@ -5,36 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.0]
+## [4.0.1]
 
-Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md).
+Patch after `v4.0.0`. Existing 3.5.x / 4.0.0 state stays valid. Prefer HCL `cidaas_version` plus either provider-block credentials or the existing env vars.
 
 ### Added
 
-- **Dual platform support:** one provider binary for cidaas v3 (legacy) and v4 (Trustdesk). Target version is required: HCL `cidaas_version`, or `TERRAFORM_PROVIDER_CIDAAS_VERSION`, or `CIDAAS_VERSION` (precedence in that order). Values: `3.x` / `4.x` (optional `v` prefix).
-- **`cidaas_app_configuration`:** v4 Trustdesk app model (`/app-srv/apps`).
-- **Hosted pages (v4):**
-  - `cidaas_hosted_page`: unified hosted page group (`/hostedpages-srv/hpgroup`); system groups `default` and `admin` cannot be deleted.
-  - `cidaas_hosted_page_layout`: layouts (`/hostedpages-srv/hosted-page-layouts`); apps reference a layout via `hosted_pages_layout_id`.
-  - `cidaas_theme`: custom CSS (`/hostedpages-srv/themes`).
-  - `cidaas_translations`: locale strings (`/hostedpages-srv/translations`).
-- **`cidaas_user_setup`:** registration flows, deduplication, allowed fields, and group role assignments (`/user-srv/usersetup`).
-- **Verification / MFA (v4):**
-  - `cidaas_suggest_verification_method` (`/verification-actions-srv/suggest-verification-configs`).
-  - `cidaas_verification_options` (`/verification-actions-srv/verification-options`).
-- **Group access (v4):** `cidaas_group_selection` and `cidaas_group_verification_filter` (replaces nested `group_selection` / `group_role_restriction` on `cidaas_app`).
-- **`cidaas_federation_provider`:** OAuth2, OpenID Connect, SAML, and LDAP federation (`/federation/providers`).
+- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"` ([5208](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5208)). `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+- **Data sources** restored (4.0.0 shipped none): `cidaas_role`, `cidaas_group_type`, `cidaas_scope`, `cidaas_scope_group`, `cidaas_system_template_option`, `cidaas_consent`, `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_registration_field`, `cidaas_notification_service_setup`, `cidaas_notification_service_setups`, `cidaas_notification_templates`, `cidaas_notification_template_groups`, `cidaas_webhook_events`.
 
 ### Changed
 
-- Provider implementation moved to Terraform Plugin Framework. Existing state should upgrade, but plan/refresh behavior can differ from 3.5.x.
-- Shared resources work on both `3.x` and `4.x`: `cidaas_scope`, `cidaas_scope_group`, `cidaas_role`, `cidaas_user_groups`, `cidaas_group_type`, `cidaas_registration_field`, `cidaas_password_policy`, `cidaas_security_settings`, `cidaas_webhook`, `cidaas_notifications_template_group`, `cidaas_notifications_template_group_locale`, `cidaas_notification_template`, `cidaas_notification_template_type`, `cidaas_notification_service_setup`, `cidaas_hosted_page`, and consent resources.
+- **`cidaas_social_provider`** and **`cidaas_custom_provider`** are registered again (deprecated). Schema matches 3.5.x (`claims` / `userinfo_fields` including UpgradeState v0→v1; custom nests; `client_secret_wo`). Prefer `cidaas_federation_provider` on Trustdesk.
+- Import docs (`import.sh`) restored for remaining resources.
+- GitHub GoReleaser workflow restored so `v*` tags publish again.
+
+### Fixed
+
+- **`cidaas_federation_provider`:** Create and Update send the same payload (`provider` + nested `oauth2`), so updates no longer fail with P10003 when those fields were dropped by `omitempty`.
+- **`cidaas_custom_provider`:** Update initializes empty `userInfoFields` with a default `sub` mapping.
+- **`cidaas_consent_version`:** `consent_locales.content` is optional; `consent_type` remains optional. Version assignment no longer depends on a zero-value check.
+
+## [4.0.0]
+
+Provider **4.x targets cidaas v4 (Trustdesk)**. Set `cidaas_version = "4.x"` (or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`). Existing **v3-only Terraform customers should remain on provider 3.5.x**. Follow the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) when moving a tenant to Trustdesk.
+
+### Added
+
+- **Trustdesk (v4) resources** — require `cidaas_version = "4.x"` (Configure fails on `3.x`):
+  - **`cidaas_app_configuration`:** Trustdesk app model (`/app-srv/apps`).
+  - **Hosted pages:** `cidaas_hosted_page_layout`, `cidaas_theme`, `cidaas_translations` (layouts, CSS, locale strings). `cidaas_hosted_page` remains the shared hosted-page group resource (may gain optional nests; existing HCL stays valid).
+  - **`cidaas_user_setup`:** registration flows, deduplication, allowed fields, and group role assignments (`/user-srv/usersetup`).
+  - **Verification / MFA:** `cidaas_suggest_verification_method`, `cidaas_verification_options`.
+  - **Group access:** `cidaas_group_selection`, `cidaas_group_verification_filter`.
+  - **`cidaas_federation_provider`:** OAuth2, OpenID Connect, SAML, and LDAP via `/federation/providers` (preferred IdP on Trustdesk). Supports `client_secret_wo` / `client_secret_wo_version`.
+- Provider attribute **`cidaas_version`** (required via HCL or env) so v4-only resources can reject `3.x` configurations cleanly.
+
+### Changed
+
+- Shared/legacy resource **types** from 3.5.x remain available. Existing customer HCL for those resources must keep validating (optional additive fields / Trustdesk structure are allowed; newly Required attributes are not).
 - Consent OAuth scopes renamed: `cidaas:tenant_consent_*` → `cidaas:consent_read` / `cidaas:consent_write` / `cidaas:consent_delete`. Update the Terraform client's assigned scopes.
-- **`cidaas_template_group` (breaking):** If `email_sender_config` is set, `from_email` and `from_name` are now **required** (they were optional+computed in 3.5.x). If `sms_sender_config` is set, `from_name` is now **required**. Configs that declare those blocks without the sender fields will fail validation. The blocks themselves remain optional. This resource is deprecated; prefer `cidaas_notifications_template_group` on v4.
+- **Identity providers:** `cidaas_social_provider` and `cidaas_custom_provider` remain registered (deprecated). Prefer `cidaas_federation_provider` on Trustdesk. Schema coverage matches 3.5.x (`claims` / `userinfo_fields` on social including UpgradeState v0→v1; custom nests; write-only `client_secret_wo`).
 
 ### Deprecated
 
-- `cidaas_app`: legacy v3 appv1 resource. On v4 tenants use `cidaas_app_configuration`.
+- `cidaas_app`: legacy appv1 resource. On Trustdesk use `cidaas_app_configuration`.
+- `cidaas_social_provider` and `cidaas_custom_provider`: migrate to `cidaas_federation_provider` on Trustdesk when possible.
 - `cidaas_template`: use `cidaas_notification_template`.
 - `cidaas_template_group`: use `cidaas_notifications_template_group`.
 - `cidaas_social_provider` and `cidaas_custom_provider`: still registered. For new designs use `cidaas_federation_provider`.
@@ -103,7 +119,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 **Upgrade steps:**
 
 1. Remove **`copy_from_group_id`** and **`copy_locale_mappings`** from every `cidaas_notifications_template_group` block.
-2. Add one **`cidaas_notifications_template_group_locale`** per locale (see [Migration: Template group locale copy](docs/guides/migration-notifications-template-group-locales.md)).
+2. Add one **`cidaas_notifications_template_group_locale`** per locale (see [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) and resource docs for `cidaas_notifications_template_group_locale`).
 3. Set **`tg_type`** to match usage: **`cidaas`** for platform groups; **`developer`** for groups used with **`cidaas_notification_template`** / custom template types; **`reminder`** for reminder groups.
 4. If templates already exist, **import** locale resources: `terraform import cidaas_notifications_template_group_locale.<name> <group_id>/<locale>`.
 
@@ -160,7 +176,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 
 #### Enhancements
 
-- **Documentation:** Added the [Notification service (notification-srv)](docs/guides/notification_srv.md) guide (source: `templates/guides/notification_srv.md.tmpl`) covering legacy templates-srv vs notification-srv, `notifications_context_path`, scopes, use cases, API casing, and known limitations. Linked from the README notification section.
+- **Documentation:** Documented notification-srv vs legacy templates-srv (see [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) and notification resource docs). Historical note: a dedicated `notification_srv` guide was later folded into the main guides.
 - **Examples:** Added examples for `cidaas_notification_template`, `cidaas_notifications_template_group`, `data.cidaas_notification_templates`, and `data.cidaas_notification_template_groups`; refreshed `cidaas_notification_template_type` examples to use lowercase `communication_methods` / `msg_formats` aligned with notification-srv JSON.
 - **Registry docs:** Regenerated provider documentation (`go generate ./...`) including notification-srv resources and datasources; provider index template example provider version set to **3.5.7**.
 
@@ -195,7 +211,7 @@ Upgrade from 3.5.x: set `cidaas_version` and follow the [v3 to v4 migration guid
 
 - **Registration field data source:** The list endpoint for registration fields now uses `fieldsetup-srv/graph/fields` instead of `registration-setup-srv/fields/list`, aligning with the current cidaas API.
 - **Notification template type:** The cidaas client now exposes the template type service, enabling the `cidaas_notification_template_type` resource to manage template types via the provider.
-- **Documentation:** Migration guide for classic `cidaas_template` / `cidaas_template_group` vs `cidaas_notification_template_type`: `docs/guides/migration-template-to-notification-template-type.md`.
+- **Documentation:** Migration notes for classic `cidaas_template` / `cidaas_template_group` vs `cidaas_notification_template_type` live in the [v3 to v4 migration guide](docs/guides/v3-to-v4-migration.md) and notification resource docs.
 
 #### Bug Fixes
 

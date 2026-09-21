@@ -150,11 +150,7 @@ func (r *GroupVerificationFilterResource) Configure(ctx context.Context, req res
 		)
 		return
 	}
-	if c.Capabilities.TargetVersion == "3.x" {
-		resp.Diagnostics.AddError(
-			"Resource Not Supported on cidaas v3.x",
-			"The resource `cidaas_group_verification_filter` is only supported on cidaas v4.x (Trustdesk), but the provider is configured for v3.x. Please set cidaas_version = \"4.x\" in your provider block.",
-		)
+	if !c.RequireV4("cidaas_group_verification_filter", &resp.Diagnostics) {
 		return
 	}
 	r.BaseResource.Configure(ctx, req, resp)

@@ -97,7 +97,7 @@ func (h *HTTPClient) MakeRequest(ctx context.Context, requestBody interface{}) (
 	var expectedCodes []int
 	switch h.HTTPMethod {
 	case http.MethodGet, http.MethodPut:
-		expectedCodes = []int{http.StatusOK}
+		expectedCodes = []int{http.StatusOK, http.StatusNoContent}
 	case http.MethodPost:
 		expectedCodes = []int{http.StatusOK, http.StatusCreated, http.StatusNoContent}
 	case http.MethodPatch:

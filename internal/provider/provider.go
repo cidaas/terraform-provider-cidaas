@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
+	cidaasDataSources "github.com/Cidaas/terraform-provider-cidaas/internal/datasources"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/app"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/consent"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/resources/group"
@@ -39,6 +40,8 @@ type cidaasProvider struct {
 type providerModel struct {
 	BaseURL       types.String `tfsdk:"base_url"`
 	CidaasVersion types.String `tfsdk:"cidaas_version"`
+	ClientID      types.String `tfsdk:"client_id"`
+	ClientSecret  types.String `tfsdk:"client_secret"`
 }
 
 func New(version string) func() provider.Provider {
@@ -55,7 +58,7 @@ func (p *cidaasProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 func (p *cidaasProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The cidaas provider manages cidaas **v3** and **v4 (Trustdesk)** resources. " +
-			"Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.",
+			"Authenticate with `client_id` and `client_secret` in provider configuration or `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variables.",
 		Attributes: map[string]schema.Attribute{
 			"base_url": schema.StringAttribute{
 				Required:            true,
@@ -73,6 +76,17 @@ func (p *cidaasProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 					),
 				},
 			},
+			"client_id": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "The client ID of a non-interactive cidaas client used by Terraform to authenticate with cidaas. " +
+					"Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` environment variable. The provider configuration value takes precedence.",
+			},
+			"client_secret": schema.StringAttribute{
+				Optional:  true,
+				Sensitive: true,
+				MarkdownDescription: "The client secret of a non-interactive cidaas client used by Terraform to authenticate with cidaas. " +
+					"Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variable. The provider configuration value takes precedence.",
+			},
 		},
 	}
 }
@@ -84,12 +98,19 @@ func (p *cidaasProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	clientID := os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID")
-	clientSecret := os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET")
+	clientID := cfg.ClientID.ValueString()
+	if clientID == "" {
+		clientID = os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID")
+	}
+	clientSecret := cfg.ClientSecret.ValueString()
+	if clientSecret == "" {
+		clientSecret = os.Getenv("TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET")
+	}
+
 	if clientID == "" || clientSecret == "" {
 		resp.Diagnostics.AddError(
 			"Missing credentials",
-			"Set TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET.",
+			"Set client_id and client_secret in provider configuration, or set TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET environment variables.",
 		)
 		return
 	}
@@ -172,6 +193,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		notification.NewNotificationTemplateTypeResource,
 		notification.NewNotificationsTemplateGroupResource,
 		notification.NewNotificationsTemplateGroupLocaleResource,
+		notification.NewNotificationProviderConfigResource,
 
 		consent.NewConsentResource,
 		consent.NewConsentGroupResource,
@@ -179,9 +201,26 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 
 		webhook.NewWebhookResource,
 		identityprovider.NewFederationProviderResource,
+		identityprovider.NewSocialProviderResource,
+		identityprovider.NewCustomProviderResource,
 	}
 }
 
 func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		cidaasDataSources.NewRole,
+		cidaasDataSources.NewGroupType,
+		cidaasDataSources.NewScope,
+		cidaasDataSources.NewScopeGroup,
+		cidaasDataSources.NewSystemTemplateOption,
+		cidaasDataSources.NewConsent,
+		cidaasDataSources.NewSocialProvider,
+		cidaasDataSources.NewCustomProvider,
+		cidaasDataSources.NewRegistrationField,
+		cidaasDataSources.NewNotificationServiceSetups,
+		cidaasDataSources.NewNotificationServiceSetup,
+		cidaasDataSources.NewNotificationTemplates,
+		cidaasDataSources.NewNotificationTemplateGroupsGraph,
+		cidaasDataSources.NewWebhookEvents,
+	}
 }

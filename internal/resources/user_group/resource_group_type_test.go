@@ -92,8 +92,8 @@ func testCheckGroupTypeDestroyed(resourceName string) resource.TestCheckFunc {
 		for i := 0; i < maxRetries; i++ {
 			res, err := groupType.Get(context.Background(), rs.Primary.Attributes["group_type"])
 
-			// Check if resource is successfully deleted (nil response)
-			if res == nil {
+			// Check if resource is successfully deleted (nil response or empty group_type)
+			if res == nil || !res.Success || res.Data.GroupType == "" {
 				return nil // Resource successfully deleted
 			}
 

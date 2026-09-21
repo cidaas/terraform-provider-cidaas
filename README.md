@@ -25,6 +25,8 @@ Manage cidaas **v4 (Trustdesk)** tenants with Terraform: applications, scopes, r
 
 Registry address: `registry.terraform.io/Cidaas/cidaas`
 
+Provider **4.x is for Trustdesk**. Existing **cidaas v3** Terraform customers should remain on **provider 3.5.x**. Shared/legacy resource HCL stays valid when you do move to 4.x; new Trustdesk-only resources require `cidaas_version = "4.x"`.
+
 The Terraform provider for cidaas enables interaction with cidaas instances for CRUD operations on applications, custom providers, registration fields, and many other capabilities. From managing applications to configuring custom providers, it helps you define, provision, and manipulate cidaas resources as infrastructure as code.
 
 <p align="center">
@@ -99,6 +101,8 @@ Attribute schemas and Example Usage for each resource are generated into `docs/r
 <details open>
 <summary><strong>Credentials</strong> (required)</summary>
 
+Credentials can be set via HCL (`client_id` / `client_secret`) or environment variables (`TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`).
+
 ```bash
 export TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID="your-client-id"
 export TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET="your-client-secret"
@@ -107,7 +111,7 @@ export TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET="your-client-secret"
 </details>
 
 <details open>
-<summary><strong>Target version</strong> (required)</summary>
+<summary><strong>Target version & Configuration</strong> (required)</summary>
 
 Set via HCL or environment. Precedence: `cidaas_version` in the provider block → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
 
@@ -122,8 +126,10 @@ terraform {
 }
 
 provider "cidaas" {
-  base_url       = "https://your-tenant.cidaas.eu"
+  base_url      = "https://your-tenant.cidaas.eu"
   cidaas_version = "4.x"
+  client_id     = var.cidaas_client_id
+  client_secret = var.cidaas_client_secret
 }
 ```
 

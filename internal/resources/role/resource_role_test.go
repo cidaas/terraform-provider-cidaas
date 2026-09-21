@@ -274,8 +274,8 @@ func testAccCheckRoleResourceDestroyed(s *terraform.State) error {
 				return fmt.Errorf("error checking if role exists: %w", err)
 			}
 
-			// Check if resource is successfully deleted (nil response)
-			if res == nil {
+			// Check if resource is successfully deleted (nil response or empty role ID)
+			if res == nil || !res.Success || res.Data.Role == "" {
 				break // Role successfully deleted, continue to next resource
 			}
 
