@@ -129,8 +129,8 @@ func testCheckUserGroupDestroyed(resourceID string) resource.TestCheckFunc {
 				return fmt.Errorf("error checking if user group exists: %w", err)
 			}
 
-			// Check if resource is nil
-			if res == nil {
+			// Check if resource is nil or empty
+			if res == nil || !res.Success || res.Data.GroupID == "" {
 				break // User group successfully deleted, continue to group type check
 			}
 
@@ -170,8 +170,8 @@ func testCheckUserGroupDestroyed(resourceID string) resource.TestCheckFunc {
 				return fmt.Errorf("error checking if group type exists: %w", err)
 			}
 
-			// Check if resource is nil
-			if resp == nil {
+			// Check if resource is nil or empty
+			if resp == nil || !resp.Success || resp.Data.GroupType == "" {
 				return nil // Both resources successfully deleted
 			}
 

@@ -143,8 +143,8 @@ func testCheckScopeDestroyed(resourceName string) resource.TestCheckFunc {
 		for i := 0; i < maxRetries; i++ {
 			res, err := scope.Get(context.Background(), rs.Primary.Attributes["scope_key"])
 
-			// Check if resource is successfully deleted (nil response)
-			if res == nil {
+			// Check if resource is successfully deleted (nil response or empty scope ID)
+			if res == nil || !res.Success || res.Data.ID == "" || res.Data.ScopeKey == "" {
 				return nil // Resource successfully deleted
 			}
 

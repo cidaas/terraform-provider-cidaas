@@ -2,6 +2,7 @@ package util //nolint:revive
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -118,11 +119,11 @@ func ProcessResponse(res *http.Response, target interface{}) error {
 	if res == nil || res.Body == nil {
 		return fmt.Errorf("invalid response or body")
 	}
-	if target == nil {
+	if target == nil || res.StatusCode == http.StatusNoContent {
 		return nil
 	}
 	err := json.NewDecoder(res.Body).Decode(target)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("failed to decode response body, %w", err)
 	}
 	return nil

@@ -119,13 +119,6 @@ func (r *ConsentResource) Configure(ctx context.Context, req resource.ConfigureR
 		)
 		return
 	}
-	if c.Capabilities.TargetVersion == "4.x" {
-		resp.Diagnostics.AddError(
-			"Consent Resource Coming Soon on v4",
-			"Consent resources (`cidaas_consent`, `cidaas_consent_group`, `cidaas_consent_version`) are supported on cidaas v3.x. Support for cidaas v4.x (Trustdesk) is coming soon. Please set cidaas_version = \"3.x\" in your provider block to manage v3 consent resources.",
-		)
-		return
-	}
 	r.BaseResource.Configure(ctx, req, resp)
 	r.cidaasClient = c.CidaasClient
 }

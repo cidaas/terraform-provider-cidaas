@@ -1,0 +1,1 @@
+terraform import cidaas_consent_group.sample id
