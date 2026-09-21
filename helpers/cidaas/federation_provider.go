@@ -60,7 +60,7 @@ func NewFederationProvider(clientConfig ClientConfig) *FederationProvider {
 	return &FederationProvider{clientConfig}
 }
 
-func (f *FederationProvider) Create(ctx context.Context, pc *ProviderConfigModel) (*ProviderConfigResponse, error) {
+func buildFederationProviderPayload(pc *ProviderConfigModel, id string) map[string]interface{} {
 	if pc.Owner == "" {
 		pc.Owner = "client"
 	}
@@ -69,6 +69,29 @@ func (f *FederationProvider) Create(ctx context.Context, pc *ProviderConfigModel
 	}
 	if pc.StandardType == "" {
 		pc.StandardType = "OAUTH2"
+	}
+
+	clientID := pc.ClientID
+	clientSecret := pc.ClientSecret
+	authEndpoint := pc.AuthorizationEndpoint
+	tokenEndpoint := pc.TokenEndpoint
+	userinfoEndpoint := pc.UserinfoEndpoint
+	if pc.OAuth2 != nil {
+		if clientID == "" {
+			clientID = pc.OAuth2.ClientID
+		}
+		if clientSecret == "" {
+			clientSecret = pc.OAuth2.ClientSecret
+		}
+		if authEndpoint == "" {
+			authEndpoint = pc.OAuth2.AuthorizationEndpoint
+		}
+		if tokenEndpoint == "" {
+			tokenEndpoint = pc.OAuth2.TokenEndpoint
+		}
+		if userinfoEndpoint == "" {
+			userinfoEndpoint = pc.OAuth2.UserinfoEndpoint
+		}
 	}
 
 	payload := map[string]interface{}{
@@ -80,14 +103,32 @@ func (f *FederationProvider) Create(ctx context.Context, pc *ProviderConfigModel
 		"owner":         pc.Owner,
 		"domains":       pc.Domains,
 		"oauth2": map[string]interface{}{
-			"client_id":              pc.ClientID,
-			"client_secret":          pc.ClientSecret,
-			"authorization_endpoint": pc.AuthorizationEndpoint,
-			"token_endpoint":         pc.TokenEndpoint,
-			"userinfo_endpoint":      pc.UserinfoEndpoint,
+			"client_id":              clientID,
+			"client_secret":          clientSecret,
+			"authorization_endpoint": authEndpoint,
+			"token_endpoint":         tokenEndpoint,
+			"userinfo_endpoint":      userinfoEndpoint,
 			"userinfoSource":         "USERINFOENDPOINT",
 		},
 	}
+	if id != "" {
+		payload["id"] = id
+	}
+	return payload
+}
+
+func unwrapOAuth2Config(data *ProviderConfigModel) {
+	if data.OAuth2 != nil {
+		data.ClientID = data.OAuth2.ClientID
+		data.ClientSecret = data.OAuth2.ClientSecret
+		data.AuthorizationEndpoint = data.OAuth2.AuthorizationEndpoint
+		data.TokenEndpoint = data.OAuth2.TokenEndpoint
+		data.UserinfoEndpoint = data.OAuth2.UserinfoEndpoint
+	}
+}
+
+func (f *FederationProvider) Create(ctx context.Context, pc *ProviderConfigModel) (*ProviderConfigResponse, error) {
+	payload := buildFederationProviderPayload(pc, "")
 
 	var response ProviderConfigResponse
 	url := fmt.Sprintf("%s/%s", f.BaseURL, "federation/providers")
@@ -104,13 +145,7 @@ func (f *FederationProvider) Create(ctx context.Context, pc *ProviderConfigModel
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
-	if response.Data.OAuth2 != nil {
-		response.Data.ClientID = response.Data.OAuth2.ClientID
-		response.Data.ClientSecret = response.Data.OAuth2.ClientSecret
-		response.Data.AuthorizationEndpoint = response.Data.OAuth2.AuthorizationEndpoint
-		response.Data.TokenEndpoint = response.Data.OAuth2.TokenEndpoint
-		response.Data.UserinfoEndpoint = response.Data.OAuth2.UserinfoEndpoint
-	}
+	unwrapOAuth2Config(&response.Data)
 	return &response, nil
 }
 
@@ -130,25 +165,21 @@ func (f *FederationProvider) Get(ctx context.Context, id string) (*ProviderConfi
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
-	if response.Data.OAuth2 != nil {
-		response.Data.ClientID = response.Data.OAuth2.ClientID
-		response.Data.ClientSecret = response.Data.OAuth2.ClientSecret
-		response.Data.AuthorizationEndpoint = response.Data.OAuth2.AuthorizationEndpoint
-		response.Data.TokenEndpoint = response.Data.OAuth2.TokenEndpoint
-		response.Data.UserinfoEndpoint = response.Data.OAuth2.UserinfoEndpoint
-	}
+	unwrapOAuth2Config(&response.Data)
 	return &response, nil
 }
 
 //nolint:dupl
 func (f *FederationProvider) Update(ctx context.Context, id string, pc *ProviderConfigModel) (*ProviderConfigResponse, error) {
+	payload := buildFederationProviderPayload(pc, id)
+
 	var response ProviderConfigResponse
 	url := fmt.Sprintf("%s/%s/%s", f.BaseURL, "federation/providers", id)
 	client, err := util.NewHTTPClient(url, http.MethodPut, f.AccessToken)
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, pc)
+	res, err := client.MakeRequest(ctx, payload)
 	if err := util.HandleResponseError(res, err); err != nil {
 		return nil, err
 	}
@@ -157,6 +188,7 @@ func (f *FederationProvider) Update(ctx context.Context, id string, pc *Provider
 	if err := util.ProcessResponse(res, &response); err != nil {
 		return nil, err
 	}
+	unwrapOAuth2Config(&response.Data)
 	return &response, nil
 }
 

@@ -68,7 +68,7 @@ func NewSocialProvider(clientConfig ClientConfig) *SocialProvider {
 func makeRequestWithRetry(ctx context.Context, client *util.HTTPClient, body interface{}) (*http.Response, error) {
 	var res *http.Response
 	var err error
-	maxAttempts := 3
+	maxAttempts := 5
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		res, err = client.MakeRequest(ctx, body)
 		if err == nil {
@@ -148,8 +148,8 @@ func (s *SocialProvider) GetAll(ctx context.Context) ([]SocialProviderModel, err
 	if err != nil {
 		return nil, err
 	}
-	res, err := client.MakeRequest(ctx, nil)
-	if err := util.HandleResponseError(res, err); err != nil {
+	res, err := makeRequestWithRetry(ctx, client, nil)
+	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = res.Body.Close() }()

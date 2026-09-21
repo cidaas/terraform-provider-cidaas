@@ -61,6 +61,7 @@ func testAccGroupSelectionConfig(resourceID, groupType, groupID, name string, al
 			group_type = cidaas_group_type.%s.group_type
 			group_id = "%s"
 			group_name = "Sample Group %s"
+			depends_on = [cidaas_group_type.%s]
 		}
 		resource "cidaas_group_selection" "%s" {
 			name = "%s"
@@ -69,6 +70,7 @@ func testAccGroupSelectionConfig(resourceID, groupType, groupID, name string, al
 			always_show_group_selection = %t
 			selectable_groups = [cidaas_user_groups.%s.group_id]
 			selectable_group_types = [cidaas_group_type.%s.group_type]
+			depends_on = [cidaas_user_groups.%s, cidaas_group_type.%s]
 		}
-	`, acctest.GetBaseURL(), resourceID, groupType, resourceID, resourceID, groupID, groupID, resourceID, name, alwaysShow, resourceID, resourceID)
+	`, acctest.GetBaseURL(), resourceID, groupType, resourceID, resourceID, groupID, groupID, resourceID, resourceID, name, alwaysShow, resourceID, resourceID, resourceID, resourceID)
 }

@@ -1,16 +1,14 @@
 ---
 page_title: "cidaas Provider"
 description: |-
-  The cidaas provider manages cidaas v4 (Trustdesk) resources. Authenticate with TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET.
+  The cidaas provider manages cidaas v3 and v4 (Trustdesk) resources. Authenticate with client_id and client_secret in provider configuration or TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID and TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET environment variables.
 ---
 
 # cidaas Provider
 
-The cidaas provider **4.x** manages cidaas **v4 (Trustdesk)** resources. Authenticate with `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+The cidaas provider manages cidaas **v3** and **v4 (Trustdesk)** resources. Authenticate with `client_id` and `client_secret` in provider configuration or `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` and `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variables.
 
-Set `cidaas_version = "4.x"` (or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`). Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
-
-Customers who are **not** moving to Trustdesk should stay on **provider 3.5.x**. Shared/legacy resource configs that already work on 3.5.x remain valid on 4.x; new Trustdesk-only resources require `cidaas_version = "4.x"`. See [Provider configuration](guides/version-targeting.md) and the [v3 to v4 migration guide](guides/v3-to-v4-migration.md).
+Set the target major version with HCL `cidaas_version`, or environment variables `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`. One of these is **required**. Trustdesk-only resources error when the target is `3.x`; shared resources work on both.
 
 ## Example Usage
 
@@ -25,12 +23,14 @@ terraform {
 }
 
 provider "cidaas" {
-  # Authenticate with:
+  # Authenticate via client_id and client_secret, or environment variables:
   #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID
   #   TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET
   # Target version (required): HCL or TERRAFORM_PROVIDER_CIDAAS_VERSION / CIDAAS_VERSION
   base_url       = "https://your-tenant.cidaas.eu"
   cidaas_version = "4.x"
+  client_id      = var.cidaas_client_id
+  client_secret  = var.cidaas_client_secret
 }
 ```
 
@@ -44,3 +44,5 @@ provider "cidaas" {
 ### Optional
 
 - `cidaas_version` (String) Target cidaas version (e.g. `3.x`, `v3.x`, `4.x`, `v4.x`). Required via this attribute or `TERRAFORM_PROVIDER_CIDAAS_VERSION` / `CIDAAS_VERSION`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_VERSION` → `CIDAAS_VERSION`.
+- `client_id` (String) The client ID of a non-interactive cidaas client used by Terraform to authenticate with cidaas. Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` environment variable. The provider configuration value takes precedence.
+- `client_secret` (String, Sensitive) The client secret of a non-interactive cidaas client used by Terraform to authenticate with cidaas. Can also be set via the `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET` environment variable. The provider configuration value takes precedence.
