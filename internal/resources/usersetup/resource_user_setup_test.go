@@ -3,6 +3,7 @@ package usersetup
 import (
 	"testing"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -120,7 +121,7 @@ func TestListToStringsSkipsUnknownElements(t *testing.T) {
 		types.StringValue("given_name"),
 		types.StringNull(),
 	})
-	got := listToStrings(l)
+	got := util.ListToStrings(l)
 	if len(got) != 2 || got[0] != "email" || got[1] != "given_name" {
 		t.Fatalf("got %v", got)
 	}
@@ -132,13 +133,13 @@ func TestListContainsUnknown(t *testing.T) {
 		types.StringValue("email"),
 		types.StringUnknown(),
 	})
-	if !listContainsUnknown(withUnknown) {
+	if !util.ListContainsUnknown(withUnknown) {
 		t.Fatal("expected unknown element")
 	}
 	known := types.ListValueMust(types.StringType, []attr.Value{
 		types.StringValue("email"),
 	})
-	if listContainsUnknown(known) {
+	if util.ListContainsUnknown(known) {
 		t.Fatal("did not expect unknown element")
 	}
 }

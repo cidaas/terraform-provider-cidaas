@@ -709,11 +709,7 @@ func prepareSocialProviderModel(ctx context.Context, plan SocialProviderConfig) 
 	}
 
 	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
-		var scopes []string
-		if diags := plan.Scopes.ElementsAs(ctx, &scopes, false); diags.HasError() {
-			return nil, diags
-		}
-		sp.Scopes = scopes
+		sp.Scopes = util.SetToStrings(plan.Scopes)
 	} else {
 		sp.Scopes = []string{}
 	}
@@ -736,35 +732,19 @@ func prepareSocialProviderModel(ctx context.Context, plan SocialProviderConfig) 
 		}
 
 		if !claims.RequiredClaims.UserInfo.IsNull() && !claims.RequiredClaims.UserInfo.IsUnknown() {
-			var userInfo []string
-			if diags := claims.RequiredClaims.UserInfo.ElementsAs(ctx, &userInfo, false); diags.HasError() {
-				return nil, diags
-			}
-			sp.Claims.RequiredClaims.UserInfo = userInfo
+			sp.Claims.RequiredClaims.UserInfo = util.SetToStrings(claims.RequiredClaims.UserInfo)
 		}
 
 		if !claims.RequiredClaims.IDToken.IsNull() && !claims.RequiredClaims.IDToken.IsUnknown() {
-			var idToken []string
-			if diags := claims.RequiredClaims.IDToken.ElementsAs(ctx, &idToken, false); diags.HasError() {
-				return nil, diags
-			}
-			sp.Claims.RequiredClaims.IDToken = idToken
+			sp.Claims.RequiredClaims.IDToken = util.SetToStrings(claims.RequiredClaims.IDToken)
 		}
 
 		if !claims.OptionalClaims.UserInfo.IsNull() && !claims.OptionalClaims.UserInfo.IsUnknown() {
-			var userInfo []string
-			if diags := claims.OptionalClaims.UserInfo.ElementsAs(ctx, &userInfo, false); diags.HasError() {
-				return nil, diags
-			}
-			sp.Claims.OptionalClaims.UserInfo = userInfo
+			sp.Claims.OptionalClaims.UserInfo = util.SetToStrings(claims.OptionalClaims.UserInfo)
 		}
 
 		if !claims.OptionalClaims.IDToken.IsNull() && !claims.OptionalClaims.IDToken.IsUnknown() {
-			var idToken []string
-			if diags := claims.OptionalClaims.IDToken.ElementsAs(ctx, &idToken, false); diags.HasError() {
-				return nil, diags
-			}
-			sp.Claims.OptionalClaims.IDToken = idToken
+			sp.Claims.OptionalClaims.IDToken = util.SetToStrings(claims.OptionalClaims.IDToken)
 		}
 	}
 

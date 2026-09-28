@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -334,11 +335,11 @@ func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.Val
 	if config.userSetup.AllowedFields.IsUnknown() || config.userSetup.RequiredFields.IsUnknown() {
 		return
 	}
-	if listContainsUnknown(config.userSetup.AllowedFields) || listContainsUnknown(config.userSetup.RequiredFields) {
+	if util.ListContainsUnknown(config.userSetup.AllowedFields) || util.ListContainsUnknown(config.userSetup.RequiredFields) {
 		return
 	}
-	allowed := listToStrings(config.userSetup.AllowedFields)
-	required := listToStrings(config.userSetup.RequiredFields)
+	allowed := util.ListToStrings(config.userSetup.AllowedFields)
+	required := util.ListToStrings(config.userSetup.RequiredFields)
 	if missing := missingRequiredFields(allowed, required); len(missing) > 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("user_setup").AtName("required_fields"),
@@ -456,12 +457,12 @@ func (c *setupConfig) toModel(ctx context.Context) (client.UserAppSetupModel, di
 	if !c.userSetup.CommunicationMediumVerification.IsNull() && !c.userSetup.CommunicationMediumVerification.IsUnknown() {
 		detail.CommunicationMediumVerification = c.userSetup.CommunicationMediumVerification.ValueString()
 	}
-	detail.AllowedFields = listToStrings(c.userSetup.AllowedFields)
-	detail.RequiredFields = listToStrings(c.userSetup.RequiredFields)
-	detail.AllowLoginWith = listToStrings(c.userSetup.AllowLoginWith)
-	detail.ConsentRefs = listToStrings(c.ConsentRefs)
-	detail.AutoConfirmCommunicationMethod = listToStrings(c.userSetup.AutoConfirmCommunicationMethod)
-	detail.VerificationForMedium = listToStrings(c.userSetup.VerificationForMedium)
+	detail.AllowedFields = util.ListToStrings(c.userSetup.AllowedFields)
+	detail.RequiredFields = util.ListToStrings(c.userSetup.RequiredFields)
+	detail.AllowLoginWith = util.ListToStrings(c.userSetup.AllowLoginWith)
+	detail.ConsentRefs = util.ListToStrings(c.ConsentRefs)
+	detail.AutoConfirmCommunicationMethod = util.ListToStrings(c.userSetup.AutoConfirmCommunicationMethod)
+	detail.VerificationForMedium = util.ListToStrings(c.userSetup.VerificationForMedium)
 
 	for _, g := range c.userSetup.operationsAllowedGroups {
 		if g == nil {
@@ -469,8 +470,8 @@ func (c *setupConfig) toModel(ctx context.Context) (client.UserAppSetupModel, di
 		}
 		ag := client.AllowedGroup{
 			GroupID:      g.GroupID.ValueString(),
-			Roles:        listToStrings(g.Roles),
-			DefaultRoles: listToStrings(g.DefaultRoles),
+			Roles:        util.ListToStrings(g.Roles),
+			DefaultRoles: util.ListToStrings(g.DefaultRoles),
 		}
 		detail.OperationsAllowedGroups = append(detail.OperationsAllowedGroups, ag)
 	}
@@ -661,46 +662,6 @@ func (r *userSetupResource) validateFieldSetupKeys(ctx context.Context, model cl
 		"Field keys must exist and be enabled in Field Setup",
 		msg,
 	)
-	return false
-}
-
-func listToStrings(l types.List) []string {
-	if l.IsNull() || l.IsUnknown() {
-		return nil
-	}
-	// Iterate element-by-element so that unknown values (e.g., references to
-	// not-yet-created resources) are safely skipped instead of causing a
-	// "Received unknown value, however the target type cannot handle unknown
-	// values" panic.  During plan, Terraform marks unresolved references as
-	// unknown; these become concrete strings only at apply time.
-	elems := l.Elements()
-	out := make([]string, 0, len(elems))
-	for _, e := range elems {
-		if e.IsUnknown() || e.IsNull() {
-			continue
-		}
-		sv, ok := e.(types.String)
-		if !ok {
-			continue
-		}
-		out = append(out, sv.ValueString())
-	}
-	return out
-}
-
-// listContainsUnknown returns true if any element in a non-null, non-unknown
-// list is itself unknown.  This is the case when a list literal contains a
-// reference to an attribute of another resource that has not been resolved yet
-// (e.g., [cidaas_registration_field.foo.field_key, "email"]).
-func listContainsUnknown(l types.List) bool {
-	if l.IsNull() || l.IsUnknown() {
-		return false
-	}
-	for _, e := range l.Elements() {
-		if e.IsUnknown() {
-			return true
-		}
-	}
 	return false
 }
 

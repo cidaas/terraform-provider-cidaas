@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -142,5 +143,19 @@ func TestToModelPreservesExplicitClientID(t *testing.T) {
 	}
 	if model.ClientID != "custom-client-id" {
 		t.Fatalf("ClientID=%q", model.ClientID)
+	}
+}
+
+func TestListToStringsSkipsUnknownElements(t *testing.T) {
+	t.Parallel()
+	l := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("openid"),
+		types.StringUnknown(),
+		types.StringValue("profile"),
+		types.StringNull(),
+	})
+	got := util.ListToStrings(l)
+	if len(got) != 2 || got[0] != "openid" || got[1] != "profile" {
+		t.Fatalf("got %v", got)
 	}
 }

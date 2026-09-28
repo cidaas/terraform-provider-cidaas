@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -142,11 +143,8 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 			DisableInsecurePKCEMethod: boolPtr(c.DisableInsecurePKCEMethod),
 		}
 	}
-	var d diag.Diagnostics
-	model.GrantTypes, d = listToStrings(ctx, c.GrantTypes)
-	diags.Append(d...)
-	model.ResponseTypes, d = listToStrings(ctx, c.ResponseTypes)
-	diags.Append(d...)
+	model.GrantTypes = util.ListToStrings(c.GrantTypes)
+	model.ResponseTypes = util.ListToStrings(c.ResponseTypes)
 
 	if c.redirectURIs != nil {
 		redirectURIs, d := redirectURIsToClient(ctx, c.redirectURIs)
@@ -180,30 +178,24 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 }
 
 // redirectURIsToClient maps the redirect_uris nested block to the API struct.
-func redirectURIsToClient(ctx context.Context, cfg *redirectURIsConfig) (*client.RedirectURIsConfig, diag.Diagnostics) {
+func redirectURIsToClient(_ context.Context, cfg *redirectURIsConfig) (*client.RedirectURIsConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	out := &client.RedirectURIsConfig{}
-	var d diag.Diagnostics
-	out.RedirectURIs, d = listToStrings(ctx, cfg.RedirectURIs)
-	diags.Append(d...)
-	out.AllowedLogoutUrls, d = listToStrings(ctx, cfg.AllowedLogoutUrls)
-	diags.Append(d...)
-	out.PostLogoutRedirectURIs, d = listToStrings(ctx, cfg.PostLogoutRedirectURIs)
-	diags.Append(d...)
-	out.AllowedWebOrigins, d = listToStrings(ctx, cfg.AllowedWebOrigins)
-	diags.Append(d...)
+	out := &client.RedirectURIsConfig{
+		RedirectURIs:           util.ListToStrings(cfg.RedirectURIs),
+		AllowedLogoutUrls:      util.ListToStrings(cfg.AllowedLogoutUrls),
+		PostLogoutRedirectURIs: util.ListToStrings(cfg.PostLogoutRedirectURIs),
+		AllowedWebOrigins:      util.ListToStrings(cfg.AllowedWebOrigins),
+	}
 	return out, diags
 }
 
 // scopesToClient maps the scopes nested block to the API struct.
-func scopesToClient(ctx context.Context, cfg *scopesConfig) (*client.ScopesConfig, diag.Diagnostics) {
+func scopesToClient(_ context.Context, cfg *scopesConfig) (*client.ScopesConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	out := &client.ScopesConfig{}
-	var d diag.Diagnostics
-	out.AllowedScopes, d = listToStrings(ctx, cfg.AllowedScopes)
-	diags.Append(d...)
-	out.DefaultScopes, d = listToStrings(ctx, cfg.DefaultScopes)
-	diags.Append(d...)
+	out := &client.ScopesConfig{
+		AllowedScopes: util.ListToStrings(cfg.AllowedScopes),
+		DefaultScopes: util.ListToStrings(cfg.DefaultScopes),
+	}
 	return out, diags
 }
 

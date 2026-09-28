@@ -886,10 +886,7 @@ func prepareCpRequestPayload(ctx context.Context, plan ProviderConfig) (*cidaas.
 	cp.Pkce = plan.Pkce.ValueBool()
 	cp.AuthType = plan.AuthType.ValueString()
 
-	diags = plan.Domains.ElementsAs(ctx, &cp.Domains, false)
-	if diags.HasError() {
-		return nil, diags
-	}
+	cp.Domains = util.SetToStrings(plan.Domains)
 	var childScopes []cidaas.ScopeChild
 	for _, v := range plan.scopes {
 		childScopes = append(childScopes, cidaas.ScopeChild{

@@ -226,50 +226,42 @@ func (m *securitySettingsModel) toPatch(ctx context.Context) (cidaas.SecuritySet
 			hasAny = true
 		}
 		if !bs.BlackListedEmailDomains.IsNull() {
-			var sl []string
-			diags.Append(bs.BlackListedEmailDomains.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.BlackListedEmailDomains)
 			apiBS.BlackListedEmailDomains = &sl
 			hasAny = true
 		}
 		if !bs.BlackListedIPs.IsNull() {
-			var sl []string
-			diags.Append(bs.BlackListedIPs.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.BlackListedIPs)
 			apiBS.BlackListedIPs = &sl
 			hasAny = true
 		}
 		if !bs.ExcludedEmailsFromBlackList.IsNull() {
-			var sl []string
-			diags.Append(bs.ExcludedEmailsFromBlackList.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.ExcludedEmailsFromBlackList)
 			apiBS.ExcludedEmailsFromBlackList = &sl
 			hasAny = true
 		}
 		if !bs.ExcludedIPsFromBlackList.IsNull() {
-			var sl []string
-			diags.Append(bs.ExcludedIPsFromBlackList.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.ExcludedIPsFromBlackList)
 			apiBS.ExcludedIPsFromBlackList = &sl
 			hasAny = true
 		}
 		if !bs.Subs.IsNull() {
-			var sl []string
-			diags.Append(bs.Subs.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.Subs)
 			apiBS.Subs = &sl
 			hasAny = true
 		}
 		if !bs.WhiteListedEmailDomains.IsNull() {
-			var sl []string
-			diags.Append(bs.WhiteListedEmailDomains.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.WhiteListedEmailDomains)
 			apiBS.WhiteListedEmailDomains = &sl
 			hasAny = true
 		}
 		if !bs.WhiteListedIPs.IsNull() {
-			var sl []string
-			diags.Append(bs.WhiteListedIPs.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.WhiteListedIPs)
 			apiBS.WhiteListedIPs = &sl
 			hasAny = true
 		}
 		if !bs.BlackListedIdentifiers.IsNull() {
-			var sl []string
-			diags.Append(bs.BlackListedIdentifiers.ElementsAs(ctx, &sl, false)...)
+			sl := util.SetToStrings(bs.BlackListedIdentifiers)
 			apiBS.BlackListedIdentifiers = &sl
 			hasAny = true
 		}

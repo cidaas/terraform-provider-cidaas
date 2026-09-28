@@ -168,14 +168,7 @@ func (r *PasswordPolicy) Create(ctx context.Context, req resource.CreateRequest,
 		},
 	}
 
-	diags := plan.passwordPolicy.StrengthRegexes.ElementsAs(ctx, &payload.PasswordPolicy.StrengthRegexes, false)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		tflog.Error(ctx, "failed to extract strength regexes", util.H{
-			"errors": resp.Diagnostics.Errors(),
-		})
-		return
-	}
+	payload.PasswordPolicy.StrengthRegexes = util.SetToStrings(plan.passwordPolicy.StrengthRegexes)
 
 	if !plan.passwordPolicy.ChangeEnforcement.IsNull() {
 		payload.PasswordPolicy.ChangeEnforcement = cidaas.ChangeEnforcement{
@@ -310,14 +303,7 @@ func (r *PasswordPolicy) Update(ctx context.Context, req resource.UpdateRequest,
 		},
 	}
 
-	diags := plan.passwordPolicy.StrengthRegexes.ElementsAs(ctx, &payload.PasswordPolicy.StrengthRegexes, false)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		tflog.Error(ctx, "failed to extract strength regexes for update", util.H{
-			"errors": resp.Diagnostics.Errors(),
-		})
-		return
-	}
+	payload.PasswordPolicy.StrengthRegexes = util.SetToStrings(plan.passwordPolicy.StrengthRegexes)
 
 	if !plan.passwordPolicy.ChangeEnforcement.IsNull() {
 		payload.PasswordPolicy.ChangeEnforcement = cidaas.ChangeEnforcement{

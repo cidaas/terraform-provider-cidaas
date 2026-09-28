@@ -2,21 +2,9 @@
 package app
 
 import (
-	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
-	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
-	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
-}
 
 func stringList(values []string) types.List {
 	elems := make([]attr.Value, 0, len(values))

@@ -86,11 +86,7 @@ func (r *RegFieldResource) ModifyPlan(ctx context.Context, req resource.ModifyPl
 		return
 	}
 
-	var patterns []string
-	resp.Diagnostics.Append(plan.fieldDefinition.Regexes.ElementsAs(ctx, &patterns, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	patterns := util.ListToStrings(plan.fieldDefinition.Regexes)
 	composed, err := composeANDRegexes(patterns)
 	if err != nil {
 		resp.Diagnostics.AddError("Invalid field_definition.regexes", err.Error())
@@ -1220,6 +1216,7 @@ func (r *RegFieldResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.RegistrationFieldConfig, diag.Diagnostics) { //nolint:gocognit,gocyclo
+	var diag diag.Diagnostics
 	var regConfig cidaas.RegistrationFieldConfig
 	regConfig.Internal = plan.Internal.ValueBool()
 	regConfig.ReadOnly = plan.ReadOnly.ValueBool()
@@ -1244,16 +1241,10 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 	}
 	regConfig.ClassName = className
 
-	diag := plan.Scopes.ElementsAs(ctx, &regConfig.Scopes, false)
-	if diag.HasError() {
-		return nil, diag
-	}
+	regConfig.Scopes = util.SetToStrings(plan.Scopes)
 
 	if plan.DataType.ValueString() == "CONSENT" {
-		diag = plan.ConsentRefs.ElementsAs(ctx, &regConfig.ConsentRefs, false)
-		if diag.HasError() {
-			return nil, diag
-		}
+		regConfig.ConsentRefs = util.SetToStrings(plan.ConsentRefs)
 	}
 
 	var attrKeys []string
@@ -1298,12 +1289,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 			regexValue = plan.fieldDefinition.Regex.ValueString()
 		}
 		if plan.fieldDefinition != nil && !plan.fieldDefinition.Regexes.IsNull() && !plan.fieldDefinition.Regexes.IsUnknown() {
-			var patterns []string
-			diags := plan.fieldDefinition.Regexes.ElementsAs(ctx, &patterns, false)
-			diag.Append(diags...)
-			if diag.HasError() {
-				return nil, diag
-			}
+			patterns := util.ListToStrings(plan.fieldDefinition.Regexes)
 			if len(patterns) > 0 {
 				composed, err := composeANDRegexes(patterns)
 				if err != nil {
