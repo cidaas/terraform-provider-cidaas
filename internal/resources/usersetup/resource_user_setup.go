@@ -327,7 +327,14 @@ func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.Val
 	if resp.Diagnostics.HasError() || config.userSetup == nil {
 		return
 	}
+	// Skip validation when list-level or any element-level values are unknown.
+	// This happens when elements reference attributes of other resources
+	// (e.g., cidaas_registration_field.foo.field_key) that are not yet resolved
+	// during the plan phase.
 	if config.userSetup.AllowedFields.IsUnknown() || config.userSetup.RequiredFields.IsUnknown() {
+		return
+	}
+	if listContainsUnknown(config.userSetup.AllowedFields) || listContainsUnknown(config.userSetup.RequiredFields) {
 		return
 	}
 	allowed, diags := listToStrings(ctx, config.userSetup.AllowedFields)
@@ -673,9 +680,40 @@ func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostic
 	if l.IsNull() || l.IsUnknown() {
 		return nil, nil
 	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
+	// Iterate element-by-element so that unknown values (e.g., references to
+	// not-yet-created resources) are safely skipped instead of causing a
+	// "Received unknown value, however the target type cannot handle unknown
+	// values" panic.  During plan, Terraform marks unresolved references as
+	// unknown; these become concrete strings only at apply time.
+	elems := l.Elements()
+	out := make([]string, 0, len(elems))
+	for _, e := range elems {
+		if e.IsUnknown() || e.IsNull() {
+			continue
+		}
+		sv, ok := e.(types.String)
+		if !ok {
+			continue
+		}
+		out = append(out, sv.ValueString())
+	}
+	return out, nil
+}
+
+// listContainsUnknown returns true if any element in a non-null, non-unknown
+// list is itself unknown.  This is the case when a list literal contains a
+// reference to an attribute of another resource that has not been resolved yet
+// (e.g., [cidaas_registration_field.foo.field_key, "email"]).
+func listContainsUnknown(l types.List) bool {
+	if l.IsNull() || l.IsUnknown() {
+		return false
+	}
+	for _, e := range l.Elements() {
+		if e.IsUnknown() {
+			return true
+		}
+	}
+	return false
 }
 
 func stringList(values []string) types.List {

@@ -127,3 +127,21 @@ func signingKeyConfigAttrTypes() map[string]attr.Type {
 func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
 }
+
+// preferKnownBool keeps prior when the API omitted a bool (nil → null) so Terraform
+// does not report "Provider produced inconsistent result after apply" for optional
+// computed attributes like disable_insecure_pkce_method / require_pkce.
+func preferKnownBool(prior, fromAPI types.Bool) types.Bool {
+	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
+		return prior
+	}
+	return fromAPI
+}
+
+// mergeOmittedAppConfigurationBools restores plan/prior values for PKCE flags when
+// app-srv create/update/get responses omit them.
+func mergeOmittedAppConfigurationBools(prior, state appConfigurationConfig) appConfigurationConfig {
+	state.RequirePKCE = preferKnownBool(prior.RequirePKCE, state.RequirePKCE)
+	state.DisableInsecurePKCEMethod = preferKnownBool(prior.DisableInsecurePKCEMethod, state.DisableInsecurePKCEMethod)
+	return state
+}

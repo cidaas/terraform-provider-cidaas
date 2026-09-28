@@ -1,9 +1,12 @@
 package usersetup
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func TestMissingRequiredFields(t *testing.T) {
@@ -107,5 +110,39 @@ func TestFieldKeysMissingFromSetup(t *testing.T) {
 	)
 	if attr != "" || msg != "" {
 		t.Fatalf("attr=%q msg=%q", attr, msg)
+	}
+}
+
+func TestListToStringsSkipsUnknownElements(t *testing.T) {
+	t.Parallel()
+	l := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("email"),
+		types.StringUnknown(),
+		types.StringValue("given_name"),
+		types.StringNull(),
+	})
+	got, diags := listToStrings(context.Background(), l)
+	if diags.HasError() {
+		t.Fatalf("diags: %v", diags)
+	}
+	if len(got) != 2 || got[0] != "email" || got[1] != "given_name" {
+		t.Fatalf("got %v", got)
+	}
+}
+
+func TestListContainsUnknown(t *testing.T) {
+	t.Parallel()
+	withUnknown := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("email"),
+		types.StringUnknown(),
+	})
+	if !listContainsUnknown(withUnknown) {
+		t.Fatal("expected unknown element")
+	}
+	known := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("email"),
+	})
+	if listContainsUnknown(known) {
+		t.Fatal("did not expect unknown element")
 	}
 }

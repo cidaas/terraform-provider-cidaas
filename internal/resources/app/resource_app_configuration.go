@@ -257,7 +257,13 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	model.ClientID = ""
+	// Only clear the client_id when the user hasn't explicitly set one (null/unknown).
+	// When a user provides a specific client_id, it must be forwarded to the API so
+	// that the returned value matches the planned value; otherwise Terraform raises
+	// "Provider produced inconsistent result after apply".
+	if plan.ClientID.IsNull() || plan.ClientID.IsUnknown() {
+		model.ClientID = ""
+	}
 
 	res, err := r.client.AppConfiguration.Create(ctx, model)
 	if err != nil {
@@ -269,6 +275,9 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	// app-srv may omit PKCE flags in the create response even when persisted;
+	// keep planned known values to avoid inconsistent-result-after-apply.
+	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -297,6 +306,7 @@ func (r *appConfigurationResource) Read(ctx context.Context, req resource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	next = mergeOmittedAppConfigurationBools(state, next)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
@@ -329,6 +339,7 @@ func (r *appConfigurationResource) Update(ctx context.Context, req resource.Upda
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
