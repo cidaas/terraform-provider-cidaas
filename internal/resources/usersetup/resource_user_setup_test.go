@@ -1,7 +1,6 @@
 package usersetup
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
@@ -121,10 +120,7 @@ func TestListToStringsSkipsUnknownElements(t *testing.T) {
 		types.StringValue("given_name"),
 		types.StringNull(),
 	})
-	got, diags := listToStrings(context.Background(), l)
-	if diags.HasError() {
-		t.Fatalf("diags: %v", diags)
-	}
+	got := listToStrings(l)
 	if len(got) != 2 || got[0] != "email" || got[1] != "given_name" {
 		t.Fatalf("got %v", got)
 	}

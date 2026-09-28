@@ -337,13 +337,8 @@ func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.Val
 	if listContainsUnknown(config.userSetup.AllowedFields) || listContainsUnknown(config.userSetup.RequiredFields) {
 		return
 	}
-	allowed, diags := listToStrings(ctx, config.userSetup.AllowedFields)
-	resp.Diagnostics.Append(diags...)
-	required, diags := listToStrings(ctx, config.userSetup.RequiredFields)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	allowed := listToStrings(config.userSetup.AllowedFields)
+	required := listToStrings(config.userSetup.RequiredFields)
 	if missing := missingRequiredFields(allowed, required); len(missing) > 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("user_setup").AtName("required_fields"),
@@ -461,29 +456,22 @@ func (c *setupConfig) toModel(ctx context.Context) (client.UserAppSetupModel, di
 	if !c.userSetup.CommunicationMediumVerification.IsNull() && !c.userSetup.CommunicationMediumVerification.IsUnknown() {
 		detail.CommunicationMediumVerification = c.userSetup.CommunicationMediumVerification.ValueString()
 	}
-	var d diag.Diagnostics
-	detail.AllowedFields, d = listToStrings(ctx, c.userSetup.AllowedFields)
-	diags.Append(d...)
-	detail.RequiredFields, d = listToStrings(ctx, c.userSetup.RequiredFields)
-	diags.Append(d...)
-	detail.AllowLoginWith, d = listToStrings(ctx, c.userSetup.AllowLoginWith)
-	diags.Append(d...)
-	detail.ConsentRefs, d = listToStrings(ctx, c.ConsentRefs)
-	diags.Append(d...)
-	detail.AutoConfirmCommunicationMethod, d = listToStrings(ctx, c.userSetup.AutoConfirmCommunicationMethod)
-	diags.Append(d...)
-	detail.VerificationForMedium, d = listToStrings(ctx, c.userSetup.VerificationForMedium)
-	diags.Append(d...)
+	detail.AllowedFields = listToStrings(c.userSetup.AllowedFields)
+	detail.RequiredFields = listToStrings(c.userSetup.RequiredFields)
+	detail.AllowLoginWith = listToStrings(c.userSetup.AllowLoginWith)
+	detail.ConsentRefs = listToStrings(c.ConsentRefs)
+	detail.AutoConfirmCommunicationMethod = listToStrings(c.userSetup.AutoConfirmCommunicationMethod)
+	detail.VerificationForMedium = listToStrings(c.userSetup.VerificationForMedium)
 
 	for _, g := range c.userSetup.operationsAllowedGroups {
 		if g == nil {
 			continue
 		}
-		ag := client.AllowedGroup{GroupID: g.GroupID.ValueString()}
-		ag.Roles, d = listToStrings(ctx, g.Roles)
-		diags.Append(d...)
-		ag.DefaultRoles, d = listToStrings(ctx, g.DefaultRoles)
-		diags.Append(d...)
+		ag := client.AllowedGroup{
+			GroupID:      g.GroupID.ValueString(),
+			Roles:        listToStrings(g.Roles),
+			DefaultRoles: listToStrings(g.DefaultRoles),
+		}
 		detail.OperationsAllowedGroups = append(detail.OperationsAllowedGroups, ag)
 	}
 	model.UserSetup = detail
@@ -676,9 +664,9 @@ func (r *userSetupResource) validateFieldSetupKeys(ctx context.Context, model cl
 	return false
 }
 
-func listToStrings(_ context.Context, l types.List) ([]string, diag.Diagnostics) {
+func listToStrings(l types.List) []string {
 	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
+		return nil
 	}
 	// Iterate element-by-element so that unknown values (e.g., references to
 	// not-yet-created resources) are safely skipped instead of causing a
@@ -697,7 +685,7 @@ func listToStrings(_ context.Context, l types.List) ([]string, diag.Diagnostics)
 		}
 		out = append(out, sv.ValueString())
 	}
-	return out, nil
+	return out
 }
 
 // listContainsUnknown returns true if any element in a non-null, non-unknown

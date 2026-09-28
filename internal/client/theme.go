@@ -46,7 +46,7 @@ func authClient() *http.Client {
 				if prev.URL != nil && req.URL != nil &&
 					prev.URL.Scheme == req.URL.Scheme && prev.URL.Host == req.URL.Host {
 					if auth := prev.Header.Get("Authorization"); auth != "" && req.Header.Get("Authorization") == "" {
-						req.Header.Set("Authorization", auth)
+						req.Header.Set("Authorization", auth) //nolint:gosec // G119: intentional same-host restore; Go strips Authorization on redirect.
 					}
 				}
 			}
