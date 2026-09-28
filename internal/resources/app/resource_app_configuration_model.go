@@ -147,14 +147,10 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 	model.ResponseTypes = util.ListToStrings(c.ResponseTypes)
 
 	if c.redirectURIs != nil {
-		redirectURIs, d := redirectURIsToClient(ctx, c.redirectURIs)
-		diags.Append(d...)
-		model.RedirectURIs = redirectURIs
+		model.RedirectURIs = redirectURIsToClient(c.redirectURIs)
 	}
 	if c.scopes != nil {
-		scopes, d := scopesToClient(ctx, c.scopes)
-		diags.Append(d...)
-		model.Scopes = scopes
+		model.Scopes = scopesToClient(c.scopes)
 	}
 	if c.tokenLifetimes != nil {
 		model.TokenLifetimes = tokenLifetimesToClient(c.tokenLifetimes)
@@ -178,25 +174,21 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 }
 
 // redirectURIsToClient maps the redirect_uris nested block to the API struct.
-func redirectURIsToClient(_ context.Context, cfg *redirectURIsConfig) (*client.RedirectURIsConfig, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	out := &client.RedirectURIsConfig{
+func redirectURIsToClient(cfg *redirectURIsConfig) *client.RedirectURIsConfig {
+	return &client.RedirectURIsConfig{
 		RedirectURIs:           util.ListToStrings(cfg.RedirectURIs),
 		AllowedLogoutUrls:      util.ListToStrings(cfg.AllowedLogoutUrls),
 		PostLogoutRedirectURIs: util.ListToStrings(cfg.PostLogoutRedirectURIs),
 		AllowedWebOrigins:      util.ListToStrings(cfg.AllowedWebOrigins),
 	}
-	return out, diags
 }
 
 // scopesToClient maps the scopes nested block to the API struct.
-func scopesToClient(_ context.Context, cfg *scopesConfig) (*client.ScopesConfig, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	out := &client.ScopesConfig{
+func scopesToClient(cfg *scopesConfig) *client.ScopesConfig {
+	return &client.ScopesConfig{
 		AllowedScopes: util.ListToStrings(cfg.AllowedScopes),
 		DefaultScopes: util.ListToStrings(cfg.DefaultScopes),
 	}
-	return out, diags
 }
 
 // tokenLifetimesToClient maps the token_lifetimes nested block to the API struct.
