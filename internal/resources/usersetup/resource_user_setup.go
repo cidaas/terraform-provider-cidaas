@@ -676,7 +676,7 @@ func (r *userSetupResource) validateFieldSetupKeys(ctx context.Context, model cl
 	return false
 }
 
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
+func listToStrings(_ context.Context, l types.List) ([]string, diag.Diagnostics) {
 	if l.IsNull() || l.IsUnknown() {
 		return nil, nil
 	}

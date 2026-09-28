@@ -31,7 +31,8 @@ type ThemeListResponse struct {
 
 // authClient preserves Authorization across same-host redirects.
 // Go's default client strips Authorization on redirect, which turns
-// POST /themes → 301 /themes/ into a 401 Unauthorized.
+// POST /themes → 301 /themes/ into a 401 Unauthorized. Re-adding is
+// limited to matching scheme+host to avoid leaking credentials (G119).
 func authClient() *http.Client {
 	return &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -39,8 +40,14 @@ func authClient() *http.Client {
 				return fmt.Errorf("too many redirects")
 			}
 			if len(via) > 0 {
-				if auth := via[0].Header.Get("Authorization"); auth != "" && req.Header.Get("Authorization") == "" {
-					req.Header.Set("Authorization", auth)
+				prev := via[0]
+				// Only re-add on same-host redirects. Go strips Authorization by
+				// default; re-adding across hosts would leak credentials (G119).
+				if prev.URL != nil && req.URL != nil &&
+					prev.URL.Scheme == req.URL.Scheme && prev.URL.Host == req.URL.Host {
+					if auth := prev.Header.Get("Authorization"); auth != "" && req.Header.Get("Authorization") == "" {
+						req.Header.Set("Authorization", auth)
+					}
 				}
 			}
 			return nil
