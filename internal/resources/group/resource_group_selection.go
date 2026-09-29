@@ -130,7 +130,7 @@ func (r *GroupSelectionResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	apiReq := groupSelectionModelToAPI(ctx, plan, &resp.Diagnostics)
+	apiReq := groupSelectionModelToAPI(plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -177,7 +177,7 @@ func (r *GroupSelectionResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	apiReq := groupSelectionModelToAPI(ctx, plan, &resp.Diagnostics)
+	apiReq := groupSelectionModelToAPI(plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -214,7 +214,7 @@ func (r *GroupSelectionResource) ImportState(ctx context.Context, req resource.I
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func groupSelectionModelToAPI(_ context.Context, m groupSelectionModel, _ *diag.Diagnostics) cidaas.GroupSelectionModel {
+func groupSelectionModelToAPI(m groupSelectionModel) cidaas.GroupSelectionModel {
 	selectableGroups := util.SetToStrings(m.SelectableGroups)
 	selectableGroupTypes := util.SetToStrings(m.SelectableGroupTypes)
 
