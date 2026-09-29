@@ -289,18 +289,3 @@ func mergeOmittedAuthSetupDefaultsBools(prior, state authSetupDefaultsModel) aut
 	state.Description = preferKnownString(prior.Description, state.Description)
 	return state
 }
-
-// preferKnownBool keeps prior when the API omitted a bool (nil → null).
-func preferKnownBool(prior, fromAPI types.Bool) types.Bool {
-	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
-		return prior
-	}
-	return fromAPI
-}
-
-func preferKnownString(prior, fromAPI types.String) types.String {
-	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
-		return prior
-	}
-	return fromAPI
-}

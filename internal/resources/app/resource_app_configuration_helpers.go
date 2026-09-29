@@ -140,6 +140,14 @@ func preferKnownBool(prior, fromAPI types.Bool) types.Bool {
 	return fromAPI
 }
 
+// preferKnownString keeps prior when the API omitted a string (empty/null).
+func preferKnownString(prior, fromAPI types.String) types.String {
+	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
+		return prior
+	}
+	return fromAPI
+}
+
 // mergeOmittedAppConfigurationBools restores plan/prior values for PKCE flags when
 // app-srv create/update/get responses omit them.
 func mergeOmittedAppConfigurationBools(prior, state appConfigurationConfig) appConfigurationConfig {
