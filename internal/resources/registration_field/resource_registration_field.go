@@ -1270,7 +1270,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 			if len(s.attributes) > 0 {
 				tempLocalText.Attributes = cidaasAttribues
 			}
-			if !s.ConsentLabel.IsNull() && !s.ConsentLabel.IsUnknown() {
+			if !s.ConsentLabel.IsNull() && !s.ConsentLabel.IsUnknown() && s.consent != nil {
 				tempLocalText.ConsentLabel = &cidaas.ConsentLabel{
 					Label:     s.consent.Label.ValueString(),
 					LabelText: s.consent.LabelText.ValueString(),
