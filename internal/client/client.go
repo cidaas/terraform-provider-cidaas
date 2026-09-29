@@ -24,6 +24,7 @@ type Client struct {
 	SuggestVerificationMethod *SuggestVerificationMethodService
 	VerificationOptions       *VerificationOptionsService
 	AppConfiguration          *AppConfigurationService
+	AuthSetupDefaults         *AuthSetupDefaultsService
 }
 
 type Config struct {
@@ -105,6 +106,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.SuggestVerificationMethod = NewSuggestVerificationMethodService(cfg)
 	c.VerificationOptions = NewVerificationOptionsService(cfg)
 	c.AppConfiguration = NewAppConfigurationService(cfg)
+	c.AuthSetupDefaults = NewAuthSetupDefaultsService(cfg)
 	return c, nil
 }
 

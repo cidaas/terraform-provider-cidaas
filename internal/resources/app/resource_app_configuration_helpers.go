@@ -96,6 +96,20 @@ func authenticationSetupAttrTypes() map[string]attr.Type {
 		"admin_client":                     types.BoolType,
 		"is_login_success_page_enabled":    types.BoolType,
 		"is_register_success_page_enabled": types.BoolType,
+		"auto_login_after_register":        types.BoolType,
+		"register_with_login_information":  types.BoolType,
+		"enable_password_less_auth":        types.BoolType,
+		"allow_user_level_multi_provider":  types.BoolType,
+		"social_business_ids":              types.BoolType,
+		"login_spi":                        types.ObjectType{AttrTypes: loginSpiAttrTypes()},
+	}
+}
+
+func loginSpiAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"enable_login_spi": types.BoolType,
+		"oauth_client_id":  types.StringType,
+		"spi_url":          types.StringType,
 	}
 }
 

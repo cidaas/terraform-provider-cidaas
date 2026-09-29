@@ -75,17 +75,30 @@ type TokenLifetimesConfig struct {
 	DefaultMaxAge                 *int64 `json:"default_max_age,omitempty"`
 }
 
-// AuthenticationSetupConfig maps authentication_setup nested object (extdep IDs + flags).
+// AuthenticationSetupConfig maps authentication_setup nested object (extdep IDs + flags + defaults-overridable bools).
 type AuthenticationSetupConfig struct {
-	VerificationOptionsID        string `json:"verification_options_id,omitempty"`
-	GroupSelectionID             string `json:"group_selection_id,omitempty"`
-	GroupVerificationRequestID   string `json:"group_verification_request_id,omitempty"`
-	TemplateGroupID              string `json:"template_group_id,omitempty"`
-	AllowGuestLogin              *bool  `json:"allow_guest_login,omitempty"`
-	IsRememberMeSelected         *bool  `json:"is_remember_me_selected,omitempty"`
-	AdminClient                  *bool  `json:"admin_client,omitempty"`
-	IsLoginSuccessPageEnabled    *bool  `json:"is_login_success_page_enabled,omitempty"`
-	IsRegisterSuccessPageEnabled *bool  `json:"is_register_success_page_enabled,omitempty"`
+	VerificationOptionsID        string          `json:"verification_options_id,omitempty"`
+	GroupSelectionID             string          `json:"group_selection_id,omitempty"`
+	GroupVerificationRequestID   string          `json:"group_verification_request_id,omitempty"`
+	TemplateGroupID              string          `json:"template_group_id,omitempty"`
+	AllowGuestLogin              *bool           `json:"allow_guest_login,omitempty"`
+	IsRememberMeSelected         *bool           `json:"is_remember_me_selected,omitempty"`
+	AdminClient                  *bool           `json:"admin_client,omitempty"`
+	IsLoginSuccessPageEnabled    *bool           `json:"is_login_success_page_enabled,omitempty"`
+	IsRegisterSuccessPageEnabled *bool           `json:"is_register_success_page_enabled,omitempty"`
+	AutoLoginAfterRegister       *bool           `json:"auto_login_after_register,omitempty"`
+	RegisterWithLoginInformation *bool           `json:"register_with_login_information,omitempty"`
+	EnablePasswordLessAuth       *bool           `json:"enable_password_less_auth,omitempty"`
+	AllowUserLevelMultiProvider  *bool           `json:"allow_user_level_multi_provider,omitempty"`
+	SocialBusinessIDs            *bool           `json:"social_business_ids,omitempty"`
+	LoginSpi                     *LoginSPIConfig `json:"login_spi,omitempty"`
+}
+
+// LoginSPIConfig maps authentication_setup.login_spi.
+type LoginSPIConfig struct {
+	EnableLoginSpi *bool  `json:"enable_login_spi,omitempty"`
+	OauthClientID  string `json:"oauth_client_id,omitempty"`
+	SpiURL         string `json:"spi_url,omitempty"`
 }
 
 // OwnershipDetailsConfig maps owner_ship_details (required on create).

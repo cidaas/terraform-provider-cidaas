@@ -97,17 +97,34 @@ Optional:
 <a id="nestedatt--authentication_setup"></a>
 ### Nested Schema for `authentication_setup`
 
+Per-app authentication setup. Bool flags that are omitted inherit tenant defaults from `cidaas_auth_setup_defaults`.
+
 Optional:
 
 - `admin_client` (Boolean)
 - `allow_guest_login` (Boolean)
+- `allow_user_level_multi_provider` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
+- `auto_login_after_register` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
+- `enable_password_less_auth` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
 - `group_selection_id` (String)
 - `group_verification_request_id` (String)
 - `is_login_success_page_enabled` (Boolean)
 - `is_register_success_page_enabled` (Boolean)
 - `is_remember_me_selected` (Boolean)
+- `login_spi` (Attributes) Optional login SPI configuration for this app. (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
+- `register_with_login_information` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
+- `social_business_ids` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
 - `template_group_id` (String)
 - `verification_options_id` (String)
+
+<a id="nestedatt--authentication_setup--login_spi"></a>
+### Nested Schema for `authentication_setup.login_spi`
+
+Optional:
+
+- `enable_login_spi` (Boolean)
+- `oauth_client_id` (String)
+- `spi_url` (String)
 
 
 <a id="nestedatt--client_auth_config"></a>

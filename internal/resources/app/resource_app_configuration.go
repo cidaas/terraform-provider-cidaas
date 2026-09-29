@@ -171,6 +171,8 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"authentication_setup": schema.SingleNestedAttribute{
 				Optional: true,
+				MarkdownDescription: "Per-app authentication setup. Bool flags that are omitted inherit tenant defaults from " +
+					"`cidaas_auth_setup_defaults`.",
 				Attributes: map[string]schema.Attribute{
 					"verification_options_id":          schema.StringAttribute{Optional: true},
 					"group_selection_id":               schema.StringAttribute{Optional: true},
@@ -181,6 +183,35 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"admin_client":                     schema.BoolAttribute{Optional: true},
 					"is_login_success_page_enabled":    schema.BoolAttribute{Optional: true},
 					"is_register_success_page_enabled": schema.BoolAttribute{Optional: true},
+					"auto_login_after_register": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+					},
+					"register_with_login_information": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+					},
+					"enable_password_less_auth": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+					},
+					"allow_user_level_multi_provider": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+					},
+					"social_business_ids": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+					},
+					"login_spi": schema.SingleNestedAttribute{
+						Optional:            true,
+						MarkdownDescription: "Optional login SPI configuration for this app.",
+						Attributes: map[string]schema.Attribute{
+							"enable_login_spi": schema.BoolAttribute{Optional: true},
+							"oauth_client_id":  schema.StringAttribute{Optional: true},
+							"spi_url":          schema.StringAttribute{Optional: true},
+						},
+					},
 				},
 			},
 			"hosted_pages_layout_id": schema.StringAttribute{

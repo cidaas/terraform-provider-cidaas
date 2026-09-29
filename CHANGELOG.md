@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`cidaas_auth_setup_defaults`:** Tenant Default Authentication Setup via `app-srv/apps/auth-setup-defaults`: 
+`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`, `net_id`.
+- **`cidaas_app_configuration.authentication_setup`:** Per-app overrides for the same defaults bools, plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`).
+
+### Changed
+
+- v3→v4 migration guide: Trustdesk default auth flags map to `cidaas_auth_setup_defaults` / app `authentication_setup`, not `user_setup` / `verification_options`.
+
 ### Fixed
 
 - **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
