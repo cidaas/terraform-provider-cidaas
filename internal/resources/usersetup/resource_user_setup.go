@@ -335,6 +335,9 @@ func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.Val
 	if config.userSetup.AllowedFields.IsUnknown() || config.userSetup.RequiredFields.IsUnknown() {
 		return
 	}
+	// Also skip when individual elements are unknown (e.g., plan-time refs to other resources).
+	// Null elements are not valid field keys and are intentionally dropped by util.ListToStrings.
+
 	if util.ListContainsUnknown(config.userSetup.AllowedFields) || util.ListContainsUnknown(config.userSetup.RequiredFields) {
 		return
 	}
