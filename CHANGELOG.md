@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` and also written to `localeText` (Trustdesk). Previously only `localeTexts` + `label_text` were sent, so Trustdesk showed the name but not the consent label.
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
 
 ## [4.0.1]
 

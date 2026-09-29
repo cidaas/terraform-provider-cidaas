@@ -48,24 +48,8 @@ type RegistrationFieldConfig struct {
 	RemoteSettings                           *RemoteFieldSettings `json:"remoteFieldSettings,omitempty"`
 }
 
-// MarshalJSON dual-writes localeTexts (API store) and localeText (Trustdesk UI).
-func (c RegistrationFieldConfig) MarshalJSON() ([]byte, error) {
-	type alias RegistrationFieldConfig
-	aux := struct {
-		alias
-		LocaleText any `json:"localeText,omitempty"`
-	}{alias: alias(c)}
-	switch len(c.LocaleTexts) {
-	case 0:
-	case 1:
-		aux.LocaleText = c.LocaleTexts[0]
-	default:
-		aux.LocaleText = c.LocaleTexts
-	}
-	return json.Marshal(aux)
-}
-
 // UnmarshalJSON reads localeTexts or Trustdesk localeText (object or array).
+// Outbound payloads keep localeTexts only — fieldsetup rejects dual-write of localeText (400/09001).
 func (c *RegistrationFieldConfig) UnmarshalJSON(data []byte) error {
 	type alias RegistrationFieldConfig
 	aux := struct {
@@ -182,20 +166,7 @@ type ConsentLabel struct {
 	LabelText string `json:"labelText,omitempty"`
 }
 
-// MarshalJSON emits labelText (fieldsetup/Trustdesk) and label_text (legacy payloads).
-func (c ConsentLabel) MarshalJSON() ([]byte, error) {
-	out := map[string]string{}
-	if c.Label != "" {
-		out["label"] = c.Label
-	}
-	if c.LabelText != "" {
-		out["labelText"] = c.LabelText
-		out["label_text"] = c.LabelText
-	}
-	return json.Marshal(out)
-}
-
-// UnmarshalJSON accepts labelText or label_text.
+// UnmarshalJSON accepts labelText (Trustdesk/fieldsetup) or legacy label_text.
 func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
 	var raw map[string]string
 	if err := json.Unmarshal(data, &raw); err != nil {

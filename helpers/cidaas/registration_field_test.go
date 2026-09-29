@@ -863,7 +863,7 @@ func TestRegField_UpdateOrder_Error(t *testing.T) {
 	}
 }
 
-func TestRegistrationFieldConfig_MarshalLocaleTextAndConsentLabelText(t *testing.T) {
+func TestRegistrationFieldConfig_MarshalConsentLabelText(t *testing.T) {
 	t.Parallel()
 	cfg := RegistrationFieldConfig{
 		FieldKey: "bug_consent",
@@ -885,11 +885,14 @@ func TestRegistrationFieldConfig_MarshalLocaleTextAndConsentLabelText(t *testing
 	if !strings.Contains(s, `"localeTexts"`) {
 		t.Fatalf("missing localeTexts: %s", s)
 	}
-	if !strings.Contains(s, `"localeText"`) {
-		t.Fatalf("missing localeText: %s", s)
+	if strings.Contains(s, `"localeText"`) {
+		t.Fatalf("must not dual-write localeText (fieldsetup 400): %s", s)
 	}
 	if !strings.Contains(s, `"labelText":"I agree"`) {
 		t.Fatalf("missing labelText: %s", s)
+	}
+	if strings.Contains(s, `"label_text"`) {
+		t.Fatalf("must emit camelCase labelText only: %s", s)
 	}
 }
 
