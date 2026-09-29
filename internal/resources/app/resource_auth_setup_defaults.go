@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -125,30 +126,7 @@ func (r *authSetupDefaultsResource) Configure(_ context.Context, req resource.Co
 }
 
 func (r *authSetupDefaultsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	if r.client == nil {
-		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
-		return
-	}
-	var plan authSetupDefaultsModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	current, err := r.client.AuthSetupDefaults.Get(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Read auth setup defaults failed", err.Error())
-		return
-	}
-	entity := mergeAuthSetupDefaultsPlan(current.Data, plan)
-	res, err := r.client.AuthSetupDefaults.Update(ctx, entity)
-	if err != nil {
-		resp.Diagnostics.AddError("Update auth setup defaults failed", err.Error())
-		return
-	}
-	state := flattenAuthSetupDefaults(res.Data)
-	state = mergeOmittedAuthSetupDefaultsBools(plan, state)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(r.applyAndSet(ctx, req.Plan.Get, resp.State.Set)...)
 }
 
 func (r *authSetupDefaultsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -176,29 +154,48 @@ func (r *authSetupDefaultsResource) Read(ctx context.Context, req resource.ReadR
 }
 
 func (r *authSetupDefaultsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	if r.client == nil {
-		resp.Diagnostics.AddError("Provider not configured", "Configure the provider before managing resources.")
-		return
-	}
+	resp.Diagnostics.Append(r.applyAndSet(ctx, req.Plan.Get, resp.State.Set)...)
+}
+
+func (r *authSetupDefaultsResource) applyAndSet(
+	ctx context.Context,
+	getPlan func(context.Context, any) diag.Diagnostics,
+	setState func(context.Context, any) diag.Diagnostics,
+) diag.Diagnostics {
 	var plan authSetupDefaultsModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
+	diags := getPlan(ctx, &plan)
+	if diags.HasError() {
+		return diags
+	}
+	state, d := r.applyPlan(ctx, plan)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	diags.Append(setState(ctx, &state)...)
+	return diags
+}
+
+func (r *authSetupDefaultsResource) applyPlan(ctx context.Context, plan authSetupDefaultsModel) (authSetupDefaultsModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if r.client == nil {
+		diags.AddError("Provider not configured", "Configure the provider before managing resources.")
+		return authSetupDefaultsModel{}, diags
 	}
 	current, err := r.client.AuthSetupDefaults.Get(ctx)
 	if err != nil {
-		resp.Diagnostics.AddError("Read auth setup defaults failed", err.Error())
-		return
+		diags.AddError("Read auth setup defaults failed", err.Error())
+		return authSetupDefaultsModel{}, diags
 	}
 	entity := mergeAuthSetupDefaultsPlan(current.Data, plan)
 	res, err := r.client.AuthSetupDefaults.Update(ctx, entity)
 	if err != nil {
-		resp.Diagnostics.AddError("Update auth setup defaults failed", err.Error())
-		return
+		diags.AddError("Update auth setup defaults failed", err.Error())
+		return authSetupDefaultsModel{}, diags
 	}
 	state := flattenAuthSetupDefaults(res.Data)
 	state = mergeOmittedAuthSetupDefaultsBools(plan, state)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	return state, diags
 }
 
 func (r *authSetupDefaultsResource) Delete(ctx context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
