@@ -172,7 +172,8 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			"authentication_setup": schema.SingleNestedAttribute{
 				Optional: true,
 				MarkdownDescription: "Per-app authentication setup. Bool flags that are omitted inherit tenant defaults from " +
-					"`cidaas_auth_setup_defaults`.",
+					"`cidaas_auth_setup_defaults`. `net_id` is tenant-only; `login_spi` is app-only. " +
+					"Requires scopes `cidaas:apps_read` / `cidaas:apps_write`.",
 				Attributes: map[string]schema.Attribute{
 					"verification_options_id":          schema.StringAttribute{Optional: true},
 					"group_selection_id":               schema.StringAttribute{Optional: true},
@@ -205,11 +206,20 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					},
 					"login_spi": schema.SingleNestedAttribute{
 						Optional:            true,
-						MarkdownDescription: "Optional login SPI configuration for this app.",
+						MarkdownDescription: "Optional login SPI configuration for this app (app-level only; not on tenant defaults).",
 						Attributes: map[string]schema.Attribute{
-							"enable_login_spi": schema.BoolAttribute{Optional: true},
-							"oauth_client_id":  schema.StringAttribute{Optional: true},
-							"spi_url":          schema.StringAttribute{Optional: true},
+							"enable_login_spi": schema.BoolAttribute{
+								Optional:            true,
+								MarkdownDescription: "Enable login SPI for this app.",
+							},
+							"oauth_client_id": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "OAuth client ID used by the login SPI.",
+							},
+							"spi_url": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "Login SPI endpoint URL.",
+							},
 						},
 					},
 				},

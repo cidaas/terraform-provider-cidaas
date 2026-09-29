@@ -19,13 +19,15 @@ Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write`, `cidaas:apps_dele
 #
 # Configures client applications in Cidaas v4.
 # Supports NON_INTERACTIVE (M2M), SINGLE_PAGE_WEBAPP, REGULAR_WEB, and NATIVE_MOBILE client types.
+# Requires OAuth scopes: cidaas:apps_read, cidaas:apps_write, cidaas:apps_delete
 
 resource "cidaas_app_configuration" "example" {
-  client_name = "terraform-example-m2m"
-  client_type = "NON_INTERACTIVE"
+  client_name = "terraform-example-spa"
+  client_type = "SINGLE_PAGE"
   enabled     = true
 
-  grant_types = ["client_credentials"]
+  grant_types    = ["authorization_code", "refresh_token"]
+  response_types = ["code"]
 
   ownership_details = {
     company_name    = "Example Corp"
@@ -36,6 +38,19 @@ resource "cidaas_app_configuration" "example" {
   scopes = {
     allowed_scopes = ["openid", "profile"]
     default_scopes = ["openid"]
+  }
+
+  # Per-app overrides. Omit a bool to inherit cidaas_auth_setup_defaults (tenant).
+  # net_id is tenant-only (cidaas_auth_setup_defaults); login_spi is app-only.
+  authentication_setup = {
+    auto_login_after_register       = false
+    register_with_login_information = false
+    enable_password_less_auth       = true
+    allow_user_level_multi_provider = true
+    social_business_ids             = false
+    login_spi = {
+      enable_login_spi = false
+    }
   }
 }
 ```
@@ -97,7 +112,9 @@ Optional:
 <a id="nestedatt--authentication_setup"></a>
 ### Nested Schema for `authentication_setup`
 
-Per-app authentication setup. Bool flags that are omitted inherit tenant defaults from `cidaas_auth_setup_defaults`.
+Per-app authentication setup on `POST/GET/PUT /app-srv/apps/{client_id}`. Bool flags that are omitted inherit tenant defaults from [`cidaas_auth_setup_defaults`](auth_setup_defaults.md) (`GET/PUT /app-srv/apps/auth-setup-defaults`).
+
+Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write` (and `cidaas:apps_delete` to destroy the app). `net_id` is **not** set here — use tenant `cidaas_auth_setup_defaults.net_id`. `login_spi` is **app-only**.
 
 Optional:
 
@@ -111,7 +128,7 @@ Optional:
 - `is_login_success_page_enabled` (Boolean)
 - `is_register_success_page_enabled` (Boolean)
 - `is_remember_me_selected` (Boolean)
-- `login_spi` (Attributes) Optional login SPI configuration for this app. (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
+- `login_spi` (Attributes) Optional login SPI configuration for this app (app-level only). (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
 - `register_with_login_information` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
 - `social_business_ids` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
 - `template_group_id` (String)
@@ -122,9 +139,9 @@ Optional:
 
 Optional:
 
-- `enable_login_spi` (Boolean)
-- `oauth_client_id` (String)
-- `spi_url` (String)
+- `enable_login_spi` (Boolean) Enable login SPI for this app.
+- `oauth_client_id` (String) OAuth client ID used by the login SPI.
+- `spi_url` (String) Login SPI endpoint URL.
 
 
 <a id="nestedatt--client_auth_config"></a>

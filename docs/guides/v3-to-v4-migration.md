@@ -108,6 +108,21 @@ resource "cidaas_app" "legacy_full_app" {
 
 #### Standardized `cidaas_app_configuration` (v4 Decoupled Microservice)
 
+Tenant Default Authentication Setup (Trustdesk) is a separate singleton — set once, then override per app only when needed:
+
+```hcl
+# Requires scopes cidaas:apps_read / cidaas:apps_write and cidaas_version = "4.x"
+resource "cidaas_auth_setup_defaults" "tenant" {
+  name                            = "default"
+  auto_login_after_register       = false
+  register_with_login_information = false
+  enable_password_less_auth       = true
+  allow_user_level_multi_provider = true
+  social_business_ids             = false
+  net_id                          = false
+}
+```
+
 ```hcl
 resource "cidaas_app_configuration" "v4_full_app" {
   client_name         = "sample_app_v3_full"
@@ -153,9 +168,21 @@ resource "cidaas_app_configuration" "v4_full_app" {
   user_setup_id          = cidaas_user_setup.sample.id
 
   authentication_setup = {
+    # Extdep refs
     verification_options_id       = cidaas_verification_options.web.id
     group_selection_id            = cidaas_group_selection.sample.id
     group_verification_request_id = cidaas_group_verification_filter.sample.id
+
+    # Optional overrides of cidaas_auth_setup_defaults (omit to inherit).
+    # net_id is tenant-only; login_spi is app-only.
+    auto_login_after_register       = false
+    register_with_login_information = false
+    enable_password_less_auth       = true
+    allow_user_level_multi_provider = true
+    social_business_ids             = false
+    login_spi = {
+      enable_login_spi = false
+    }
   }
 }
 ```

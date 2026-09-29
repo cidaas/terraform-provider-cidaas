@@ -52,10 +52,11 @@ func (r *authSetupDefaultsResource) Metadata(_ context.Context, req resource.Met
 
 func (r *authSetupDefaultsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages the tenant **Default Authentication Setup** (Trustdesk) via `app-srv/apps/auth-setup-defaults`. " +
+		MarkdownDescription: "Manages the tenant **Default Authentication Setup** (Trustdesk / v4) via `GET/PUT app-srv/apps/auth-setup-defaults`. " +
 			"This is a singleton (`id` is always `default`); Create updates the seeded record, Destroy only removes it from Terraform state.\n\n" +
-			"Apps may override the same bools under `cidaas_app_configuration.authentication_setup` (nil inherits these defaults).\n\n" +
-			"Requires admin roles and scopes `cidaas:apps_read` / `cidaas:apps_write`.",
+			"Apps may override the same bools under `cidaas_app_configuration.authentication_setup` (omit inherits these defaults). " +
+			"`login_spi` is app-only; `net_id` is tenant-only.\n\n" +
+			"Requires `cidaas_version = \"4.x\"`, admin roles, and OAuth scopes `cidaas:apps_read` / `cidaas:apps_write`.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

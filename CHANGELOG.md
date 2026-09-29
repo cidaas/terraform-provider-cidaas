@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - v3→v4 migration guide: Trustdesk default auth flags map to `cidaas_auth_setup_defaults` / app `authentication_setup`, not `user_setup` / `verification_options`.
+- Docs: `cidaas_auth_setup_defaults` requirements (scopes, roles, `4.x`, API); app `authentication_setup` examples; inheritance / `net_id` vs `login_spi` notes; resource-dependency order.
 
 ### Fixed
 
