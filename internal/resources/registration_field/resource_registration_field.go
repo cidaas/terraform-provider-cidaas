@@ -1216,7 +1216,7 @@ func (r *RegFieldResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.RegistrationFieldConfig, diag.Diagnostics) { //nolint:gocognit,gocyclo
-	var diag diag.Diagnostics
+	var diags diag.Diagnostics
 	var regConfig cidaas.RegistrationFieldConfig
 	regConfig.Internal = plan.Internal.ValueBool()
 	regConfig.ReadOnly = plan.ReadOnly.ValueBool()
@@ -1293,8 +1293,8 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 			if len(patterns) > 0 {
 				composed, err := composeANDRegexes(patterns)
 				if err != nil {
-					diag.AddError("Validation Error", fmt.Sprintf("field_definition.regexes: %s", err.Error()))
-					return nil, diag
+					diags.AddError("Validation Error", fmt.Sprintf("field_definition.regexes: %s", err.Error()))
+					return nil, diags
 				}
 				regexValue = composed
 			}
@@ -1312,21 +1312,21 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 		if !plan.fieldDefinition.MinDate.IsNull() {
 			minDate, err := time.Parse(layout, plan.fieldDefinition.MinDate.ValueString())
 			if err != nil {
-				diag.AddError("Parse Error", "failed to parse min_date configured")
+				diags.AddError("Parse Error", "failed to parse min_date configured")
 			}
 			regConfig.FieldDefinition.MinDate = &minDate
 		}
 		if !plan.fieldDefinition.MaxDate.IsNull() {
 			maxDate, err := time.Parse(layout, plan.fieldDefinition.MaxDate.ValueString())
 			if err != nil {
-				diag.AddError("Parse Error", "failed to parse max_date configured")
+				diags.AddError("Parse Error", "failed to parse max_date configured")
 			}
 			regConfig.FieldDefinition.MaxDate = &maxDate
 		}
 		if !plan.fieldDefinition.InitialDate.IsNull() {
 			initialDate, err := time.Parse(layout, plan.fieldDefinition.InitialDate.ValueString())
 			if err != nil {
-				diag.AddError("Parse Error", "failed to parse initial_date configured")
+				diags.AddError("Parse Error", "failed to parse initial_date configured")
 			}
 			regConfig.FieldDefinition.InitialDate = &initialDate
 		}
@@ -1338,7 +1338,7 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 		}
 		regConfig.RemoteSettings = remote
 	}
-	return &regConfig, nil
+	return &regConfig, diags
 }
 
 // buildRemoteFieldSettings converts Terraform remote_field_settings config to API type.
