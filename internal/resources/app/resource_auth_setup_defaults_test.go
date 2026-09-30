@@ -66,7 +66,8 @@ func TestMergeAuthSetupDefaultsPlanOverridesKnownBools(t *testing.T) {
 	t.Parallel()
 	curTrue := true
 	current := client.AuthSetupDefaultsEntity{
-		Name: "default",
+		Name:  "default",
+		Owner: "SYSTEM",
 		AuthSetupDefaults: &client.AuthSetupDefaults{
 			EnablePasswordLessAuth: &curTrue,
 			NetID:                  &curTrue,
@@ -78,6 +79,9 @@ func TestMergeAuthSetupDefaultsPlanOverridesKnownBools(t *testing.T) {
 		NetID:                  falseVal,
 	}
 	out := mergeAuthSetupDefaultsPlan(current, plan)
+	if out.Owner != "SYSTEM" {
+		t.Fatalf("owner=%q, want SYSTEM (must round-trip on PUT)", out.Owner)
+	}
 	if out.AuthSetupDefaults == nil || out.AuthSetupDefaults.EnablePasswordLessAuth == nil || *out.AuthSetupDefaults.EnablePasswordLessAuth {
 		t.Fatalf("%+v", out.AuthSetupDefaults)
 	}

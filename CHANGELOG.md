@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
+- **`cidaas_app_configuration`:** custom `client_id` no longer causes “Provider produced inconsistent result after apply” (explicit values are forwarded; only null/unknown are cleared before create).
+- **`cidaas_app_configuration`:** `disable_insecure_pkce_method` / `require_pkce` no longer become null after apply when the API omits them (`preferKnownBool`).
+- **`cidaas_user_setup`:** plan-time refs in `allowed_fields` / `required_fields` no longer crash; unknown list/set elements are skipped instead of forcing string conversion.
 
 ## [4.0.1]
 

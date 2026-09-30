@@ -246,6 +246,7 @@ func mergeAuthSetupDefaultsPlan(current client.AuthSetupDefaultsEntity, plan aut
 		ID:                authSetupDefaultsResourceID,
 		Name:              name,
 		Description:       desc,
+		Owner:             current.Owner,
 		AuthSetupDefaults: defaults,
 	}
 }
