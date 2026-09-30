@@ -137,9 +137,10 @@ func (r *userSetupResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages reusable User Setup profiles on cidaas v4 (Trustdesk) via `user-srv/usersetup`. " +
 			"Applications reference a profile via `user_setup_id`.\n\n" +
-			"Writes (create/update/delete) require admin or developer roles " +
-			"(`USERSETUP_MANAGER` / `APP_MANAGER` / `ADMIN` / `SECONDARY_ADMIN` / `SUPER_ADMIN`) — there is no write OAuth scope. " +
-			"Read-by-ID may use roles or scope `cidaas:usersetup_read`.",
+			"Authorization (user-srv): OAuth scopes **or** admin/developer group roles.\n\n" +
+			"- Create/Update: scope `cidaas:usersetup_write`, or roles `USERSETUP_MANAGER` / `APP_MANAGER` / `ADMIN` / `SECONDARY_ADMIN` / `SUPER_ADMIN`\n" +
+			"- Read: scope `cidaas:usersetup_read`, or the write roles plus `USERSETUP_VIEWER`\n" +
+			"- Delete: scope `cidaas:usersetup_delete`, or the same write roles",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
