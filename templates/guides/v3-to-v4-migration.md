@@ -69,7 +69,7 @@ Below is the complete, zero-omissions mapping table showing how all fields from 
 | `token_endpoint_auth_method`                                                                           | `client_auth_config.token_endpoint_auth_method`      | String             | Moved into `client_auth_config` block (`none`, `client_secret_basic`, `private_key_jwt`, `tls_client_auth`).                             |
 | `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers`                                 | List(Object)       | Standardized under `identity_providers` list in v4, linking `cidaas_federation_provider` instances.                                      |
 | `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` that includes `cidaas_hosted_page` ID.                                                                    |
-| `auto_login_after_register`, `register_with_login_information`, `enable_passwordless_auth` / `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`, NetID active | `cidaas_auth_setup_defaults` (tenant defaults) and/or `authentication_setup.*` on `cidaas_app_configuration` (per-app override; omit to inherit) | Bool | Trustdesk **Default Authentication Setup** is `GET/PUT app-srv/apps/auth-setup-defaults`. Deduplication / field lists stay on `cidaas_user_setup`. |
+| `auto_login_after_register`, `register_with_login_information`, `enable_passwordless_auth` / `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids` | `authentication_setup.*` on `cidaas_app_configuration` | Bool | Set per app in Terraform. Tenant Default Authentication Setup is admin/Trustdesk-only (not a Terraform resource). Deduplication / field lists stay on `cidaas_user_setup`. NetID is tenant-only and not exposed on the app resource. |
 | `enable_deduplication`, `allow_disposable_email`, `validate_phone_number`, allowed/required fields | `user_setup_id` → `cidaas_user_setup` | String (Extdep ID) | Registration field and dedup policies. |
 | `mfa`, `suggest_verification_methods`, `smart_mfa`, `allowed_mfa`                                      | `authentication_setup.verification_options_id`       | String (Extdep ID) | In v4, MFA settings and policies are managed via `cidaas_verification_options` resource.                                                 |
 | `group_selection`                                                                                      | `authentication_setup.group_selection_id`            | String (Extdep ID) | In v4, group selection policies are managed via `cidaas_group_selection` resource.                                                       |
@@ -108,20 +108,7 @@ resource "cidaas_app" "legacy_full_app" {
 
 #### Standardized `cidaas_app_configuration` (v4 Decoupled Microservice)
 
-Tenant Default Authentication Setup (Trustdesk) is a separate singleton — set once, then override per app only when needed:
-
-```hcl
-# Requires scopes cidaas:apps_read / cidaas:apps_write and cidaas_version = "4.x"
-resource "cidaas_auth_setup_defaults" "tenant" {
-  name                            = "default"
-  auto_login_after_register       = false
-  register_with_login_information = false
-  enable_password_less_auth       = true
-  allow_user_level_multi_provider = true
-  social_business_ids             = false
-  net_id                          = false
-}
-```
+Set authentication setup flags on the app (Terraform manages **app-level only**; tenant Default Authentication Setup stays in Trustdesk):
 
 ```hcl
 resource "cidaas_app_configuration" "v4_full_app" {
@@ -173,8 +160,7 @@ resource "cidaas_app_configuration" "v4_full_app" {
     group_selection_id            = cidaas_group_selection.sample.id
     group_verification_request_id = cidaas_group_verification_filter.sample.id
 
-    # Optional overrides of cidaas_auth_setup_defaults (omit to inherit).
-    # net_id is tenant-only; login_spi is app-only.
+    # Per-app authentication setup
     auto_login_after_register       = false
     register_with_login_information = false
     enable_password_less_auth       = true

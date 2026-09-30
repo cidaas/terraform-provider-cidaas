@@ -171,7 +171,6 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		hostedpages.NewHostedPageResource,
 		usersetup.NewUserSetupResource,
 		app.NewAppConfigurationResource,
-		app.NewAuthSetupDefaultsResource,
 		app.NewLegacyAppResource,
 		verification.NewSuggestVerificationMethodResource,
 		verification.NewVerificationOptionsResource,

@@ -40,8 +40,8 @@ resource "cidaas_app_configuration" "example" {
     default_scopes = ["openid"]
   }
 
-  # Per-app overrides. Omit a bool to inherit cidaas_auth_setup_defaults (tenant).
-  # net_id is tenant-only (cidaas_auth_setup_defaults); login_spi is app-only.
+  # Per-app authentication setup (Trustdesk). Tenant defaults are not managed by Terraform.
+  # login_spi is app-only.
   authentication_setup = {
     auto_login_after_register       = false
     register_with_login_information = false
@@ -112,25 +112,25 @@ Optional:
 <a id="nestedatt--authentication_setup"></a>
 ### Nested Schema for `authentication_setup`
 
-Per-app authentication setup on `POST/GET/PUT /app-srv/apps/{client_id}`. Bool flags that are omitted inherit tenant defaults from [`cidaas_auth_setup_defaults`](auth_setup_defaults.md) (`GET/PUT /app-srv/apps/auth-setup-defaults`).
+Per-app authentication setup on `POST/GET/PUT /app-srv/apps/{client_id}`. Managed only at **app level** in Terraform; tenant Default Authentication Setup (Trustdesk UI / `app-srv/apps/auth-setup-defaults`) is out of scope for this provider.
 
-Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write` (and `cidaas:apps_delete` to destroy the app). `net_id` is **not** set here — use tenant `cidaas_auth_setup_defaults.net_id`. `login_spi` is **app-only**.
+Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write` (and `cidaas:apps_delete` to destroy the app). `login_spi` is app-only. Tenant-only flags such as `net_id` are not exposed here.
 
 Optional:
 
 - `admin_client` (Boolean)
 - `allow_guest_login` (Boolean)
-- `allow_user_level_multi_provider` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
-- `auto_login_after_register` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
-- `enable_password_less_auth` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
+- `allow_user_level_multi_provider` (Boolean) Allow users to link multiple identity providers.
+- `auto_login_after_register` (Boolean) Automatically log the user in after registration.
+- `enable_password_less_auth` (Boolean) Enable passwordless authentication methods (magic link / OTP).
 - `group_selection_id` (String)
 - `group_verification_request_id` (String)
 - `is_login_success_page_enabled` (Boolean)
 - `is_register_success_page_enabled` (Boolean)
 - `is_remember_me_selected` (Boolean)
-- `login_spi` (Attributes) Optional login SPI configuration for this app (app-level only). (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
-- `register_with_login_information` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
-- `social_business_ids` (Boolean) Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.
+- `login_spi` (Attributes) Optional login SPI configuration for this app. (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
+- `register_with_login_information` (Boolean) Allow registration using login information.
+- `social_business_ids` (Boolean) Enable social business IDs.
 - `template_group_id` (String)
 - `verification_options_id` (String)
 

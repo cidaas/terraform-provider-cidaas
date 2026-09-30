@@ -25,8 +25,8 @@ resource "cidaas_app_configuration" "example" {
     default_scopes = ["openid"]
   }
 
-  # Per-app overrides. Omit a bool to inherit cidaas_auth_setup_defaults (tenant).
-  # net_id is tenant-only (cidaas_auth_setup_defaults); login_spi is app-only.
+  # Per-app authentication setup (Trustdesk). Tenant defaults are not managed by Terraform.
+  # login_spi is app-only.
   authentication_setup = {
     auto_login_after_register       = false
     register_with_login_information = false

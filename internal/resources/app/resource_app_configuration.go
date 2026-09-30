@@ -171,9 +171,9 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"authentication_setup": schema.SingleNestedAttribute{
 				Optional: true,
-				MarkdownDescription: "Per-app authentication setup. Bool flags that are omitted inherit tenant defaults from " +
-					"`cidaas_auth_setup_defaults`. `net_id` is tenant-only; `login_spi` is app-only. " +
-					"Requires scopes `cidaas:apps_read` / `cidaas:apps_write`.",
+				MarkdownDescription: "Per-app authentication setup on Trustdesk (v4). Set these flags on the app via Terraform; " +
+					"tenant Default Authentication Setup is not managed by this provider. " +
+					"`login_spi` is app-only. Requires scopes `cidaas:apps_read` / `cidaas:apps_write`.",
 				Attributes: map[string]schema.Attribute{
 					"verification_options_id":          schema.StringAttribute{Optional: true},
 					"group_selection_id":               schema.StringAttribute{Optional: true},
@@ -186,27 +186,27 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"is_register_success_page_enabled": schema.BoolAttribute{Optional: true},
 					"auto_login_after_register": schema.BoolAttribute{
 						Optional:            true,
-						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+						MarkdownDescription: "Automatically log the user in after registration.",
 					},
 					"register_with_login_information": schema.BoolAttribute{
 						Optional:            true,
-						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+						MarkdownDescription: "Allow registration using login information.",
 					},
 					"enable_password_less_auth": schema.BoolAttribute{
 						Optional:            true,
-						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+						MarkdownDescription: "Enable passwordless authentication methods (magic link / OTP).",
 					},
 					"allow_user_level_multi_provider": schema.BoolAttribute{
 						Optional:            true,
-						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+						MarkdownDescription: "Allow users to link multiple identity providers.",
 					},
 					"social_business_ids": schema.BoolAttribute{
 						Optional:            true,
-						MarkdownDescription: "Override tenant default; omit to inherit `cidaas_auth_setup_defaults`.",
+						MarkdownDescription: "Enable social business IDs.",
 					},
 					"login_spi": schema.SingleNestedAttribute{
 						Optional:            true,
-						MarkdownDescription: "Optional login SPI configuration for this app (app-level only; not on tenant defaults).",
+						MarkdownDescription: "Optional login SPI configuration for this app.",
 						Attributes: map[string]schema.Attribute{
 							"enable_login_spi": schema.BoolAttribute{
 								Optional:            true,

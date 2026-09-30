@@ -9,14 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`cidaas_auth_setup_defaults`:** Tenant Default Authentication Setup via `app-srv/apps/auth-setup-defaults`: 
-`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`, `net_id`.
-- **`cidaas_app_configuration.authentication_setup`:** Per-app overrides for the same defaults bools, plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`).
+- **`cidaas_app_configuration.authentication_setup`:** Per-app authentication setup flags (`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`) plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`). Tenant Default Authentication Setup is not managed by Terraform (admin-only Trustdesk / `app-srv/apps/auth-setup-defaults`).
 
 ### Changed
 
-- v3→v4 migration guide: Trustdesk default auth flags map to `cidaas_auth_setup_defaults` / app `authentication_setup`, not `user_setup` / `verification_options`.
-- Docs: `cidaas_auth_setup_defaults` requirements (scopes, roles, `4.x`, API); app `authentication_setup` examples; inheritance / `net_id` vs `login_spi` notes; resource-dependency order.
+- v3→v4 migration guide: Trustdesk app auth flags map to `cidaas_app_configuration.authentication_setup`, not `user_setup` / `verification_options`.
+- Docs: app `authentication_setup` examples; `login_spi` notes; resource-dependency order.
 
 ### Fixed
 
