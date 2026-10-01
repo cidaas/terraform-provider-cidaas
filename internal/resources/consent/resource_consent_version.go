@@ -218,14 +218,8 @@ func (r *ConsentVersionResource) Create(ctx context.Context, req resource.Create
 
 	var scopes, requiredFields []string
 	if plan.ConsentType.ValueString() == SCOPES {
-		resp.Diagnostics.Append(plan.Scopes.ElementsAs(ctx, &scopes, false)...)
-		resp.Diagnostics.Append(plan.RequiredFields.ElementsAs(ctx, &requiredFields, false)...)
-		if resp.Diagnostics.HasError() {
-			tflog.Error(ctx, "failed to get scopes or required fields", util.H{
-				"errors": resp.Diagnostics.Errors(),
-			})
-			return
-		}
+		scopes = util.SetToStrings(plan.Scopes)
+		requiredFields = util.SetToStrings(plan.RequiredFields)
 	}
 
 	consentVersion := cidaas.ConsentVersionModel{

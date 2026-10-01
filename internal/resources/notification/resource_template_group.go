@@ -332,33 +332,21 @@ func prepareTemplateGroupModel(ctx context.Context, plan TemplateGroupConfig) (*
 			FromName:  plan.emailSenderConfig.FromName.ValueString(),
 			ReplyTo:   plan.emailSenderConfig.ReplyTo.ValueString(),
 		}
-		diag := plan.emailSenderConfig.SenderNames.ElementsAs(ctx, &tgModel.EmailSenderConfig.SenderNames, false)
-		if diag.HasError() {
-			return nil, diag
-		}
+		tgModel.EmailSenderConfig.SenderNames = util.SetToStrings(plan.emailSenderConfig.SenderNames)
 	}
 	if !plan.SMSSenderConfig.IsNull() && !plan.SMSSenderConfig.IsUnknown() {
 		tgModel.SMSSenderConfig = &cidaas.SMSSenderConfig{
 			FromName: plan.smsSenderConfig.FromName.ValueString(),
 		}
-		diag := plan.smsSenderConfig.SenderNames.ElementsAs(ctx, &tgModel.SMSSenderConfig.SenderNames, false)
-		if diag.HasError() {
-			return nil, diag
-		}
+		tgModel.SMSSenderConfig.SenderNames = util.SetToStrings(plan.smsSenderConfig.SenderNames)
 	}
 	if !plan.IVRSenderConfig.IsNull() && !plan.IVRSenderConfig.IsUnknown() {
 		tgModel.IVRSenderConfig = &cidaas.IVRSenderConfig{}
-		diag := plan.ivrSenderConfig.SenderNames.ElementsAs(ctx, &tgModel.IVRSenderConfig.SenderNames, false)
-		if diag.HasError() {
-			return nil, diag
-		}
+		tgModel.IVRSenderConfig.SenderNames = util.SetToStrings(plan.ivrSenderConfig.SenderNames)
 	}
 	if !plan.PushSenderConfig.IsNull() && !plan.PushSenderConfig.IsUnknown() {
 		tgModel.PushSenderConfig = &cidaas.IVRSenderConfig{}
-		diag := plan.pushSenderConfig.SenderNames.ElementsAs(ctx, &tgModel.PushSenderConfig.SenderNames, false)
-		if diag.HasError() {
-			return nil, diag
-		}
+		tgModel.PushSenderConfig.SenderNames = util.SetToStrings(plan.pushSenderConfig.SenderNames)
 	}
 	return &tgModel, nil
 }

@@ -314,7 +314,7 @@ func notificationTemplateToAPI(ctx context.Context, m notificationTemplateModel)
 		out.Number = &n
 	}
 	if !m.UserGroupIDs.IsNull() && !m.UserGroupIDs.IsUnknown() {
-		diags.Append(m.UserGroupIDs.ElementsAs(ctx, &out.UserGroupIDs, false)...)
+		out.UserGroupIDs = util.SetToStrings(m.UserGroupIDs)
 	}
 	return out, diags
 }

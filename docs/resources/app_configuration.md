@@ -19,13 +19,15 @@ Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write`, `cidaas:apps_dele
 #
 # Configures client applications in Cidaas v4.
 # Supports NON_INTERACTIVE (M2M), SINGLE_PAGE_WEBAPP, REGULAR_WEB, and NATIVE_MOBILE client types.
+# Requires OAuth scopes: cidaas:apps_read, cidaas:apps_write, cidaas:apps_delete
 
 resource "cidaas_app_configuration" "example" {
-  client_name = "terraform-example-m2m"
-  client_type = "NON_INTERACTIVE"
+  client_name = "terraform-example-spa"
+  client_type = "SINGLE_PAGE"
   enabled     = true
 
-  grant_types = ["client_credentials"]
+  grant_types    = ["authorization_code", "refresh_token"]
+  response_types = ["code"]
 
   ownership_details = {
     company_name    = "Example Corp"
@@ -36,6 +38,19 @@ resource "cidaas_app_configuration" "example" {
   scopes = {
     allowed_scopes = ["openid", "profile"]
     default_scopes = ["openid"]
+  }
+
+  # Per-app authentication setup (Trustdesk). Tenant defaults are not managed by Terraform.
+  # login_spi is app-only.
+  authentication_setup = {
+    auto_login_after_register       = false
+    register_with_login_information = false
+    enable_password_less_auth       = true
+    allow_user_level_multi_provider = true
+    social_business_ids             = false
+    login_spi = {
+      enable_login_spi = false
+    }
   }
 }
 ```
@@ -97,17 +112,36 @@ Optional:
 <a id="nestedatt--authentication_setup"></a>
 ### Nested Schema for `authentication_setup`
 
+Per-app authentication setup on `POST/GET/PUT /app-srv/apps/{client_id}`. Managed only at **app level** in Terraform; tenant Default Authentication Setup (Trustdesk UI / `app-srv/apps/auth-setup-defaults`) is out of scope for this provider.
+
+Requires OAuth scopes `cidaas:apps_read`, `cidaas:apps_write` (and `cidaas:apps_delete` to destroy the app). `login_spi` is app-only. Tenant-only flags such as `net_id` are not exposed here.
+
 Optional:
 
 - `admin_client` (Boolean)
 - `allow_guest_login` (Boolean)
+- `allow_user_level_multi_provider` (Boolean) Allow users to link multiple identity providers.
+- `auto_login_after_register` (Boolean) Automatically log the user in after registration.
+- `enable_password_less_auth` (Boolean) Enable passwordless authentication methods (magic link / OTP).
 - `group_selection_id` (String)
 - `group_verification_request_id` (String)
 - `is_login_success_page_enabled` (Boolean)
 - `is_register_success_page_enabled` (Boolean)
 - `is_remember_me_selected` (Boolean)
+- `login_spi` (Attributes) Optional login SPI configuration for this app. (see [below for nested schema](#nestedatt--authentication_setup--login_spi))
+- `register_with_login_information` (Boolean) Allow registration using login information.
+- `social_business_ids` (Boolean) Enable social business IDs.
 - `template_group_id` (String)
 - `verification_options_id` (String)
+
+<a id="nestedatt--authentication_setup--login_spi"></a>
+### Nested Schema for `authentication_setup.login_spi`
+
+Optional:
+
+- `enable_login_spi` (Boolean) Enable login SPI for this app.
+- `oauth_client_id` (String) OAuth client ID used by the login SPI.
+- `spi_url` (String) Login SPI endpoint URL.
 
 
 <a id="nestedatt--client_auth_config"></a>

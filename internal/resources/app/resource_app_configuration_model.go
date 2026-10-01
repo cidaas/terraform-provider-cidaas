@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -81,6 +82,20 @@ type authenticationSetupConfig struct {
 	AdminClient                  types.Bool   `tfsdk:"admin_client"`
 	IsLoginSuccessPageEnabled    types.Bool   `tfsdk:"is_login_success_page_enabled"`
 	IsRegisterSuccessPageEnabled types.Bool   `tfsdk:"is_register_success_page_enabled"`
+	AutoLoginAfterRegister       types.Bool   `tfsdk:"auto_login_after_register"`
+	RegisterWithLoginInformation types.Bool   `tfsdk:"register_with_login_information"`
+	EnablePasswordLessAuth       types.Bool   `tfsdk:"enable_password_less_auth"`
+	AllowUserLevelMultiProvider  types.Bool   `tfsdk:"allow_user_level_multi_provider"`
+	SocialBusinessIDs            types.Bool   `tfsdk:"social_business_ids"`
+	LoginSpi                     types.Object `tfsdk:"login_spi"`
+
+	loginSpi *loginSpiConfig
+}
+
+type loginSpiConfig struct {
+	EnableLoginSpi types.Bool   `tfsdk:"enable_login_spi"`
+	OauthClientID  types.String `tfsdk:"oauth_client_id"`
+	SpiURL         types.String `tfsdk:"spi_url"`
 }
 
 // ownershipDetailsConfig is the Terraform nested block for ownership_details (required on create).
@@ -108,6 +123,10 @@ func (c *appConfigurationConfig) extract(ctx context.Context) diag.Diagnostics {
 	if !c.AuthenticationSetup.IsNull() && !c.AuthenticationSetup.IsUnknown() {
 		c.authenticationSetup = &authenticationSetupConfig{}
 		diags.Append(c.AuthenticationSetup.As(ctx, c.authenticationSetup, basetypes.ObjectAsOptions{})...)
+		if c.authenticationSetup != nil && !c.authenticationSetup.LoginSpi.IsNull() && !c.authenticationSetup.LoginSpi.IsUnknown() {
+			c.authenticationSetup.loginSpi = &loginSpiConfig{}
+			diags.Append(c.authenticationSetup.LoginSpi.As(ctx, c.authenticationSetup.loginSpi, basetypes.ObjectAsOptions{})...)
+		}
 	}
 	if !c.OwnershipDetails.IsNull() && !c.OwnershipDetails.IsUnknown() {
 		c.ownershipDetails = &ownershipDetailsConfig{}
@@ -142,21 +161,14 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 			DisableInsecurePKCEMethod: boolPtr(c.DisableInsecurePKCEMethod),
 		}
 	}
-	var d diag.Diagnostics
-	model.GrantTypes, d = listToStrings(ctx, c.GrantTypes)
-	diags.Append(d...)
-	model.ResponseTypes, d = listToStrings(ctx, c.ResponseTypes)
-	diags.Append(d...)
+	model.GrantTypes = util.ListToStrings(c.GrantTypes)
+	model.ResponseTypes = util.ListToStrings(c.ResponseTypes)
 
 	if c.redirectURIs != nil {
-		redirectURIs, d := redirectURIsToClient(ctx, c.redirectURIs)
-		diags.Append(d...)
-		model.RedirectURIs = redirectURIs
+		model.RedirectURIs = redirectURIsToClient(c.redirectURIs)
 	}
 	if c.scopes != nil {
-		scopes, d := scopesToClient(ctx, c.scopes)
-		diags.Append(d...)
-		model.Scopes = scopes
+		model.Scopes = scopesToClient(c.scopes)
 	}
 	if c.tokenLifetimes != nil {
 		model.TokenLifetimes = tokenLifetimesToClient(c.tokenLifetimes)
@@ -180,31 +192,21 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 }
 
 // redirectURIsToClient maps the redirect_uris nested block to the API struct.
-func redirectURIsToClient(ctx context.Context, cfg *redirectURIsConfig) (*client.RedirectURIsConfig, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	out := &client.RedirectURIsConfig{}
-	var d diag.Diagnostics
-	out.RedirectURIs, d = listToStrings(ctx, cfg.RedirectURIs)
-	diags.Append(d...)
-	out.AllowedLogoutUrls, d = listToStrings(ctx, cfg.AllowedLogoutUrls)
-	diags.Append(d...)
-	out.PostLogoutRedirectURIs, d = listToStrings(ctx, cfg.PostLogoutRedirectURIs)
-	diags.Append(d...)
-	out.AllowedWebOrigins, d = listToStrings(ctx, cfg.AllowedWebOrigins)
-	diags.Append(d...)
-	return out, diags
+func redirectURIsToClient(cfg *redirectURIsConfig) *client.RedirectURIsConfig {
+	return &client.RedirectURIsConfig{
+		RedirectURIs:           util.ListToStrings(cfg.RedirectURIs),
+		AllowedLogoutUrls:      util.ListToStrings(cfg.AllowedLogoutUrls),
+		PostLogoutRedirectURIs: util.ListToStrings(cfg.PostLogoutRedirectURIs),
+		AllowedWebOrigins:      util.ListToStrings(cfg.AllowedWebOrigins),
+	}
 }
 
 // scopesToClient maps the scopes nested block to the API struct.
-func scopesToClient(ctx context.Context, cfg *scopesConfig) (*client.ScopesConfig, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	out := &client.ScopesConfig{}
-	var d diag.Diagnostics
-	out.AllowedScopes, d = listToStrings(ctx, cfg.AllowedScopes)
-	diags.Append(d...)
-	out.DefaultScopes, d = listToStrings(ctx, cfg.DefaultScopes)
-	diags.Append(d...)
-	return out, diags
+func scopesToClient(cfg *scopesConfig) *client.ScopesConfig {
+	return &client.ScopesConfig{
+		AllowedScopes: util.ListToStrings(cfg.AllowedScopes),
+		DefaultScopes: util.ListToStrings(cfg.DefaultScopes),
+	}
 }
 
 // tokenLifetimesToClient maps the token_lifetimes nested block to the API struct.
@@ -220,7 +222,7 @@ func tokenLifetimesToClient(cfg *tokenLifetimesConfig) *client.TokenLifetimesCon
 
 // authenticationSetupToClient maps the authentication_setup nested block to the API struct.
 func authenticationSetupToClient(cfg *authenticationSetupConfig) *client.AuthenticationSetupConfig {
-	return &client.AuthenticationSetupConfig{
+	out := &client.AuthenticationSetupConfig{
 		VerificationOptionsID:        cfg.VerificationOptionsID.ValueString(),
 		GroupSelectionID:             cfg.GroupSelectionID.ValueString(),
 		GroupVerificationRequestID:   cfg.GroupVerificationRequestID.ValueString(),
@@ -230,7 +232,20 @@ func authenticationSetupToClient(cfg *authenticationSetupConfig) *client.Authent
 		AdminClient:                  boolPtr(cfg.AdminClient),
 		IsLoginSuccessPageEnabled:    boolPtr(cfg.IsLoginSuccessPageEnabled),
 		IsRegisterSuccessPageEnabled: boolPtr(cfg.IsRegisterSuccessPageEnabled),
+		AutoLoginAfterRegister:       boolPtr(cfg.AutoLoginAfterRegister),
+		RegisterWithLoginInformation: boolPtr(cfg.RegisterWithLoginInformation),
+		EnablePasswordLessAuth:       boolPtr(cfg.EnablePasswordLessAuth),
+		AllowUserLevelMultiProvider:  boolPtr(cfg.AllowUserLevelMultiProvider),
+		SocialBusinessIDs:            boolPtr(cfg.SocialBusinessIDs),
 	}
+	if cfg.loginSpi != nil {
+		out.LoginSpi = &client.LoginSPIConfig{
+			EnableLoginSpi: boolPtr(cfg.loginSpi.EnableLoginSpi),
+			OauthClientID:  cfg.loginSpi.OauthClientID.ValueString(),
+			SpiURL:         cfg.loginSpi.SpiURL.ValueString(),
+		}
+	}
+	return out
 }
 
 // flattenAppConfiguration maps an app-srv appv3 response into Terraform state.
@@ -304,7 +319,7 @@ func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurati
 	}
 	if model.AuthenticationSetup != nil {
 		a := model.AuthenticationSetup
-		obj, d := types.ObjectValue(authenticationSetupAttrTypes(), map[string]attr.Value{
+		vals := map[string]attr.Value{
 			"verification_options_id":          stringOrNull(a.VerificationOptionsID),
 			"group_selection_id":               stringOrNull(a.GroupSelectionID),
 			"group_verification_request_id":    stringOrNull(a.GroupVerificationRequestID),
@@ -314,7 +329,23 @@ func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurati
 			"admin_client":                     boolValueOrNull(a.AdminClient),
 			"is_login_success_page_enabled":    boolValueOrNull(a.IsLoginSuccessPageEnabled),
 			"is_register_success_page_enabled": boolValueOrNull(a.IsRegisterSuccessPageEnabled),
-		})
+			"auto_login_after_register":        boolValueOrNull(a.AutoLoginAfterRegister),
+			"register_with_login_information":  boolValueOrNull(a.RegisterWithLoginInformation),
+			"enable_password_less_auth":        boolValueOrNull(a.EnablePasswordLessAuth),
+			"allow_user_level_multi_provider":  boolValueOrNull(a.AllowUserLevelMultiProvider),
+			"social_business_ids":              boolValueOrNull(a.SocialBusinessIDs),
+			"login_spi":                        types.ObjectNull(loginSpiAttrTypes()),
+		}
+		if a.LoginSpi != nil {
+			spi, d := types.ObjectValue(loginSpiAttrTypes(), map[string]attr.Value{
+				"enable_login_spi": boolValueOrNull(a.LoginSpi.EnableLoginSpi),
+				"oauth_client_id":  stringOrNull(a.LoginSpi.OauthClientID),
+				"spi_url":          stringOrNull(a.LoginSpi.SpiURL),
+			})
+			diags.Append(d...)
+			vals["login_spi"] = spi
+		}
+		obj, d := types.ObjectValue(authenticationSetupAttrTypes(), vals)
 		diags.Append(d...)
 		cfg.AuthenticationSetup = obj
 	} else {

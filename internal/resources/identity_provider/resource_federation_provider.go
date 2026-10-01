@@ -302,9 +302,7 @@ func prepareFederationProviderModel(ctx context.Context, plan, config federation
 		Owner:                 ownerVal,
 	}
 	if !plan.Domains.IsNull() && !plan.Domains.IsUnknown() {
-		var domains []string
-		diags.Append(plan.Domains.ElementsAs(ctx, &domains, false)...)
-		pc.Domains = domains
+		pc.Domains = util.ListToStrings(plan.Domains)
 	}
 	return pc
 }

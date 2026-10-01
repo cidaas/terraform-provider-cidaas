@@ -265,7 +265,7 @@ func groupVerificationFilterModelToAPI(ctx context.Context, m groupVerificationF
 		if f.RoleFilter != nil {
 			var roles []string
 			if !f.RoleFilter.Roles.IsNull() && !f.RoleFilter.Roles.IsUnknown() {
-				diags.Append(f.RoleFilter.Roles.ElementsAs(ctx, &roles, false)...)
+				roles = util.ListToStrings(f.RoleFilter.Roles)
 			}
 			roleFilterWire = &cidaas.RoleVerificationFilterWire{
 				Roles:          roles,

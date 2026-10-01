@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`cidaas_app_configuration.authentication_setup`:** Per-app authentication setup flags (`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`) plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`). Tenant Default Authentication Setup is not managed by Terraform (admin-only Trustdesk / `app-srv/apps/auth-setup-defaults`).
+
+### Changed
+
+- v3→v4 migration guide: Trustdesk app auth flags map to `cidaas_app_configuration.authentication_setup`, not `user_setup` / `verification_options`.
+- Docs: app `authentication_setup` examples; `login_spi` notes; resource-dependency order.
+
+### Fixed
+
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
+- **`cidaas_app_configuration`:** custom `client_id` no longer causes “Provider produced inconsistent result after apply” (explicit values are forwarded; only null/unknown are cleared before create).
+- **`cidaas_app_configuration`:** `disable_insecure_pkce_method` / `require_pkce` no longer become null after apply when the API omits them (`preferKnownBool`).
+- **`cidaas_user_setup`:** plan-time refs in `allowed_fields` / `required_fields` no longer crash; unknown list/set elements are skipped instead of forcing string conversion.
+
 ## [4.0.1]
 
 Patch after `v4.0.0`. Existing 3.5.x / 4.0.0 state stays valid. Prefer HCL `cidaas_version` plus either provider-block credentials or the existing env vars.

@@ -171,6 +171,9 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"authentication_setup": schema.SingleNestedAttribute{
 				Optional: true,
+				MarkdownDescription: "Per-app authentication setup on Trustdesk (v4). Set these flags on the app via Terraform; " +
+					"tenant Default Authentication Setup is not managed by this provider. " +
+					"`login_spi` is app-only. Requires scopes `cidaas:apps_read` / `cidaas:apps_write`.",
 				Attributes: map[string]schema.Attribute{
 					"verification_options_id":          schema.StringAttribute{Optional: true},
 					"group_selection_id":               schema.StringAttribute{Optional: true},
@@ -181,6 +184,44 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"admin_client":                     schema.BoolAttribute{Optional: true},
 					"is_login_success_page_enabled":    schema.BoolAttribute{Optional: true},
 					"is_register_success_page_enabled": schema.BoolAttribute{Optional: true},
+					"auto_login_after_register": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Automatically log the user in after registration.",
+					},
+					"register_with_login_information": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Allow registration using login information.",
+					},
+					"enable_password_less_auth": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Enable passwordless authentication methods (magic link / OTP).",
+					},
+					"allow_user_level_multi_provider": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Allow users to link multiple identity providers.",
+					},
+					"social_business_ids": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Enable social business IDs.",
+					},
+					"login_spi": schema.SingleNestedAttribute{
+						Optional:            true,
+						MarkdownDescription: "Optional login SPI configuration for this app.",
+						Attributes: map[string]schema.Attribute{
+							"enable_login_spi": schema.BoolAttribute{
+								Optional:            true,
+								MarkdownDescription: "Enable login SPI for this app.",
+							},
+							"oauth_client_id": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "OAuth client ID used by the login SPI.",
+							},
+							"spi_url": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "Login SPI endpoint URL.",
+							},
+						},
+					},
 				},
 			},
 			"hosted_pages_layout_id": schema.StringAttribute{
@@ -257,7 +298,13 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	model.ClientID = ""
+	// Only clear the client_id when the user hasn't explicitly set one (null/unknown).
+	// When a user provides a specific client_id, it must be forwarded to the API so
+	// that the returned value matches the planned value; otherwise Terraform raises
+	// "Provider produced inconsistent result after apply".
+	if plan.ClientID.IsNull() || plan.ClientID.IsUnknown() {
+		model.ClientID = ""
+	}
 
 	res, err := r.client.AppConfiguration.Create(ctx, model)
 	if err != nil {
@@ -269,6 +316,9 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	// app-srv may omit PKCE flags in the create response even when persisted;
+	// keep planned known values to avoid inconsistent-result-after-apply.
+	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -297,6 +347,7 @@ func (r *appConfigurationResource) Read(ctx context.Context, req resource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	next = mergeOmittedAppConfigurationBools(state, next)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
@@ -329,6 +380,7 @@ func (r *appConfigurationResource) Update(ctx context.Context, req resource.Upda
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

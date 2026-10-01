@@ -862,3 +862,58 @@ func TestRegField_UpdateOrder_Error(t *testing.T) {
 		t.Fatal("Expected error for bad request, got nil")
 	}
 }
+
+func TestRegistrationFieldConfig_MarshalConsentLabelText(t *testing.T) {
+	t.Parallel()
+	cfg := RegistrationFieldConfig{
+		FieldKey: "bug_consent",
+		DataType: "CONSENT",
+		LocaleTexts: []*LocaleText{{
+			Locale: "en-US",
+			Name:   "Visible Name",
+			ConsentLabel: &ConsentLabel{
+				Label:     "https://example/consent",
+				LabelText: "I agree",
+			},
+		}},
+	}
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	if !strings.Contains(s, `"localeTexts"`) {
+		t.Fatalf("missing localeTexts: %s", s)
+	}
+	if strings.Contains(s, `"localeText"`) {
+		t.Fatalf("must not dual-write localeText (fieldsetup 400): %s", s)
+	}
+	if !strings.Contains(s, `"labelText":"I agree"`) {
+		t.Fatalf("missing labelText: %s", s)
+	}
+	if strings.Contains(s, `"label_text"`) {
+		t.Fatalf("must emit camelCase labelText only: %s", s)
+	}
+}
+
+func TestRegistrationFieldConfig_UnmarshalLocaleTextObject(t *testing.T) {
+	t.Parallel()
+	raw := []byte(`{
+		"fieldKey":"bug_consent",
+		"localeText":{
+			"locale":"en-US",
+			"name":"Visible Name",
+			"consentLabel":{"label":"l","labelText":"I agree"}
+		}
+	}`)
+	var cfg RegistrationFieldConfig
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.LocaleTexts) != 1 || cfg.LocaleTexts[0].Name != "Visible Name" {
+		t.Fatalf("LocaleTexts=%v", cfg.LocaleTexts)
+	}
+	if cfg.LocaleTexts[0].ConsentLabel == nil || cfg.LocaleTexts[0].ConsentLabel.LabelText != "I agree" {
+		t.Fatalf("ConsentLabel=%v", cfg.LocaleTexts[0].ConsentLabel)
+	}
+}

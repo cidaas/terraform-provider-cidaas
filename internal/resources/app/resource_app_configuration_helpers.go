@@ -2,21 +2,9 @@
 package app
 
 import (
-	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
-	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
-	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
-}
 
 func stringList(values []string) types.List {
 	elems := make([]attr.Value, 0, len(values))
@@ -108,6 +96,20 @@ func authenticationSetupAttrTypes() map[string]attr.Type {
 		"admin_client":                     types.BoolType,
 		"is_login_success_page_enabled":    types.BoolType,
 		"is_register_success_page_enabled": types.BoolType,
+		"auto_login_after_register":        types.BoolType,
+		"register_with_login_information":  types.BoolType,
+		"enable_password_less_auth":        types.BoolType,
+		"allow_user_level_multi_provider":  types.BoolType,
+		"social_business_ids":              types.BoolType,
+		"login_spi":                        types.ObjectType{AttrTypes: loginSpiAttrTypes()},
+	}
+}
+
+func loginSpiAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"enable_login_spi": types.BoolType,
+		"oauth_client_id":  types.StringType,
+		"spi_url":          types.StringType,
 	}
 }
 
@@ -126,4 +128,30 @@ func signingKeyConfigAttrTypes() map[string]attr.Type {
 
 func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
+}
+
+// preferKnownBool keeps prior when the API omitted a bool (nil → null) so Terraform
+// does not report "Provider produced inconsistent result after apply" for optional
+// computed attributes like disable_insecure_pkce_method / require_pkce.
+func preferKnownBool(prior, fromAPI types.Bool) types.Bool {
+	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
+		return prior
+	}
+	return fromAPI
+}
+
+// preferKnownString keeps prior when the API omitted a string (empty/null).
+func preferKnownString(prior, fromAPI types.String) types.String {
+	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
+		return prior
+	}
+	return fromAPI
+}
+
+// mergeOmittedAppConfigurationBools restores plan/prior values for PKCE flags when
+// app-srv create/update/get responses omit them.
+func mergeOmittedAppConfigurationBools(prior, state appConfigurationConfig) appConfigurationConfig {
+	state.RequirePKCE = preferKnownBool(prior.RequirePKCE, state.RequirePKCE)
+	state.DisableInsecurePKCEMethod = preferKnownBool(prior.DisableInsecurePKCEMethod, state.DisableInsecurePKCEMethod)
+	return state
 }
