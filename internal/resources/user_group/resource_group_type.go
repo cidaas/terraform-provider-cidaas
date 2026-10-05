@@ -121,14 +121,7 @@ func (r *GroupTypeResource) Create(ctx context.Context, req resource.CreateReque
 		Description: plan.Description.ValueString(),
 	}
 
-	diag := plan.AllowedRoles.ElementsAs(ctx, &groupType.AllowedRoles, false)
-	resp.Diagnostics.Append(diag...)
-	if resp.Diagnostics.HasError() {
-		tflog.Error(ctx, "failed to extract allowed roles", util.H{
-			"errors": resp.Diagnostics.Errors(),
-		})
-		return
-	}
+	groupType.AllowedRoles = util.SetToStrings(plan.AllowedRoles)
 	res, err := r.CidaasClient.GroupType.Create(ctx, groupType)
 	if err != nil {
 		tflog.Error(ctx, "failed to create group type via API", util.H{
@@ -217,14 +210,7 @@ func (r *GroupTypeResource) Update(ctx context.Context, req resource.UpdateReque
 		Description: plan.Description.ValueString(),
 	}
 
-	diag := plan.AllowedRoles.ElementsAs(ctx, &groupType.AllowedRoles, false)
-	resp.Diagnostics.Append(diag...)
-	if resp.Diagnostics.HasError() {
-		tflog.Error(ctx, "failed to extract allowed roles for update", util.H{
-			"errors": resp.Diagnostics.Errors(),
-		})
-		return
-	}
+	groupType.AllowedRoles = util.SetToStrings(plan.AllowedRoles)
 	err := r.CidaasClient.GroupType.Update(ctx, groupType)
 	if err != nil {
 		tflog.Error(ctx, "failed to update group_type via API", util.H{

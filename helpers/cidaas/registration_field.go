@@ -2,6 +2,7 @@ package cidaas
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -45,6 +46,46 @@ type RegistrationFieldConfig struct {
 	FieldDefinition                          *FieldDefinition     `json:"fieldDefinition,omitempty"`
 	ClassName                                string               `json:"className,omitempty"`
 	RemoteSettings                           *RemoteFieldSettings `json:"remoteFieldSettings,omitempty"`
+}
+
+// UnmarshalJSON reads localeTexts or Trustdesk localeText (object or array).
+// Outbound payloads keep localeTexts only — fieldsetup rejects dual-write of localeText (400/09001).
+func (c *RegistrationFieldConfig) UnmarshalJSON(data []byte) error {
+	type alias RegistrationFieldConfig
+	aux := struct {
+		alias
+		LocaleText json.RawMessage `json:"localeText"`
+	}{}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	*c = RegistrationFieldConfig(aux.alias)
+	if len(c.LocaleTexts) == 0 && len(aux.LocaleText) > 0 && string(aux.LocaleText) != "null" {
+		texts, err := parseLocaleTextJSON(aux.LocaleText)
+		if err != nil {
+			return err
+		}
+		c.LocaleTexts = texts
+	}
+	return nil
+}
+
+func parseLocaleTextJSON(raw json.RawMessage) ([]*LocaleText, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	if raw[0] == '[' {
+		var arr []*LocaleText
+		if err := json.Unmarshal(raw, &arr); err != nil {
+			return nil, err
+		}
+		return arr, nil
+	}
+	var one LocaleText
+	if err := json.Unmarshal(raw, &one); err != nil {
+		return nil, err
+	}
+	return []*LocaleText{&one}, nil
 }
 
 // RemoteFieldSettings is optional and only valid when dataType is GROUPING.
@@ -122,7 +163,21 @@ type Attribute struct {
 
 type ConsentLabel struct {
 	Label     string `json:"label,omitempty"`
-	LabelText string `json:"label_text,omitempty"`
+	LabelText string `json:"labelText,omitempty"`
+}
+
+// UnmarshalJSON accepts labelText (Trustdesk/fieldsetup) or legacy label_text.
+func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
+	var raw map[string]string
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	c.Label = raw["label"]
+	c.LabelText = raw["labelText"]
+	if c.LabelText == "" {
+		c.LabelText = raw["label_text"]
+	}
+	return nil
 }
 
 // RegistrationFieldOrder is the PATCH /fieldsetup-srv/fields/order request body.

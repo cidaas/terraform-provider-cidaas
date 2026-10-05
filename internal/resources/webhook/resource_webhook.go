@@ -439,10 +439,7 @@ func prepareWebhookModel(ctx context.Context, plan WebhookConfig) (*cidaas.Webho
 			ClientID: plan.cidaasAuthConfig.ClientID.ValueString(),
 		}
 	}
-	diags := plan.Events.ElementsAs(ctx, &wb.Events, false)
-	if diags.HasError() {
-		return nil, diags
-	}
+	wb.Events = util.SetToStrings(plan.Events)
 	return &wb, nil
 }
 

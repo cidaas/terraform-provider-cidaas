@@ -356,28 +356,26 @@ func prepareTemplateTypeModel(ctx context.Context, config TemplateTypeConfig) *c
 	}
 
 	if !config.ProcessingTypes.IsNull() {
-		config.ProcessingTypes.ElementsAs(ctx, &model.ProcessingTypes, false)
+		model.ProcessingTypes = util.SetToStrings(config.ProcessingTypes)
 	}
 	if !config.UsageTypes.IsNull() {
-		config.UsageTypes.ElementsAs(ctx, &model.UsageTypes, false)
+		model.UsageTypes = util.SetToStrings(config.UsageTypes)
 	}
 	if !config.VerificationTypes.IsNull() {
-		config.VerificationTypes.ElementsAs(ctx, &model.VerificationTypes, false)
+		model.VerificationTypes = util.SetToStrings(config.VerificationTypes)
 	}
 	if !config.CommunicationMethods.IsNull() {
-		var comm []string
-		config.CommunicationMethods.ElementsAs(ctx, &comm, false)
+		comm := util.SetToStrings(config.CommunicationMethods)
 		for i := range comm {
 			comm[i] = strings.ToLower(strings.TrimSpace(comm[i]))
 		}
 		model.CommunicationMethods = comm
 	}
 	if !config.TemplateGroupIDs.IsNull() {
-		config.TemplateGroupIDs.ElementsAs(ctx, &model.TemplateGroupIDs, false)
+		model.TemplateGroupIDs = util.SetToStrings(config.TemplateGroupIDs)
 	}
 	if !config.MsgFormats.IsNull() {
-		var mf []string
-		config.MsgFormats.ElementsAs(ctx, &mf, false)
+		mf := util.SetToStrings(config.MsgFormats)
 		for i := range mf {
 			mf[i] = strings.ToLower(strings.TrimSpace(mf[i]))
 		}

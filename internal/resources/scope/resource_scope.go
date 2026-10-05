@@ -352,10 +352,7 @@ func generateScopeModel(ctx context.Context, plan ScopeConfig) (*cidaas.ScopeMod
 		ScopeKey:            plan.ScopeKey.ValueString(),
 		RequiredUserConsent: plan.RequiredUserConsent.ValueBool(),
 	}
-	diag := plan.GroupName.ElementsAs(ctx, &scope.GroupName, false)
-	if diag.HasError() {
-		return nil, diag
-	}
+	scope.GroupName = util.SetToStrings(plan.GroupName)
 
 	for _, ld := range plan.localizedDescriptions {
 		scope.LocaleWiseDescription = append(scope.LocaleWiseDescription, cidaas.ScopeLocalDescription{

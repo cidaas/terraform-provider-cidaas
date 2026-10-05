@@ -22,34 +22,34 @@ const OwnerClient = "client"
 
 // AppConfigurationModel matches appv3.App JSON (MVP subset for Terraform).
 type AppConfigurationModel struct {
-	ID                        string                     `json:"_id,omitempty"`
-	ClientID                  string                     `json:"client_id,omitempty"`
-	ClientName                string                     `json:"client_name"`
-	ClientType                string                     `json:"client_type"`
-	Owner                     string                     `json:"owner,omitempty"`
-	Enabled                   *bool                      `json:"enabled,omitempty"`
-	RequirePKCE               *bool                      `json:"require_pkce,omitempty"`
-	DisableInsecurePKCEMethod *bool                      `json:"disable_insecure_pkce_method,omitempty"`
-	PKCE                      *PKCEConfig                `json:"pkce,omitempty"`
-	GrantTypes                []string                   `json:"grant_types,omitempty"`
-	ResponseTypes             []string                   `json:"response_types,omitempty"`
-	RedirectURIs              *RedirectURIsConfig        `json:"redirect_uris,omitempty"`
-	Scopes                    *ScopesConfig              `json:"scopes,omitempty"`
-	TokenLifetimes            *TokenLifetimesConfig      `json:"token_lifetimes,omitempty"`
-	AuthenticationSetup       *AuthenticationSetupConfig `json:"authentication_setup,omitempty"`
-	HostedPagesLayoutID       string                     `json:"hosted_pages_layout_id,omitempty"`
-	UserSetupID               string                     `json:"user_setup_id,omitempty"`
-	OwnershipDetails          *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
-	ClientAuthConfig          *AuthConfig                `json:"client_auth_config,omitempty"`
-	SigningKeyConfig          *SigningKeyConfig          `json:"signing_key_config,omitempty"`
-	CreatedTime               string                     `json:"created_time,omitempty"`
-	UpdatedTime               string                     `json:"updated_time,omitempty"`
+	ID                  string                     `json:"_id,omitempty"`
+	ClientID            string                     `json:"client_id,omitempty"`
+	ClientName          string                     `json:"client_name"`
+	ClientType          string                     `json:"client_type"`
+	Owner               string                     `json:"owner,omitempty"`
+	Enabled             *bool                      `json:"enabled,omitempty"`
+	PKCE                *PKCEConfig                `json:"pkce,omitempty"`
+	GrantTypes          []string                   `json:"grant_types,omitempty"`
+	ResponseTypes       []string                   `json:"response_types,omitempty"`
+	RedirectURIs        *RedirectURIsConfig        `json:"redirect_uris,omitempty"`
+	Scopes              *ScopesConfig              `json:"scopes,omitempty"`
+	TokenLifetimes      *TokenLifetimesConfig      `json:"token_lifetimes,omitempty"`
+	AuthenticationSetup *AuthenticationSetupConfig `json:"authentication_setup,omitempty"`
+	HostedPagesLayoutID string                     `json:"hosted_pages_layout_id,omitempty"`
+	UserSetupID         string                     `json:"user_setup_id,omitempty"`
+	OwnershipDetails    *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
+	ClientAuthConfig    *AuthConfig                `json:"client_auth_config,omitempty"`
+	SigningKeyConfig    *SigningKeyConfig          `json:"signing_key_config,omitempty"`
+	CreatedTime         string                     `json:"created_time,omitempty"`
+	UpdatedTime         string                     `json:"updated_time,omitempty"`
 }
 
-// PKCEConfig maps the nested pkce object required by app-srv validation.
+// PKCEConfig is the app-srv nested `pkce` object.
+// code_challenge_method is canonical (e.g. ["S256"] or ["S256","PLAIN"]); there is no
+// disable_insecure_pkce_method field on this API shape.
 type PKCEConfig struct {
-	RequirePKCE               *bool `json:"require_pkce,omitempty"`
-	DisableInsecurePKCEMethod *bool `json:"disable_insecure_pkce_method,omitempty"`
+	RequirePKCE         *bool    `json:"require_pkce,omitempty"`
+	CodeChallengeMethod []string `json:"code_challenge_method,omitempty"`
 }
 
 // RedirectURIsConfig maps redirect_uris nested object.
@@ -75,17 +75,30 @@ type TokenLifetimesConfig struct {
 	DefaultMaxAge                 *int64 `json:"default_max_age,omitempty"`
 }
 
-// AuthenticationSetupConfig maps authentication_setup nested object (extdep IDs + flags).
+// AuthenticationSetupConfig maps authentication_setup nested object (extdep IDs + flags + defaults-overridable bools).
 type AuthenticationSetupConfig struct {
-	VerificationOptionsID        string `json:"verification_options_id,omitempty"`
-	GroupSelectionID             string `json:"group_selection_id,omitempty"`
-	GroupVerificationRequestID   string `json:"group_verification_request_id,omitempty"`
-	TemplateGroupID              string `json:"template_group_id,omitempty"`
-	AllowGuestLogin              *bool  `json:"allow_guest_login,omitempty"`
-	IsRememberMeSelected         *bool  `json:"is_remember_me_selected,omitempty"`
-	AdminClient                  *bool  `json:"admin_client,omitempty"`
-	IsLoginSuccessPageEnabled    *bool  `json:"is_login_success_page_enabled,omitempty"`
-	IsRegisterSuccessPageEnabled *bool  `json:"is_register_success_page_enabled,omitempty"`
+	VerificationOptionsID        string          `json:"verification_options_id,omitempty"`
+	GroupSelectionID             string          `json:"group_selection_id,omitempty"`
+	GroupVerificationRequestID   string          `json:"group_verification_request_id,omitempty"`
+	TemplateGroupID              string          `json:"template_group_id,omitempty"`
+	AllowGuestLogin              *bool           `json:"allow_guest_login,omitempty"`
+	IsRememberMeSelected         *bool           `json:"is_remember_me_selected,omitempty"`
+	AdminClient                  *bool           `json:"admin_client,omitempty"`
+	IsLoginSuccessPageEnabled    *bool           `json:"is_login_success_page_enabled,omitempty"`
+	IsRegisterSuccessPageEnabled *bool           `json:"is_register_success_page_enabled,omitempty"`
+	AutoLoginAfterRegister       *bool           `json:"auto_login_after_register,omitempty"`
+	RegisterWithLoginInformation *bool           `json:"register_with_login_information,omitempty"`
+	EnablePasswordLessAuth       *bool           `json:"enable_password_less_auth,omitempty"`
+	AllowUserLevelMultiProvider  *bool           `json:"allow_user_level_multi_provider,omitempty"`
+	SocialBusinessIDs            *bool           `json:"social_business_ids,omitempty"`
+	LoginSpi                     *LoginSPIConfig `json:"login_spi,omitempty"`
+}
+
+// LoginSPIConfig maps authentication_setup.login_spi.
+type LoginSPIConfig struct {
+	EnableLoginSpi *bool  `json:"enable_login_spi,omitempty"`
+	OauthClientID  string `json:"oauth_client_id,omitempty"`
+	SpiURL         string `json:"spi_url,omitempty"`
 }
 
 // OwnershipDetailsConfig maps owner_ship_details (required on create).

@@ -9,12 +9,13 @@ Many cidaas resources reference IDs created by other resources. Express those li
 ## Typical Trustdesk (v4) flow
 
 1. **Access building blocks** — `cidaas_role`, `cidaas_scope` / `cidaas_scope_group`, `cidaas_group_type`, `cidaas_user_groups`
-2. **Application** — `cidaas_app_configuration` (often references scopes)
-3. **Hosted pages** — `cidaas_hosted_page` → `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations`
-4. **Identity providers** — `cidaas_federation_provider`
-5. **Consent & registration** — `cidaas_consent` → `cidaas_consent_version` / groups; `cidaas_registration_field`
-6. **Notifications** — template types/groups → templates; `cidaas_notification_service_setup`
-7. **Webhooks & verification** — `cidaas_webhook`, verification resources
+2. **Extdeps used by apps** — `cidaas_user_setup`, `cidaas_verification_options`, `cidaas_group_selection`, `cidaas_group_verification_filter`, hosted pages
+3. **Application** — `cidaas_app_configuration` (scopes + optional `authentication_setup` / extdep IDs)
+4. **Hosted pages** — `cidaas_hosted_page` → `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations`
+5. **Identity providers** — `cidaas_federation_provider`
+6. **Consent & registration** — `cidaas_consent` → `cidaas_consent_version` / groups; `cidaas_registration_field`
+7. **Notifications** — template types/groups → templates; `cidaas_notification_service_setup`
+8. **Webhooks & verification** — `cidaas_webhook`, verification resources
 
 ## Example references
 

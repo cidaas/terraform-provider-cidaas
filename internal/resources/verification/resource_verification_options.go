@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -327,11 +328,7 @@ func (r *verificationOptionsResource) ValidateConfig(ctx context.Context, req re
 	if config.options.AllowedMethods.IsUnknown() {
 		return
 	}
-	methods, d := listToStrings(ctx, config.options.AllowedMethods)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	methods := util.ListToStrings(config.options.AllowedMethods)
 	if setting != "OFF" && len(methods) == 1 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("verification_options").AtName("allowed_methods"),
@@ -357,8 +354,7 @@ func (c *verificationOptionsConfig) toModel(ctx context.Context) (client.Verific
 		UseDefaultPasswordPolicy:    !c.options.UseDefaultPasswordPolicy.IsNull() && c.options.UseDefaultPasswordPolicy.ValueBool(),
 		SuggestVerificationMethodID: c.options.SuggestVerificationMethodID.ValueString(),
 	}
-	methods, d := listToStrings(ctx, c.options.AllowedMethods)
-	diags.Append(d...)
+	methods := util.ListToStrings(c.options.AllowedMethods)
 	if methods == nil {
 		methods = []string{}
 	}
@@ -371,8 +367,7 @@ func (c *verificationOptionsConfig) toModel(ctx context.Context) (client.Verific
 		detail.AppAttest = &client.AppAttestEntry{}
 		if c.options.appAttest.android != nil {
 			a := c.options.appAttest.android
-			certs, d := listToStrings(ctx, a.CertDigests)
-			diags.Append(d...)
+			certs := util.ListToStrings(a.CertDigests)
 			detail.AppAttest.Android = &client.AppAttestAndroidEntry{
 				Provider:            a.Provider.ValueString(),
 				RelaxAppRecognition: !a.RelaxAppRecognition.IsNull() && a.RelaxAppRecognition.ValueBool(),

@@ -3,14 +3,23 @@ page_title: "cidaas_user_setup Resource - cidaas"
 subcategory: "Security"
 description: |-
   Manages reusable User Setup profiles on cidaas v4 (Trustdesk) via user-srv/usersetup. Applications reference a profile via user_setup_id.
-  Writes (create/update/delete) require admin or developer roles (USERSETUP_MANAGER / APP_MANAGER / ADMIN / SECONDARY_ADMIN / SUPER_ADMIN) — there is no write OAuth scope. Read-by-ID may use roles or scope cidaas:usersetup_read.
+  Authorize with OAuth scopes (cidaas:usersetup_read / cidaas:usersetup_write / cidaas:usersetup_delete) or admin/developer roles.
 ---
 
 # cidaas_user_setup (Resource)
 
 Manages reusable User Setup profiles on cidaas v4 (Trustdesk) via `user-srv/usersetup`. Applications reference a profile via `user_setup_id`.
 
-Writes (create/update/delete) require admin or developer roles (`USERSETUP_MANAGER` / `APP_MANAGER` / `ADMIN` / `SECONDARY_ADMIN` / `SUPER_ADMIN`) — there is no write OAuth scope. Read-by-ID may use roles or scope `cidaas:usersetup_read`.
+Ensure that the below scopes are assigned to the client with the specified `client_id` (scopes **or** matching group roles are accepted by user-srv):
+
+- `cidaas:usersetup_read`
+- `cidaas:usersetup_write`
+- `cidaas:usersetup_delete`
+
+Alternatively (interactive / admin tokens), group roles:
+
+- Write/Delete: `USERSETUP_MANAGER`, `APP_MANAGER`, `ADMIN`, `SECONDARY_ADMIN`, `SUPER_ADMIN`
+- Read: the above plus `USERSETUP_VIEWER`
 
 ## Example Usage
 

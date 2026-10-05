@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -477,10 +478,7 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 				LogoURL:           cp.LogoURL.ValueString(),
 				IsProviderVisible: cp.IsProviderVisible.ValueBoolPointer(),
 			}
-			diags := cp.Domains.ElementsAs(ctx, &temp.Domains, false)
-			if diags.HasError() {
-				return diags
-			}
+			temp.Domains = util.SetToStrings(cp.Domains)
 			*target = append(*target, temp)
 		}
 		return nil
@@ -573,14 +571,8 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 					GroupID:   ag.GroupID.ValueString(),
 					GroupType: ag.GroupType.ValueString(),
 				}
-				diags := ag.Roles.ElementsAs(ctx, &temp.Roles, false)
-				if diags.HasError() {
-					return nil, diags
-				}
-				diags = ag.DefaultRoles.ElementsAs(ctx, &temp.DefaultRoles, false)
-				if diags.HasError() {
-					return nil, diags
-				}
+				temp.Roles = util.SetToStrings(ag.Roles)
+				temp.DefaultRoles = util.SetToStrings(ag.DefaultRoles)
 				app.AllowedGroups = append(app.AllowedGroups, temp)
 			}
 		}
@@ -595,14 +587,8 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 				temp := cidaas.IAllowedGroups{
 					GroupID: oag.GroupID.ValueString(),
 				}
-				diags := oag.Roles.ElementsAs(ctx, &temp.Roles, false)
-				if diags.HasError() {
-					return nil, diags
-				}
-				diags = oag.DefaultRoles.ElementsAs(ctx, &temp.DefaultRoles, false)
-				if diags.HasError() {
-					return nil, diags
-				}
+				temp.Roles = util.SetToStrings(oag.Roles)
+				temp.DefaultRoles = util.SetToStrings(oag.DefaultRoles)
 				app.OperationsAllowedGroups = append(app.OperationsAllowedGroups, temp)
 			}
 		}
@@ -614,14 +600,8 @@ func prepareAppModel(ctx context.Context, plan AppConfig) (*cidaas.AppModel, dia
 			temp := cidaas.IAllowedGroups{
 				GroupID: aglg.GroupID.ValueString(),
 			}
-			diags := aglg.Roles.ElementsAs(ctx, &temp.Roles, false)
-			if diags.HasError() {
-				return nil, diags
-			}
-			diags = aglg.DefaultRoles.ElementsAs(ctx, &temp.DefaultRoles, false)
-			if diags.HasError() {
-				return nil, diags
-			}
+			temp.Roles = util.SetToStrings(aglg.Roles)
+			temp.DefaultRoles = util.SetToStrings(aglg.DefaultRoles)
 			app.AllowGuestLoginGroups = append(app.AllowGuestLoginGroups, temp)
 		}
 	}

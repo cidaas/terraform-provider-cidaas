@@ -90,15 +90,32 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 				Computed: true,
 				Default:  booldefault.StaticBool(true),
 			},
-			"require_pkce": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "When `true`, requires PKCE for authorization requests.",
-			},
-			"disable_insecure_pkce_method": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "When `true`, rejects plain PKCE challenge method.",
+			"pkce": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Nested PKCE object sent to and read from app-srv (`pkce`). " +
+					"Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. " +
+					"`code_challenge_method = [\"S256\"]` rejects insecure `plain` (AUTH10048); " +
+					"`[\"S256\", \"PLAIN\"]` allows both methods. Computed from the API when omitted.",
+				Attributes: map[string]schema.Attribute{
+					"require_pkce": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						MarkdownDescription: "When `true`, clients must send `code_challenge` on `/authz-srv/authz` and PAR " +
+							"(AUTH10063 when missing). Recommended for public clients (SPA, mobile).",
+					},
+					"code_challenge_method": schema.ListAttribute{
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						MarkdownDescription: "Allowed PKCE code challenge methods (RFC 7636). " +
+							"`[\"S256\"]` rejects `plain` and the implicit plain default (AUTH10048). " +
+							"`[\"S256\", \"PLAIN\"]` allows both. Allowed values: `S256`, `PLAIN`.",
+						Validators: []validator.List{
+							listvalidator.ValueStringsAre(stringvalidator.OneOf("S256", "PLAIN")),
+						},
+					},
+				},
 			},
 			"grant_types": schema.ListAttribute{
 				Optional:    true,
@@ -171,6 +188,9 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"authentication_setup": schema.SingleNestedAttribute{
 				Optional: true,
+				MarkdownDescription: "Per-app authentication setup on Trustdesk (v4). Set these flags on the app via Terraform; " +
+					"tenant Default Authentication Setup is not managed by this provider. " +
+					"`login_spi` is app-only. Requires scopes `cidaas:apps_read` / `cidaas:apps_write`.",
 				Attributes: map[string]schema.Attribute{
 					"verification_options_id":          schema.StringAttribute{Optional: true},
 					"group_selection_id":               schema.StringAttribute{Optional: true},
@@ -181,6 +201,44 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"admin_client":                     schema.BoolAttribute{Optional: true},
 					"is_login_success_page_enabled":    schema.BoolAttribute{Optional: true},
 					"is_register_success_page_enabled": schema.BoolAttribute{Optional: true},
+					"auto_login_after_register": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Automatically log the user in after registration.",
+					},
+					"register_with_login_information": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Allow registration using login information.",
+					},
+					"enable_password_less_auth": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Enable passwordless authentication methods (magic link / OTP).",
+					},
+					"allow_user_level_multi_provider": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Allow users to link multiple identity providers.",
+					},
+					"social_business_ids": schema.BoolAttribute{
+						Optional:            true,
+						MarkdownDescription: "Enable social business IDs.",
+					},
+					"login_spi": schema.SingleNestedAttribute{
+						Optional:            true,
+						MarkdownDescription: "Optional login SPI configuration for this app.",
+						Attributes: map[string]schema.Attribute{
+							"enable_login_spi": schema.BoolAttribute{
+								Optional:            true,
+								MarkdownDescription: "Enable login SPI for this app.",
+							},
+							"oauth_client_id": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "OAuth client ID used by the login SPI.",
+							},
+							"spi_url": schema.StringAttribute{
+								Optional:            true,
+								MarkdownDescription: "Login SPI endpoint URL.",
+							},
+						},
+					},
 				},
 			},
 			"hosted_pages_layout_id": schema.StringAttribute{
@@ -257,7 +315,13 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	model.ClientID = ""
+	// Only clear the client_id when the user hasn't explicitly set one (null/unknown).
+	// When a user provides a specific client_id, it must be forwarded to the API so
+	// that the returned value matches the planned value; otherwise Terraform raises
+	// "Provider produced inconsistent result after apply".
+	if plan.ClientID.IsNull() || plan.ClientID.IsUnknown() {
+		model.ClientID = ""
+	}
 
 	res, err := r.client.AppConfiguration.Create(ctx, model)
 	if err != nil {
