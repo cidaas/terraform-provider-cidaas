@@ -7,21 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0]
+
+Minor after `v4.0.1`. Existing 4.0.x **state** stays valid, but `cidaas_app_configuration` **HCL** that still uses top-level `require_pkce` / `disable_insecure_pkce_method` must move those into nested `pkce`.
+
 ### Added
 
-- **`cidaas_app_configuration.authentication_setup`:** Per-app authentication setup flags (`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`) plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`). Tenant Default Authentication Setup is not managed by Terraform (admin-only Trustdesk / `app-srv/apps/auth-setup-defaults`).
+- **`cidaas_app_configuration.authentication_setup`:** Per-app authentication setup flags (`auto_login_after_register`, `register_with_login_information`, `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids`) plus nested `login_spi` (`enable_login_spi`, `oauth_client_id`, `spi_url`) ([5305](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5305)). Tenant Default Authentication Setup is not managed by Terraform (admin-only Trustdesk / `app-srv/apps/auth-setup-defaults`).
 
 ### Changed
 
 - v3→v4 migration guide: Trustdesk app auth flags map to `cidaas_app_configuration.authentication_setup`, not `user_setup` / `verification_options`.
-- Docs: app `authentication_setup` examples; `login_spi` notes; resource-dependency order.
-- **`cidaas_app_configuration`:** PKCE is nested `pkce { require_pkce, code_challenge_method }` to match app-srv. Former top-level `require_pkce` / `disable_insecure_pkce_method` are removed; map `disable_insecure_pkce_method = true` to `code_challenge_method = ["S256"]` (or `["S256", "PLAIN"]` to allow plain). State is read from the API response.
+- Docs: app `authentication_setup` examples; `login_spi` notes; resource-dependency order; custom provider scope formatting; user setup authorization requirements.
+- **`cidaas_app_configuration`:** PKCE is nested `pkce { require_pkce, code_challenge_method }` to match app-srv ([5304](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5304)). Map former `disable_insecure_pkce_method = true` to `code_challenge_method = ["S256"]` (or `["S256", "PLAIN"]` to allow plain). Nested PKCE state is computed from the API response.
+
+### Removed
+
+- **`cidaas_app_configuration`:** top-level `require_pkce` and `disable_insecure_pkce_method`. Use nested `pkce { require_pkce, code_challenge_method }` instead ([5304](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5304)).
 
 ### Fixed
 
-- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
-- **`cidaas_app_configuration`:** custom `client_id` no longer causes “Provider produced inconsistent result after apply” (explicit values are forwarded; only null/unknown are cleared before create).
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase) ([5314](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5314)). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
+- **`cidaas_app_configuration`:** custom `client_id` no longer causes “Provider produced inconsistent result after apply” (explicit values are forwarded; only null/unknown are cleared before create) ([2509](https://gitlab.widas.de/cidaas-v2/framework/issues/-/work_items/2509), [2510](https://gitlab.widas.de/cidaas-v2/framework/issues/-/work_items/2510), [2511](https://gitlab.widas.de/cidaas-v2/framework/issues/-/work_items/2511)).
 - **`cidaas_user_setup`:** plan-time refs in `allowed_fields` / `required_fields` no longer crash; unknown list/set elements are skipped instead of forcing string conversion.
+- HTTP client: Authorization header is preserved on same-host redirects so token refresh against the cidaas host does not drop credentials.
 
 ## [4.0.1]
 
