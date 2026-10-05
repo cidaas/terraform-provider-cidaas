@@ -14,33 +14,40 @@ import (
 
 // appConfigurationConfig is the Terraform state/plan model for cidaas_app_configuration.
 type appConfigurationConfig struct {
-	ClientID                  types.String `tfsdk:"client_id"`
-	ClientName                types.String `tfsdk:"client_name"`
-	ClientType                types.String `tfsdk:"client_type"`
-	Enabled                   types.Bool   `tfsdk:"enabled"`
-	RequirePKCE               types.Bool   `tfsdk:"require_pkce"`
-	DisableInsecurePKCEMethod types.Bool   `tfsdk:"disable_insecure_pkce_method"`
-	GrantTypes                types.List   `tfsdk:"grant_types"`
-	ResponseTypes             types.List   `tfsdk:"response_types"`
-	RedirectURIs              types.Object `tfsdk:"redirect_uris"`
-	Scopes                    types.Object `tfsdk:"scopes"`
-	TokenLifetimes            types.Object `tfsdk:"token_lifetimes"`
-	AuthenticationSetup       types.Object `tfsdk:"authentication_setup"`
-	HostedPagesLayoutID       types.String `tfsdk:"hosted_pages_layout_id"`
-	UserSetupID               types.String `tfsdk:"user_setup_id"`
-	OwnershipDetails          types.Object `tfsdk:"ownership_details"`
-	ClientAuthConfig          types.Object `tfsdk:"client_auth_config"`
-	SigningKeyConfig          types.Object `tfsdk:"signing_key_config"`
-	CreatedTime               types.String `tfsdk:"created_time"`
-	UpdatedTime               types.String `tfsdk:"updated_time"`
-	Owner                     types.String `tfsdk:"owner"`
+	ClientID            types.String `tfsdk:"client_id"`
+	ClientName          types.String `tfsdk:"client_name"`
+	ClientType          types.String `tfsdk:"client_type"`
+	Enabled             types.Bool   `tfsdk:"enabled"`
+	PKCE                types.Object `tfsdk:"pkce"`
+	GrantTypes          types.List   `tfsdk:"grant_types"`
+	ResponseTypes       types.List   `tfsdk:"response_types"`
+	RedirectURIs        types.Object `tfsdk:"redirect_uris"`
+	Scopes              types.Object `tfsdk:"scopes"`
+	TokenLifetimes      types.Object `tfsdk:"token_lifetimes"`
+	AuthenticationSetup types.Object `tfsdk:"authentication_setup"`
+	HostedPagesLayoutID types.String `tfsdk:"hosted_pages_layout_id"`
+	UserSetupID         types.String `tfsdk:"user_setup_id"`
+	OwnershipDetails    types.Object `tfsdk:"ownership_details"`
+	ClientAuthConfig    types.Object `tfsdk:"client_auth_config"`
+	SigningKeyConfig    types.Object `tfsdk:"signing_key_config"`
+	CreatedTime         types.String `tfsdk:"created_time"`
+	UpdatedTime         types.String `tfsdk:"updated_time"`
+	Owner               types.String `tfsdk:"owner"`
 
+	pkce                *pkceConfig
 	redirectURIs        *redirectURIsConfig
 	scopes              *scopesConfig
 	tokenLifetimes      *tokenLifetimesConfig
 	authenticationSetup *authenticationSetupConfig
 	ownershipDetails    *ownershipDetailsConfig
 	clientAuthConfig    *clientAuthConfigBlock
+}
+
+// pkceConfig is the Terraform nested attribute for app-srv `pkce`.
+// Maps 1:1 to client.PKCEConfig (require_pkce + code_challenge_method).
+type pkceConfig struct {
+	RequirePKCE         types.Bool `tfsdk:"require_pkce"`
+	CodeChallengeMethod types.List `tfsdk:"code_challenge_method"`
 }
 
 // clientAuthConfigBlock is the Terraform nested block for client_auth_config.
@@ -108,6 +115,10 @@ type ownershipDetailsConfig struct {
 // extract decodes nested Terraform object attributes into typed helper structs on c.
 func (c *appConfigurationConfig) extract(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
+	if !c.PKCE.IsNull() && !c.PKCE.IsUnknown() {
+		c.pkce = &pkceConfig{}
+		diags.Append(c.PKCE.As(ctx, c.pkce, basetypes.ObjectAsOptions{})...)
+	}
 	if !c.RedirectURIs.IsNull() && !c.RedirectURIs.IsUnknown() {
 		c.redirectURIs = &redirectURIsConfig{}
 		diags.Append(c.RedirectURIs.As(ctx, c.redirectURIs, basetypes.ObjectAsOptions{})...)
@@ -153,12 +164,11 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 		UserSetupID:         c.UserSetupID.ValueString(),
 	}
 
-	if (!c.RequirePKCE.IsNull() && !c.RequirePKCE.IsUnknown()) || (!c.DisableInsecurePKCEMethod.IsNull() && !c.DisableInsecurePKCEMethod.IsUnknown()) {
-		model.RequirePKCE = boolPtr(c.RequirePKCE)
-		model.DisableInsecurePKCEMethod = boolPtr(c.DisableInsecurePKCEMethod)
+	// Send nested pkce only — app-srv stores require_pkce / code_challenge_method there.
+	if c.pkce != nil {
 		model.PKCE = &client.PKCEConfig{
-			RequirePKCE:               boolPtr(c.RequirePKCE),
-			DisableInsecurePKCEMethod: boolPtr(c.DisableInsecurePKCEMethod),
+			RequirePKCE:         boolPtr(c.pkce.RequirePKCE),
+			CodeChallengeMethod: util.ListToStrings(c.pkce.CodeChallengeMethod),
 		}
 	}
 	model.GrantTypes = util.ListToStrings(c.GrantTypes)
@@ -252,34 +262,29 @@ func authenticationSetupToClient(cfg *authenticationSetupConfig) *client.Authent
 func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurationConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var requirePKCE *bool
-	if model.RequirePKCE != nil {
-		requirePKCE = model.RequirePKCE
-	} else if model.PKCE != nil {
-		requirePKCE = model.PKCE.RequirePKCE
-	}
-
-	var disableInsecurePKCE *bool
-	if model.DisableInsecurePKCEMethod != nil {
-		disableInsecurePKCE = model.DisableInsecurePKCEMethod
-	} else if model.PKCE != nil {
-		disableInsecurePKCE = model.PKCE.DisableInsecurePKCEMethod
-	}
-
 	cfg := appConfigurationConfig{
-		ClientID:                  types.StringValue(model.ClientID),
-		ClientName:                types.StringValue(model.ClientName),
-		ClientType:                types.StringValue(model.ClientType),
-		Owner:                     stringOrNull(model.Owner),
-		Enabled:                   boolValueOrNull(model.Enabled),
-		RequirePKCE:               boolValueOrNull(requirePKCE),
-		DisableInsecurePKCEMethod: boolValueOrNull(disableInsecurePKCE),
-		GrantTypes:                stringList(model.GrantTypes),
-		ResponseTypes:             stringList(model.ResponseTypes),
-		HostedPagesLayoutID:       stringOrNull(model.HostedPagesLayoutID),
-		UserSetupID:               stringOrNull(model.UserSetupID),
-		CreatedTime:               stringOrNull(model.CreatedTime),
-		UpdatedTime:               stringOrNull(model.UpdatedTime),
+		ClientID:            types.StringValue(model.ClientID),
+		ClientName:          types.StringValue(model.ClientName),
+		ClientType:          types.StringValue(model.ClientType),
+		Owner:               stringOrNull(model.Owner),
+		Enabled:             boolValueOrNull(model.Enabled),
+		GrantTypes:          stringList(model.GrantTypes),
+		ResponseTypes:       stringList(model.ResponseTypes),
+		HostedPagesLayoutID: stringOrNull(model.HostedPagesLayoutID),
+		UserSetupID:         stringOrNull(model.UserSetupID),
+		CreatedTime:         stringOrNull(model.CreatedTime),
+		UpdatedTime:         stringOrNull(model.UpdatedTime),
+	}
+	// Build pkce state from the API response (no plan-keep workaround).
+	if model.PKCE != nil {
+		obj, d := types.ObjectValue(pkceAttrTypes(), map[string]attr.Value{
+			"require_pkce":          boolValueOrNull(model.PKCE.RequirePKCE),
+			"code_challenge_method": stringListOrNull(model.PKCE.CodeChallengeMethod),
+		})
+		diags.Append(d...)
+		cfg.PKCE = obj
+	} else {
+		cfg.PKCE = types.ObjectNull(pkceAttrTypes())
 	}
 	if model.RedirectURIs != nil {
 		obj, d := types.ObjectValue(redirectURIsAttrTypes(), map[string]attr.Value{

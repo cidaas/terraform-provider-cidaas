@@ -15,12 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - v3→v4 migration guide: Trustdesk app auth flags map to `cidaas_app_configuration.authentication_setup`, not `user_setup` / `verification_options`.
 - Docs: app `authentication_setup` examples; `login_spi` notes; resource-dependency order.
+- **`cidaas_app_configuration`:** PKCE is nested `pkce { require_pkce, code_challenge_method }` to match app-srv. Former top-level `require_pkce` / `disable_insecure_pkce_method` are removed; map `disable_insecure_pkce_method = true` to `code_challenge_method = ["S256"]` (or `["S256", "PLAIN"]` to allow plain). State is read from the API response.
 
 ### Fixed
 
 - **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.labelText` (camelCase). Previously `label_text` was sent, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `label_text`.
 - **`cidaas_app_configuration`:** custom `client_id` no longer causes “Provider produced inconsistent result after apply” (explicit values are forwarded; only null/unknown are cleared before create).
-- **`cidaas_app_configuration`:** `disable_insecure_pkce_method` / `require_pkce` no longer become null after apply when the API omits them (`preferKnownBool`).
 - **`cidaas_user_setup`:** plan-time refs in `allowed_fields` / `required_fields` no longer crash; unknown list/set elements are skipped instead of forcing string conversion.
 
 ## [4.0.1]

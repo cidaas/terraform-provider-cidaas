@@ -64,8 +64,8 @@ Below is the complete, zero-omissions mapping table showing how all fields from 
 | `token_lifetime_in_seconds`                                                                            | `token_lifetimes.access_token_lifetime_in_seconds`   | Int64              | Moved into `token_lifetimes` block. Access token validity in seconds.                                                                    |
 | `id_token_lifetime_in_seconds`                                                                         | `token_lifetimes.id_token_lifetime_in_seconds`       | Int64              | Moved into `token_lifetimes` block. ID token validity in seconds.                                                                        |
 | `refresh_token_lifetime_in_seconds`                                                                    | `token_lifetimes.refresh_token_lifetime_in_seconds`  | Int64              | Moved into `token_lifetimes` block. Refresh token validity in seconds.                                                                   |
-| `require_pkce`                                                                                         | `require_pkce`                                       | Bool               | Requires PKCE for authorization code flow.                                                                                               |
-| `disable_insecure_pkce_method`                                                                         | `disable_insecure_pkce_method`                       | Bool               | Disables insecure `plain` PKCE challenge method (requires `S256`).                                                                       |
+| `require_pkce`                                                                                         | `pkce.require_pkce`                                  | Bool               | Nested under `pkce`. Requires PKCE for authorization code flow.                                                                          |
+| `disable_insecure_pkce_method`                                                                         | `pkce.code_challenge_method`                         | List(String)       | Nested under `pkce`. Former `true` → `["S256"]` (reject plain); former `false`/omitted allow-plain → `["S256", "PLAIN"]`.                 |
 | `token_endpoint_auth_method`                                                                           | `client_auth_config.token_endpoint_auth_method`      | String             | Moved into `client_auth_config` block (`none`, `client_secret_basic`, `private_key_jwt`, `tls_client_auth`).                             |
 | `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers`                                 | List(Object)       | Standardized under `identity_providers` list in v4, linking `cidaas_federation_provider` instances.                                      |
 | `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` that includes `cidaas_hosted_page` ID.                                                                    |
@@ -120,8 +120,11 @@ resource "cidaas_app_configuration" "v4_full_app" {
   grant_types    = ["authorization_code", "refresh_token"]
   response_types = ["code"]
 
-  require_pkce                 = true
-  disable_insecure_pkce_method = true
+  # Nested pkce matches app-srv. ["S256"] rejects plain (was disable_insecure_pkce_method = true).
+  pkce = {
+    require_pkce          = true
+    code_challenge_method = ["S256"]
+  }
 
   ownership_details = {
     company_name    = "Widas Concepts GmbH"

@@ -8,6 +8,7 @@ import (
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func TestToModelSetsOwnerClient(t *testing.T) {
@@ -56,13 +57,16 @@ func TestFlattenAppConfigurationPreservesOwner(t *testing.T) {
 	}
 }
 
-func TestToModelSendsDisableInsecurePKCEMethod(t *testing.T) {
+func TestToModelSendsPKCECodeChallengeMethod(t *testing.T) {
 	t.Parallel()
 	cfg := appConfigurationConfig{
-		ClientName:                types.StringValue("app-pkce"),
-		ClientType:                types.StringValue("SINGLE_PAGE"),
-		Enabled:                   types.BoolValue(true),
-		DisableInsecurePKCEMethod: types.BoolValue(true),
+		ClientName: types.StringValue("app-pkce"),
+		ClientType: types.StringValue("SINGLE_PAGE"),
+		Enabled:    types.BoolValue(true),
+		PKCE: types.ObjectValueMust(pkceAttrTypes(), map[string]attr.Value{
+			"require_pkce":          types.BoolValue(true),
+			"code_challenge_method": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("S256")}),
+		}),
 		Scopes: types.ObjectValueMust(scopesAttrTypes(), map[string]attr.Value{
 			"allowed_scopes": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("openid")}),
 			"default_scopes": types.ListValueMust(types.StringType, []attr.Value{}),
@@ -81,38 +85,42 @@ func TestToModelSendsDisableInsecurePKCEMethod(t *testing.T) {
 	if diags.HasError() {
 		t.Fatalf("toModel: %v", diags)
 	}
-	if model.DisableInsecurePKCEMethod == nil || !*model.DisableInsecurePKCEMethod {
-		t.Fatalf("DisableInsecurePKCEMethod=%v", model.DisableInsecurePKCEMethod)
+	if model.PKCE == nil || model.PKCE.RequirePKCE == nil || !*model.PKCE.RequirePKCE {
+		t.Fatalf("PKCE.RequirePKCE=%v", model.PKCE)
 	}
-	if model.PKCE == nil || model.PKCE.DisableInsecurePKCEMethod == nil || !*model.PKCE.DisableInsecurePKCEMethod {
-		t.Fatalf("PKCE=%v", model.PKCE)
+	if len(model.PKCE.CodeChallengeMethod) != 1 || model.PKCE.CodeChallengeMethod[0] != "S256" {
+		t.Fatalf("PKCE.CodeChallengeMethod=%v", model.PKCE.CodeChallengeMethod)
 	}
 }
 
-func TestMergeOmittedAppConfigurationBoolsKeepsPlannedPKCE(t *testing.T) {
+func TestFlattenAppConfigurationReadsPKCEFromAPI(t *testing.T) {
 	t.Parallel()
-	plan := appConfigurationConfig{
-		RequirePKCE:               types.BoolValue(true),
-		DisableInsecurePKCEMethod: types.BoolValue(true),
-	}
-	// Simulate app-srv create/get response that omits PKCE flags.
-	fromAPI, diags := flattenAppConfiguration(client.AppConfigurationModel{
+	reqPKCE := true
+	cfg, diags := flattenAppConfiguration(client.AppConfigurationModel{
 		ClientID:   "id-1",
 		ClientName: "app-1",
 		ClientType: "SINGLE_PAGE",
+		PKCE: &client.PKCEConfig{
+			RequirePKCE:         &reqPKCE,
+			CodeChallengeMethod: []string{"S256"},
+		},
 	})
 	if diags.HasError() {
 		t.Fatalf("flatten: %v", diags)
 	}
-	if !fromAPI.DisableInsecurePKCEMethod.IsNull() {
-		t.Fatalf("expected null from API flatten, got %v", fromAPI.DisableInsecurePKCEMethod)
+	if cfg.PKCE.IsNull() {
+		t.Fatal("expected pkce from API")
 	}
-	merged := mergeOmittedAppConfigurationBools(plan, fromAPI)
-	if merged.DisableInsecurePKCEMethod.IsNull() || !merged.DisableInsecurePKCEMethod.ValueBool() {
-		t.Fatalf("DisableInsecurePKCEMethod=%v", merged.DisableInsecurePKCEMethod)
+	var pkce pkceConfig
+	if d := cfg.PKCE.As(context.Background(), &pkce, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("pkce.As: %v", d)
 	}
-	if merged.RequirePKCE.IsNull() || !merged.RequirePKCE.ValueBool() {
-		t.Fatalf("RequirePKCE=%v", merged.RequirePKCE)
+	if pkce.RequirePKCE.IsNull() || !pkce.RequirePKCE.ValueBool() {
+		t.Fatalf("require_pkce=%v", pkce.RequirePKCE)
+	}
+	methods := util.ListToStrings(pkce.CodeChallengeMethod)
+	if len(methods) != 1 || methods[0] != "S256" {
+		t.Fatalf("code_challenge_method=%v", methods)
 	}
 }
 

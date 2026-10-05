@@ -29,6 +29,12 @@ resource "cidaas_app_configuration" "example" {
   grant_types    = ["authorization_code", "refresh_token"]
   response_types = ["code"]
 
+  # Nested pkce matches app-srv. ["S256"] rejects plain (was disable_insecure_pkce_method = true).
+  pkce = {
+    require_pkce          = true
+    code_challenge_method = ["S256"]
+  }
+
   ownership_details = {
     company_name    = "Example Corp"
     company_address = "1 Example Way"
@@ -70,12 +76,11 @@ resource "cidaas_app_configuration" "example" {
 - `authentication_setup` (Attributes) (see [below for nested schema](#nestedatt--authentication_setup))
 - `client_auth_config` (Attributes) (see [below for nested schema](#nestedatt--client_auth_config))
 - `client_id` (String) OAuth client ID. Auto-generated when omitted on create. Import key.
-- `disable_insecure_pkce_method` (Boolean) When `true`, rejects plain PKCE challenge method.
 - `enabled` (Boolean)
 - `grant_types` (List of String)
 - `hosted_pages_layout_id` (String) Reference to `cidaas_hosted_page_layout`.
+- `pkce` (Attributes) Nested PKCE object sent to and read from app-srv (`pkce`). Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. `code_challenge_method = ["S256"]` rejects insecure `plain` (AUTH10048); `["S256", "PLAIN"]` allows both methods. (see [below for nested schema](#nestedatt--pkce))
 - `redirect_uris` (Attributes) (see [below for nested schema](#nestedatt--redirect_uris))
-- `require_pkce` (Boolean) When `true`, requires PKCE for authorization requests.
 - `response_types` (List of String)
 - `token_lifetimes` (Attributes) (see [below for nested schema](#nestedatt--token_lifetimes))
 - `user_setup_id` (String) Reference to `cidaas_user_setup`.
@@ -95,6 +100,15 @@ Required:
 - `company_address` (String)
 - `company_name` (String)
 - `company_website` (String)
+
+
+<a id="nestedatt--pkce"></a>
+### Nested Schema for `pkce`
+
+Optional:
+
+- `code_challenge_method` (List of String) Allowed PKCE code challenge methods (RFC 7636). `["S256"]` rejects `plain` and the implicit plain default (AUTH10048). `["S256", "PLAIN"]` allows both. Allowed values: `S256`, `PLAIN`.
+- `require_pkce` (Boolean) When `true`, clients must send `code_challenge` on `/authz-srv/authz` and PAR (AUTH10063 when missing). Recommended for public clients (SPA, mobile).
 
 
 <a id="nestedatt--scopes"></a>

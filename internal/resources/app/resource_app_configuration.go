@@ -90,15 +90,29 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 				Computed: true,
 				Default:  booldefault.StaticBool(true),
 			},
-			"require_pkce": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "When `true`, requires PKCE for authorization requests.",
-			},
-			"disable_insecure_pkce_method": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "When `true`, rejects plain PKCE challenge method.",
+			"pkce": schema.SingleNestedAttribute{
+				Optional: true,
+				MarkdownDescription: "Nested PKCE object sent to and read from app-srv (`pkce`). " +
+					"Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. " +
+					"`code_challenge_method = [\"S256\"]` rejects insecure `plain` (AUTH10048); " +
+					"`[\"S256\", \"PLAIN\"]` allows both methods.",
+				Attributes: map[string]schema.Attribute{
+					"require_pkce": schema.BoolAttribute{
+						Optional: true,
+						MarkdownDescription: "When `true`, clients must send `code_challenge` on `/authz-srv/authz` and PAR " +
+							"(AUTH10063 when missing). Recommended for public clients (SPA, mobile).",
+					},
+					"code_challenge_method": schema.ListAttribute{
+						Optional:    true,
+						ElementType: types.StringType,
+						MarkdownDescription: "Allowed PKCE code challenge methods (RFC 7636). " +
+							"`[\"S256\"]` rejects `plain` and the implicit plain default (AUTH10048). " +
+							"`[\"S256\", \"PLAIN\"]` allows both. Allowed values: `S256`, `PLAIN`.",
+						Validators: []validator.List{
+							listvalidator.ValueStringsAre(stringvalidator.OneOf("S256", "PLAIN")),
+						},
+					},
+				},
 			},
 			"grant_types": schema.ListAttribute{
 				Optional:    true,
@@ -316,9 +330,6 @@ func (r *appConfigurationResource) Create(ctx context.Context, req resource.Crea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	// app-srv may omit PKCE flags in the create response even when persisted;
-	// keep planned known values to avoid inconsistent-result-after-apply.
-	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -347,7 +358,6 @@ func (r *appConfigurationResource) Read(ctx context.Context, req resource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	next = mergeOmittedAppConfigurationBools(state, next)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &next)...)
 }
 
@@ -380,7 +390,6 @@ func (r *appConfigurationResource) Update(ctx context.Context, req resource.Upda
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state = mergeOmittedAppConfigurationBools(plan, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

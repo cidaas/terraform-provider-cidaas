@@ -130,28 +130,19 @@ func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
 }
 
-// preferKnownBool keeps prior when the API omitted a bool (nil → null) so Terraform
-// does not report "Provider produced inconsistent result after apply" for optional
-// computed attributes like disable_insecure_pkce_method / require_pkce.
-func preferKnownBool(prior, fromAPI types.Bool) types.Bool {
-	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
-		return prior
+// stringListOrNull returns a null string list when values is nil (API omitted the field);
+// an empty non-nil slice becomes an empty list value.
+func stringListOrNull(values []string) types.List {
+	if values == nil {
+		return types.ListNull(types.StringType)
 	}
-	return fromAPI
+	return stringList(values)
 }
 
-// preferKnownString keeps prior when the API omitted a string (empty/null).
-func preferKnownString(prior, fromAPI types.String) types.String {
-	if fromAPI.IsNull() && !prior.IsNull() && !prior.IsUnknown() {
-		return prior
+// pkceAttrTypes is the Framework attr type map for the nested pkce object.
+func pkceAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"require_pkce":          types.BoolType,
+		"code_challenge_method": types.ListType{ElemType: types.StringType},
 	}
-	return fromAPI
-}
-
-// mergeOmittedAppConfigurationBools restores plan/prior values for PKCE flags when
-// app-srv create/update/get responses omit them.
-func mergeOmittedAppConfigurationBools(prior, state appConfigurationConfig) appConfigurationConfig {
-	state.RequirePKCE = preferKnownBool(prior.RequirePKCE, state.RequirePKCE)
-	state.DisableInsecurePKCEMethod = preferKnownBool(prior.DisableInsecurePKCEMethod, state.DisableInsecurePKCEMethod)
-	return state
 }
