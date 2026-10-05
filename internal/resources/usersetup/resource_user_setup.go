@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -136,9 +137,10 @@ func (r *userSetupResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages reusable User Setup profiles on cidaas v4 (Trustdesk) via `user-srv/usersetup`. " +
 			"Applications reference a profile via `user_setup_id`.\n\n" +
-			"Writes (create/update/delete) require admin or developer roles " +
-			"(`USERSETUP_MANAGER` / `APP_MANAGER` / `ADMIN` / `SECONDARY_ADMIN` / `SUPER_ADMIN`) — there is no write OAuth scope. " +
-			"Read-by-ID may use roles or scope `cidaas:usersetup_read`.",
+			"Authorization (user-srv): OAuth scopes **or** admin/developer group roles.\n\n" +
+			"- Create/Update: scope `cidaas:usersetup_write`, or roles `USERSETUP_MANAGER` / `APP_MANAGER` / `ADMIN` / `SECONDARY_ADMIN` / `SUPER_ADMIN`\n" +
+			"- Read: scope `cidaas:usersetup_read`, or the write roles plus `USERSETUP_VIEWER`\n" +
+			"- Delete: scope `cidaas:usersetup_delete`, or the same write roles",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -327,16 +329,21 @@ func (r *userSetupResource) ValidateConfig(ctx context.Context, req resource.Val
 	if resp.Diagnostics.HasError() || config.userSetup == nil {
 		return
 	}
+	// Skip validation when list-level or any element-level values are unknown.
+	// This happens when elements reference attributes of other resources
+	// (e.g., cidaas_registration_field.foo.field_key) that are not yet resolved
+	// during the plan phase.
 	if config.userSetup.AllowedFields.IsUnknown() || config.userSetup.RequiredFields.IsUnknown() {
 		return
 	}
-	allowed, diags := listToStrings(ctx, config.userSetup.AllowedFields)
-	resp.Diagnostics.Append(diags...)
-	required, diags := listToStrings(ctx, config.userSetup.RequiredFields)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	// Also skip when individual elements are unknown (e.g., plan-time refs to other resources).
+	// Null elements are not valid field keys and are intentionally dropped by util.ListToStrings.
+
+	if util.ListContainsUnknown(config.userSetup.AllowedFields) || util.ListContainsUnknown(config.userSetup.RequiredFields) {
 		return
 	}
+	allowed := util.ListToStrings(config.userSetup.AllowedFields)
+	required := util.ListToStrings(config.userSetup.RequiredFields)
 	if missing := missingRequiredFields(allowed, required); len(missing) > 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("user_setup").AtName("required_fields"),
@@ -454,29 +461,22 @@ func (c *setupConfig) toModel(ctx context.Context) (client.UserAppSetupModel, di
 	if !c.userSetup.CommunicationMediumVerification.IsNull() && !c.userSetup.CommunicationMediumVerification.IsUnknown() {
 		detail.CommunicationMediumVerification = c.userSetup.CommunicationMediumVerification.ValueString()
 	}
-	var d diag.Diagnostics
-	detail.AllowedFields, d = listToStrings(ctx, c.userSetup.AllowedFields)
-	diags.Append(d...)
-	detail.RequiredFields, d = listToStrings(ctx, c.userSetup.RequiredFields)
-	diags.Append(d...)
-	detail.AllowLoginWith, d = listToStrings(ctx, c.userSetup.AllowLoginWith)
-	diags.Append(d...)
-	detail.ConsentRefs, d = listToStrings(ctx, c.ConsentRefs)
-	diags.Append(d...)
-	detail.AutoConfirmCommunicationMethod, d = listToStrings(ctx, c.userSetup.AutoConfirmCommunicationMethod)
-	diags.Append(d...)
-	detail.VerificationForMedium, d = listToStrings(ctx, c.userSetup.VerificationForMedium)
-	diags.Append(d...)
+	detail.AllowedFields = util.ListToStrings(c.userSetup.AllowedFields)
+	detail.RequiredFields = util.ListToStrings(c.userSetup.RequiredFields)
+	detail.AllowLoginWith = util.ListToStrings(c.userSetup.AllowLoginWith)
+	detail.ConsentRefs = util.ListToStrings(c.ConsentRefs)
+	detail.AutoConfirmCommunicationMethod = util.ListToStrings(c.userSetup.AutoConfirmCommunicationMethod)
+	detail.VerificationForMedium = util.ListToStrings(c.userSetup.VerificationForMedium)
 
 	for _, g := range c.userSetup.operationsAllowedGroups {
 		if g == nil {
 			continue
 		}
-		ag := client.AllowedGroup{GroupID: g.GroupID.ValueString()}
-		ag.Roles, d = listToStrings(ctx, g.Roles)
-		diags.Append(d...)
-		ag.DefaultRoles, d = listToStrings(ctx, g.DefaultRoles)
-		diags.Append(d...)
+		ag := client.AllowedGroup{
+			GroupID:      g.GroupID.ValueString(),
+			Roles:        util.ListToStrings(g.Roles),
+			DefaultRoles: util.ListToStrings(g.DefaultRoles),
+		}
 		detail.OperationsAllowedGroups = append(detail.OperationsAllowedGroups, ag)
 	}
 	model.UserSetup = detail
@@ -667,15 +667,6 @@ func (r *userSetupResource) validateFieldSetupKeys(ctx context.Context, model cl
 		msg,
 	)
 	return false
-}
-
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
-	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
-	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
 }
 
 func stringList(values []string) types.List {

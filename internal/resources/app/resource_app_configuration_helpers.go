@@ -2,21 +2,9 @@
 package app
 
 import (
-	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
-	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
-	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
-}
 
 func stringList(values []string) types.List {
 	elems := make([]attr.Value, 0, len(values))
@@ -108,6 +96,20 @@ func authenticationSetupAttrTypes() map[string]attr.Type {
 		"admin_client":                     types.BoolType,
 		"is_login_success_page_enabled":    types.BoolType,
 		"is_register_success_page_enabled": types.BoolType,
+		"auto_login_after_register":        types.BoolType,
+		"register_with_login_information":  types.BoolType,
+		"enable_password_less_auth":        types.BoolType,
+		"allow_user_level_multi_provider":  types.BoolType,
+		"social_business_ids":              types.BoolType,
+		"login_spi":                        types.ObjectType{AttrTypes: loginSpiAttrTypes()},
+	}
+}
+
+func loginSpiAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"enable_login_spi": types.BoolType,
+		"oauth_client_id":  types.StringType,
+		"spi_url":          types.StringType,
 	}
 }
 
@@ -126,4 +128,21 @@ func signingKeyConfigAttrTypes() map[string]attr.Type {
 
 func emptyStringList() types.List {
 	return types.ListValueMust(types.StringType, []attr.Value{})
+}
+
+// stringListOrNull returns a null string list when values is nil (API omitted the field);
+// an empty non-nil slice becomes an empty list value.
+func stringListOrNull(values []string) types.List {
+	if values == nil {
+		return types.ListNull(types.StringType)
+	}
+	return stringList(values)
+}
+
+// pkceAttrTypes is the Framework attr type map for the nested pkce object.
+func pkceAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"require_pkce":          types.BoolType,
+		"code_challenge_method": types.ListType{ElemType: types.StringType},
+	}
 }

@@ -64,12 +64,13 @@ Below is the complete, zero-omissions mapping table showing how all fields from 
 | `token_lifetime_in_seconds`                                                                            | `token_lifetimes.access_token_lifetime_in_seconds`   | Int64              | Moved into `token_lifetimes` block. Access token validity in seconds.                                                                    |
 | `id_token_lifetime_in_seconds`                                                                         | `token_lifetimes.id_token_lifetime_in_seconds`       | Int64              | Moved into `token_lifetimes` block. ID token validity in seconds.                                                                        |
 | `refresh_token_lifetime_in_seconds`                                                                    | `token_lifetimes.refresh_token_lifetime_in_seconds`  | Int64              | Moved into `token_lifetimes` block. Refresh token validity in seconds.                                                                   |
-| `require_pkce`                                                                                         | `require_pkce`                                       | Bool               | Requires PKCE for authorization code flow.                                                                                               |
-| `disable_insecure_pkce_method`                                                                         | `disable_insecure_pkce_method`                       | Bool               | Disables insecure `plain` PKCE challenge method (requires `S256`).                                                                       |
+| `require_pkce`                                                                                         | `pkce.require_pkce`                                  | Bool               | Nested under `pkce`. Requires PKCE for authorization code flow.                                                                          |
+| `disable_insecure_pkce_method`                                                                         | `pkce.code_challenge_method`                         | List(String)       | Nested under `pkce`. Former `true` → `["S256"]` (reject plain); former `false`/omitted allow-plain → `["S256", "PLAIN"]`.                 |
 | `token_endpoint_auth_method`                                                                           | `client_auth_config.token_endpoint_auth_method`      | String             | Moved into `client_auth_config` block (`none`, `client_secret_basic`, `private_key_jwt`, `tls_client_auth`).                             |
 | `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers`                                 | List(Object)       | Standardized under `identity_providers` list in v4, linking `cidaas_federation_provider` instances.                                      |
 | `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` that includes `cidaas_hosted_page` ID.                                                                    |
-| `auto_login_after_register`, `enable_deduplication`, `allow_disposable_email`, `validate_phone_number` | `user_setup_id`                                      | String (Extdep ID) | In v4, user registration & deduplication policies are managed via `cidaas_user_setup` resource.                                          |
+| `auto_login_after_register`, `register_with_login_information`, `enable_passwordless_auth` / `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids` | `authentication_setup.*` on `cidaas_app_configuration` | Bool | Set per app in Terraform. Tenant Default Authentication Setup is admin/Trustdesk-only (not a Terraform resource). Deduplication / field lists stay on `cidaas_user_setup`. NetID is tenant-only and not exposed on the app resource. |
+| `enable_deduplication`, `allow_disposable_email`, `validate_phone_number`, allowed/required fields | `user_setup_id` → `cidaas_user_setup` | String (Extdep ID) | Registration field and dedup policies. |
 | `mfa`, `suggest_verification_methods`, `smart_mfa`, `allowed_mfa`                                      | `authentication_setup.verification_options_id`       | String (Extdep ID) | In v4, MFA settings and policies are managed via `cidaas_verification_options` resource.                                                 |
 | `group_selection`                                                                                      | `authentication_setup.group_selection_id`            | String (Extdep ID) | In v4, group selection policies are managed via `cidaas_group_selection` resource.                                                       |
 | `group_role_restriction`                                                                               | `authentication_setup.group_verification_request_id` | String (Extdep ID) | In v4, group verification filters are managed via `cidaas_group_verification_filter` resource.                                           |
@@ -107,6 +108,8 @@ resource "cidaas_app" "legacy_full_app" {
 
 #### Standardized `cidaas_app_configuration` (v4 Decoupled Microservice)
 
+Set authentication setup flags on the app (Terraform manages **app-level only**; tenant Default Authentication Setup stays in Trustdesk):
+
 ```hcl
 resource "cidaas_app_configuration" "v4_full_app" {
   client_name         = "sample_app_v3_full"
@@ -117,8 +120,11 @@ resource "cidaas_app_configuration" "v4_full_app" {
   grant_types    = ["authorization_code", "refresh_token"]
   response_types = ["code"]
 
-  require_pkce                 = true
-  disable_insecure_pkce_method = true
+  # Nested pkce matches app-srv. ["S256"] rejects plain (was disable_insecure_pkce_method = true).
+  pkce = {
+    require_pkce          = true
+    code_challenge_method = ["S256"]
+  }
 
   ownership_details = {
     company_name    = "Widas Concepts GmbH"
@@ -152,9 +158,20 @@ resource "cidaas_app_configuration" "v4_full_app" {
   user_setup_id          = cidaas_user_setup.sample.id
 
   authentication_setup = {
+    # Extdep refs
     verification_options_id       = cidaas_verification_options.web.id
     group_selection_id            = cidaas_group_selection.sample.id
     group_verification_request_id = cidaas_group_verification_filter.sample.id
+
+    # Per-app authentication setup
+    auto_login_after_register       = false
+    register_with_login_information = false
+    enable_password_less_auth       = true
+    allow_user_level_multi_provider = true
+    social_business_ids             = false
+    login_spi = {
+      enable_login_spi = false
+    }
   }
 }
 ```

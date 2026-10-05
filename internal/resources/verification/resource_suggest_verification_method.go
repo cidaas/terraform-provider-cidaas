@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -247,13 +248,8 @@ func (r *suggestVerificationMethodResource) ValidateConfig(ctx context.Context, 
 		if config.setup.mandatory.Methods.IsUnknown() || config.setup.optional.Methods.IsUnknown() {
 			return
 		}
-		mand, d := listToStrings(ctx, config.setup.mandatory.Methods)
-		resp.Diagnostics.Append(d...)
-		opt, d := listToStrings(ctx, config.setup.optional.Methods)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		mand := util.ListToStrings(config.setup.mandatory.Methods)
+		opt := util.ListToStrings(config.setup.optional.Methods)
 		if overlap := methodOverlap(mand, opt); len(overlap) > 0 {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("suggest_verification_method").AtName("optional_config").AtName("methods"),
@@ -292,8 +288,7 @@ func (c *suggestVerificationMethodConfig) toModel(ctx context.Context) (client.S
 		SkipDurationInDays: int(c.setup.SkipDurationInDays.ValueInt64()),
 	}
 	if c.setup.mandatory != nil {
-		methods, d := listToStrings(ctx, c.setup.mandatory.Methods)
-		diags.Append(d...)
+		methods := util.ListToStrings(c.setup.mandatory.Methods)
 		setup.MandatoryConfig = &client.SuggestVerificationMandatoryConfig{
 			Methods:   methods,
 			Range:     c.setup.mandatory.Range.ValueString(),
@@ -301,8 +296,7 @@ func (c *suggestVerificationMethodConfig) toModel(ctx context.Context) (client.S
 		}
 	}
 	if c.setup.optional != nil {
-		methods, d := listToStrings(ctx, c.setup.optional.Methods)
-		diags.Append(d...)
+		methods := util.ListToStrings(c.setup.optional.Methods)
 		setup.OptionalConfig = &client.SuggestVerificationOptionalConfig{Methods: methods}
 	}
 	model.SuggestVerificationMethod = setup
@@ -459,15 +453,6 @@ func (r *suggestVerificationMethodResource) Delete(ctx context.Context, req reso
 // ImportState imports by server-assigned UUID (id).
 func (r *suggestVerificationMethodResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostics) {
-	if l.IsNull() || l.IsUnknown() {
-		return nil, nil
-	}
-	var out []string
-	diags := l.ElementsAs(ctx, &out, false)
-	return out, diags
 }
 
 func stringList(values []string) types.List {

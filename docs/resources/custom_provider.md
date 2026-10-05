@@ -4,7 +4,7 @@ subcategory: "Identity Providers"
 description: |-
   This example demonstrates the configuration of a custom provider resource for interacting with Cidaas.
   Ensure that the below scopes are assigned to the client with the specified client_id:
-  cidaas:providers_readcidaas:providers_writecidaas:providers_delete
+  cidaas:providers_read, cidaas:providers_write, cidaas:providers_delete
   -> Note: Write-Only argument client_secret_wo is available to use in place of client_secret. Write-only arguments are supported in HashiCorp Terraform 1.11.0 and later. Learn more https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments.
 ---
 

@@ -222,13 +222,8 @@ func buildNotificationServiceSetupCreate(ctx context.Context, plan notificationS
 	var diags diag.Diagnostics
 	methods := make([]string, 0)
 	if !plan.CommunicationMethods.IsNull() && !plan.CommunicationMethods.IsUnknown() {
-		var elems []types.String
-		diags.Append(plan.CommunicationMethods.ElementsAs(ctx, &elems, false)...)
-		if diags.HasError() {
-			return cidaas.NotificationsSrvServiceSetupWrite{}, diags
-		}
-		for _, m := range elems {
-			methods = append(methods, strings.ToLower(strings.TrimSpace(m.ValueString())))
+		for _, m := range util.SetToStrings(plan.CommunicationMethods) {
+			methods = append(methods, strings.ToLower(strings.TrimSpace(m)))
 		}
 	}
 	write := cidaas.NotificationsSrvServiceSetupWrite{
