@@ -14,6 +14,12 @@ resource "cidaas_app_configuration" "example" {
   grant_types    = ["authorization_code", "refresh_token"]
   response_types = ["code"]
 
+  # Nested pkce matches app-srv. ["S256"] rejects plain (was disable_insecure_pkce_method = true).
+  pkce = {
+    require_pkce          = true
+    code_challenge_method = ["S256"]
+  }
+
   ownership_details = {
     company_name    = "Example Corp"
     company_address = "1 Example Way"
