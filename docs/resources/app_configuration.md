@@ -79,7 +79,7 @@ resource "cidaas_app_configuration" "example" {
 - `enabled` (Boolean)
 - `grant_types` (List of String)
 - `hosted_pages_layout_id` (String) Reference to `cidaas_hosted_page_layout`.
-- `pkce` (Attributes) Nested PKCE object sent to and read from app-srv (`pkce`). Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. `code_challenge_method = ["S256"]` rejects insecure `plain` (AUTH10048); `["S256", "PLAIN"]` allows both methods. (see [below for nested schema](#nestedatt--pkce))
+- `pkce` (Attributes) Nested PKCE object sent to and read from app-srv (`pkce`). Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. `code_challenge_method = ["S256"]` rejects insecure `plain` (AUTH10048); `["S256", "PLAIN"]` allows both methods. Computed from the API when omitted. (see [below for nested schema](#nestedatt--pkce))
 - `redirect_uris` (Attributes) (see [below for nested schema](#nestedatt--redirect_uris))
 - `response_types` (List of String)
 - `token_lifetimes` (Attributes) (see [below for nested schema](#nestedatt--token_lifetimes))

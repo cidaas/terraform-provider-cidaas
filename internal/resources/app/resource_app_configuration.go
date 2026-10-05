@@ -92,18 +92,21 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 			},
 			"pkce": schema.SingleNestedAttribute{
 				Optional: true,
+				Computed: true,
 				MarkdownDescription: "Nested PKCE object sent to and read from app-srv (`pkce`). " +
 					"Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. " +
 					"`code_challenge_method = [\"S256\"]` rejects insecure `plain` (AUTH10048); " +
-					"`[\"S256\", \"PLAIN\"]` allows both methods.",
+					"`[\"S256\", \"PLAIN\"]` allows both methods. Computed from the API when omitted.",
 				Attributes: map[string]schema.Attribute{
 					"require_pkce": schema.BoolAttribute{
 						Optional: true,
+						Computed: true,
 						MarkdownDescription: "When `true`, clients must send `code_challenge` on `/authz-srv/authz` and PAR " +
 							"(AUTH10063 when missing). Recommended for public clients (SPA, mobile).",
 					},
 					"code_challenge_method": schema.ListAttribute{
 						Optional:    true,
+						Computed:    true,
 						ElementType: types.StringType,
 						MarkdownDescription: "Allowed PKCE code challenge methods (RFC 7636). " +
 							"`[\"S256\"]` rejects `plain` and the implicit plain default (AUTH10048). " +
