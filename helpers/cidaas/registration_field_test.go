@@ -888,11 +888,11 @@ func TestRegistrationFieldConfig_MarshalConsentLabelText(t *testing.T) {
 	if strings.Contains(s, `"localeText"`) {
 		t.Fatalf("must not dual-write localeText (fieldsetup 400): %s", s)
 	}
-	if !strings.Contains(s, `"labelText":"I agree"`) {
-		t.Fatalf("missing labelText: %s", s)
+	if !strings.Contains(s, `"label_text":"I agree"`) {
+		t.Fatalf("missing label_text: %s", s)
 	}
-	if strings.Contains(s, `"label_text"`) {
-		t.Fatalf("must emit camelCase labelText only: %s", s)
+	if strings.Contains(s, `"labelText"`) {
+		t.Fatalf("must emit snake_case label_text only (fieldsetup drops labelText): %s", s)
 	}
 }
 
@@ -903,7 +903,7 @@ func TestRegistrationFieldConfig_UnmarshalLocaleTextObject(t *testing.T) {
 		"localeText":{
 			"locale":"en-US",
 			"name":"Visible Name",
-			"consentLabel":{"label":"l","labelText":"I agree"}
+			"consentLabel":{"label":"l","label_text":"I agree"}
 		}
 	}`)
 	var cfg RegistrationFieldConfig
@@ -915,5 +915,16 @@ func TestRegistrationFieldConfig_UnmarshalLocaleTextObject(t *testing.T) {
 	}
 	if cfg.LocaleTexts[0].ConsentLabel == nil || cfg.LocaleTexts[0].ConsentLabel.LabelText != "I agree" {
 		t.Fatalf("ConsentLabel=%v", cfg.LocaleTexts[0].ConsentLabel)
+	}
+}
+
+func TestConsentLabel_UnmarshalLegacyLabelText(t *testing.T) {
+	t.Parallel()
+	var c ConsentLabel
+	if err := json.Unmarshal([]byte(`{"label":"l","labelText":"legacy"}`), &c); err != nil {
+		t.Fatal(err)
+	}
+	if c.LabelText != "legacy" {
+		t.Fatalf("LabelText=%q want legacy", c.LabelText)
 	}
 }

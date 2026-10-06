@@ -163,19 +163,19 @@ type Attribute struct {
 
 type ConsentLabel struct {
 	Label     string `json:"label,omitempty"`
-	LabelText string `json:"labelText,omitempty"`
+	LabelText string `json:"label_text,omitempty"` // fieldsetup stores snake_case; camelCase labelText is dropped
 }
 
-// UnmarshalJSON accepts labelText (Trustdesk/fieldsetup) or legacy label_text.
+// UnmarshalJSON accepts label_text (fieldsetup/Trustdesk) or legacy labelText.
 func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
 	var raw map[string]string
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
 	c.Label = raw["label"]
-	c.LabelText = raw["labelText"]
+	c.LabelText = raw["label_text"]
 	if c.LabelText == "" {
-		c.LabelText = raw["label_text"]
+		c.LabelText = raw["labelText"]
 	}
 	return nil
 }

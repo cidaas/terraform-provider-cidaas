@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.label_text` (snake_case, matching fieldsetup). CamelCase `labelText` is dropped by fieldsetup, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `labelText`.
+
 ## [4.1.0]
 
 Minor after `v4.0.1`. Existing 4.0.x **state** stays valid, but `cidaas_app_configuration` **HCL** that still uses top-level `require_pkce` / `disable_insecure_pkce_method` must move those into nested `pkce`.
@@ -36,7 +42,7 @@ Patch after `v4.0.0`. Existing 3.5.x / 4.0.0 state stays valid. Prefer HCL `cida
 
 ### Added
 
-- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"` ([5208](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5208)). `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"`. `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
 - **Data sources** restored (4.0.0 shipped none): `cidaas_role`, `cidaas_group_type`, `cidaas_scope`, `cidaas_scope_group`, `cidaas_system_template_option`, `cidaas_consent`, `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_registration_field`, `cidaas_notification_service_setup`, `cidaas_notification_service_setups`, `cidaas_notification_templates`, `cidaas_notification_template_groups`, `cidaas_webhook_events`.
 
 ### Changed
