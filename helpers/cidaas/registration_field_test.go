@@ -928,3 +928,49 @@ func TestConsentLabel_UnmarshalLegacyLabelText(t *testing.T) {
 		t.Fatalf("LabelText=%q want legacy", c.LabelText)
 	}
 }
+
+func TestExpandConsentLabelForAPI(t *testing.T) {
+	t.Parallel()
+	id := "963df28e-e21a-4c9b-87a6-82580031cb69"
+	want := `<a href="{{` + id + `}}">This lable will not be applied</a>`
+
+	t.Run("plain label_text one ref", func(t *testing.T) {
+		got := ExpandConsentLabelForAPI("ignored", "This lable will not be applied", []string{id})
+		if got == nil || got.Label != want || got.LabelText != want {
+			t.Fatalf("got %#v want both %q", got, want)
+		}
+	})
+	t.Run("fallback to label", func(t *testing.T) {
+		got := ExpandConsentLabelForAPI("from label", "", []string{id})
+		wantLabel := `<a href="{{` + id + `}}">from label</a>`
+		if got == nil || got.Label != wantLabel || got.LabelText != wantLabel {
+			t.Fatalf("got %#v", got)
+		}
+	})
+	t.Run("fallback to first consent id", func(t *testing.T) {
+		got := ExpandConsentLabelForAPI("", "", []string{id})
+		wantID := `<a href="{{` + id + `}}">` + id + `</a>`
+		if got == nil || got.Label != wantID || got.LabelText != wantID {
+			t.Fatalf("got %#v", got)
+		}
+	})
+	t.Run("many refs space joined", func(t *testing.T) {
+		id2 := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+		got := ExpandConsentLabelForAPI("", "Agree", []string{id, id2})
+		wantMany := `<a href="{{` + id + `}}">Agree</a> <a href="{{` + id2 + `}}">Agree</a>`
+		if got == nil || got.Label != wantMany || got.LabelText != wantMany {
+			t.Fatalf("got %#v want %q", got, wantMany)
+		}
+	})
+	t.Run("already html idempotent", func(t *testing.T) {
+		got := ExpandConsentLabelForAPI(want, want, []string{id})
+		if got == nil || got.Label != want || got.LabelText != want {
+			t.Fatalf("got %#v", got)
+		}
+	})
+	t.Run("empty returns nil", func(t *testing.T) {
+		if ExpandConsentLabelForAPI("", "", nil) != nil {
+			t.Fatal("expected nil")
+		}
+	})
+}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
@@ -178,6 +179,45 @@ func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
 		c.LabelText = raw["labelText"]
 	}
 	return nil
+}
+
+// ExpandConsentLabelForAPI builds Trustdesk/fieldsetup consentLabel HTML.
+// Trustdesk stores the same full HTML in both label and label_text:
+//
+//	<a href="{{consent_id}}">display</a>
+//
+// Plain HCL text is expanded using consentRefs (space-joined for multiple).
+// Strings that already contain href="{{ are left unchanged (idempotent).
+func ExpandConsentLabelForAPI(label, labelText string, consentRefs []string) *ConsentLabel {
+	display := strings.TrimSpace(labelText)
+	if display == "" {
+		display = strings.TrimSpace(label)
+	}
+	if display == "" && len(consentRefs) > 0 {
+		display = consentRefs[0]
+	}
+	if display == "" {
+		return nil
+	}
+	html := display
+	if !strings.Contains(display, `href="{{`) && !strings.Contains(display, "href='{{") {
+		if len(consentRefs) == 0 {
+			return &ConsentLabel{Label: display, LabelText: display}
+		}
+		parts := make([]string, 0, len(consentRefs))
+		for _, id := range consentRefs {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			parts = append(parts, fmt.Sprintf(`<a href="{{%s}}">%s</a>`, id, display))
+		}
+		if len(parts) == 0 {
+			return &ConsentLabel{Label: display, LabelText: display}
+		}
+		html = strings.Join(parts, " ")
+	}
+	return &ConsentLabel{Label: html, LabelText: html}
 }
 
 // RegistrationFieldOrder is the PATCH /fieldsetup-srv/fields/order request body.
