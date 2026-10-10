@@ -119,10 +119,15 @@ Required:
 <a id="nestedatt--local_texts--consent_label"></a>
 ### Nested Schema for `local_texts.consent_label`
 
+Required when `data_type` is `CONSENT`. Plain text is expanded on create/update to Trustdesk/fieldsetup HTML
+`<a href="{{consent_id}}">…</a>` using `consent_refs` (the same string is written to API `label` and `label_text`).
+Prefer `label_text` for the link body; falls back to `label`, then the first consent id. Values that already
+contain `href="{{` are left unchanged.
+
 Required:
 
-- `label` (String)
-- `label_text` (String)
+- `label` (String) Consent label. Plain text is expanded with `consent_refs`; may already be Trustdesk HTML.
+- `label_text` (String) Preferred link text for the expanded HTML.
 
 
 
