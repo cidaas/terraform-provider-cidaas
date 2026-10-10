@@ -858,6 +858,19 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.ConsentRefs = util.SetValueOrNull(res.Data.ConsentRefs)
 	state.Order = util.Int64ValueOrNull(&res.Data.Order)
 
+	// Prior consent_label plain text (before LocalTexts refresh) avoids plan drift vs API HTML.
+	priorConsentByLocale := map[string]*Consent{}
+	resp.Diagnostics.Append(state.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, plt := range state.localTexts {
+		if plt == nil || plt.consent == nil {
+			continue
+		}
+		priorConsentByLocale[plt.Locale.ValueString()] = plt.consent
+	}
+
 	var localTextsObjectValues []attr.Value
 	typesOfAttribute := map[string]attr.Type{
 		"key":   types.StringType,
@@ -914,11 +927,19 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 					if lt.ConsentLabel == nil {
 						return types.ObjectNull(typesOfConsentLabel)
 					}
+					var priorLabel, priorLabelText string
+					if prior := priorConsentByLocale[lt.Locale]; prior != nil {
+						priorLabel = prior.Label.ValueString()
+						priorLabelText = prior.LabelText.ValueString()
+					}
+					label, labelText := cidaas.ConsentLabelForState(
+						lt.ConsentLabel, priorLabel, priorLabelText, res.Data.ConsentRefs,
+					)
 					return types.ObjectValueMust(
 						typesOfConsentLabel,
 						map[string]attr.Value{
-							"label":      util.StringValueOrNull(&lt.ConsentLabel.Label),
-							"label_text": util.StringValueOrNull(&lt.ConsentLabel.LabelText),
+							"label":      util.StringValueOrNull(&label),
+							"label_text": util.StringValueOrNull(&labelText),
 						},
 					)
 				}(),

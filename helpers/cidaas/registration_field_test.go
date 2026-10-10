@@ -973,4 +973,52 @@ func TestExpandConsentLabelForAPI(t *testing.T) {
 			t.Fatal("expected nil")
 		}
 	})
+	t.Run("escapes html in display", func(t *testing.T) {
+		got := ExpandConsentLabelForAPI("", "Terms & Conditions", []string{id})
+		wantEsc := `<a href="{{` + id + `}}">Terms &amp; Conditions</a>`
+		if got == nil || got.Label != wantEsc || got.LabelText != wantEsc {
+			t.Fatalf("got %#v want %q", got, wantEsc)
+		}
+	})
+}
+
+func TestCollapseConsentLabelFromAPI(t *testing.T) {
+	t.Parallel()
+	id := "963df28e-e21a-4c9b-87a6-82580031cb69"
+	t.Run("plain unchanged", func(t *testing.T) {
+		if got := CollapseConsentLabelFromAPI("I agree"); got != "I agree" {
+			t.Fatalf("got %q", got)
+		}
+	})
+	t.Run("one anchor", func(t *testing.T) {
+		in := `<a href="{{` + id + `}}">This lable will not be applied</a>`
+		if got := CollapseConsentLabelFromAPI(in); got != "This lable will not be applied" {
+			t.Fatalf("got %q", got)
+		}
+	})
+	t.Run("unescapes entities", func(t *testing.T) {
+		in := `<a href="{{` + id + `}}">Terms &amp; Conditions</a>`
+		if got := CollapseConsentLabelFromAPI(in); got != "Terms & Conditions" {
+			t.Fatalf("got %q", got)
+		}
+	})
+}
+
+func TestConsentLabelForState(t *testing.T) {
+	t.Parallel()
+	id := "963df28e-e21a-4c9b-87a6-82580031cb69"
+	refs := []string{id}
+	apiHTML := ExpandConsentLabelForAPI("ignored", "I agree", refs)
+	t.Run("keeps prior when expand matches", func(t *testing.T) {
+		label, labelText := ConsentLabelForState(apiHTML, "ignored", "I agree", refs)
+		if label != "ignored" || labelText != "I agree" {
+			t.Fatalf("got %q %q", label, labelText)
+		}
+	})
+	t.Run("collapses when no prior", func(t *testing.T) {
+		label, labelText := ConsentLabelForState(apiHTML, "", "", refs)
+		if label != "I agree" || labelText != "I agree" {
+			t.Fatalf("got %q %q", label, labelText)
+		}
+	})
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -181,6 +183,9 @@ func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// consentLabelAnchorRE matches Trustdesk consent anchors written by ExpandConsentLabelForAPI.
+var consentLabelAnchorRE = regexp.MustCompile(`(?s)<a\s+href=["']\{\{[^}]+\}\}["']>(.*?)</a>`)
+
 // ExpandConsentLabelForAPI builds Trustdesk/fieldsetup consentLabel HTML.
 // Trustdesk stores the same full HTML in both label and label_text:
 //
@@ -199,25 +204,64 @@ func ExpandConsentLabelForAPI(label, labelText string, consentRefs []string) *Co
 	if display == "" {
 		return nil
 	}
-	html := display
+	out := display
 	if !strings.Contains(display, `href="{{`) && !strings.Contains(display, "href='{{") {
 		if len(consentRefs) == 0 {
 			return &ConsentLabel{Label: display, LabelText: display}
 		}
 		parts := make([]string, 0, len(consentRefs))
+		escaped := html.EscapeString(display)
 		for _, id := range consentRefs {
 			id = strings.TrimSpace(id)
 			if id == "" {
 				continue
 			}
-			parts = append(parts, fmt.Sprintf(`<a href="{{%s}}">%s</a>`, id, display))
+			parts = append(parts, fmt.Sprintf(`<a href="{{%s}}">%s</a>`, id, escaped))
 		}
 		if len(parts) == 0 {
 			return &ConsentLabel{Label: display, LabelText: display}
 		}
-		html = strings.Join(parts, " ")
+		out = strings.Join(parts, " ")
 	}
-	return &ConsentLabel{Label: html, LabelText: html}
+	return &ConsentLabel{Label: out, LabelText: out}
+}
+
+// CollapseConsentLabelFromAPI returns plain display text from Trustdesk HTML, or s unchanged.
+func CollapseConsentLabelFromAPI(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+	matches := consentLabelAnchorRE.FindAllStringSubmatch(s, -1)
+	if len(matches) == 0 {
+		return s
+	}
+	display := html.UnescapeString(matches[0][1])
+	for _, m := range matches[1:] {
+		if html.UnescapeString(m[1]) != display {
+			return s
+		}
+	}
+	return display
+}
+
+// ConsentLabelForState keeps prior HCL plain text when it expands to the API value (no plan drift).
+// Otherwise collapses API HTML to plain display for both fields (import / external change).
+func ConsentLabelForState(api *ConsentLabel, priorLabel, priorLabelText string, consentRefs []string) (label, labelText string) {
+	if api == nil {
+		return "", ""
+	}
+	if priorLabel != "" || priorLabelText != "" {
+		if exp := ExpandConsentLabelForAPI(priorLabel, priorLabelText, consentRefs); exp != nil &&
+			exp.Label == api.Label && exp.LabelText == api.LabelText {
+			return priorLabel, priorLabelText
+		}
+	}
+	plain := CollapseConsentLabelFromAPI(api.LabelText)
+	if plain == "" {
+		plain = CollapseConsentLabelFromAPI(api.Label)
+	}
+	return plain, plain
 }
 
 // RegistrationFieldOrder is the PATCH /fieldsetup-srv/fields/order request body.
