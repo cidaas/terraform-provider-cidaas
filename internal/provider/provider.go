@@ -215,6 +215,7 @@ func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.Data
 		cidaasDataSources.NewSystemTemplateOption,
 		cidaasDataSources.NewConsent,
 		cidaasDataSources.NewSocialProvider,
+		cidaasDataSources.NewFederationProvider,
 		cidaasDataSources.NewCustomProvider,
 		cidaasDataSources.NewRegistrationField,
 		cidaasDataSources.NewNotificationServiceSetups,
