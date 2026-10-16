@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
@@ -397,8 +398,8 @@ func flattenFederationProvider(api *cidaas.FederationProviderModel, prior *feder
 		Description:           util.StringValueOrNull(&api.Description),
 		Domains:               stringListOrPrior(api.Domains, prior.Domains),
 		EnabledForAdminPortal: util.BoolValueOrNull(api.EnabledForAdminPortal),
-		CreatedTime:           util.StringValueOrNull(&api.CreatedTime),
-		UpdatedTime:           util.StringValueOrNull(&api.UpdatedTime),
+		CreatedTime:           federationTimestamp(api.CreatedTime),
+		UpdatedTime:           federationTimestamp(api.UpdatedTime),
 	}
 	if len(api.AttributeMapping) > 0 {
 		out.AttributeMapping = make(map[string]federationAttributeMappingModel, len(api.AttributeMapping))
@@ -642,6 +643,20 @@ func flattenFederationLDAP(api *cidaas.FederationLDAPConfig, prior *federationLD
 // ---------------------------------------------------------------------------
 // value helpers
 // ---------------------------------------------------------------------------
+
+// federationTimestamp normalizes an API timestamp to millisecond precision. Create/update responses carry
+// nanoseconds while GET returns what MongoDB stored (milliseconds), so without this the value would change
+// on the first refresh and break import verification.
+func federationTimestamp(v string) types.String {
+	if v == "" {
+		return types.StringNull()
+	}
+	t, err := time.Parse(time.RFC3339Nano, v)
+	if err != nil {
+		return types.StringValue(v)
+	}
+	return types.StringValue(t.UTC().Truncate(time.Millisecond).Format(time.RFC3339Nano))
+}
 
 // valueStringIfKnown returns the string value, or "" when v is null or unknown.
 func valueStringIfKnown(v types.String) string {

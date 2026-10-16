@@ -31,13 +31,17 @@ provider "cidaas" {
 
 resource "cidaas_federation_provider" "sample" {
   provider_name = "%s"
-  provider_type = "google"
-  display_name  = "TF Acc DS Google"
+  provider_type = "custom"
+  display_name  = "TF Acc DS Custom"
   standard_type = "OAUTH2"
 
   oauth2 = {
-    client_id     = "acc_ds_client"
-    client_secret = "acc_ds_secret"
+    client_id              = "acc_ds_client"
+    client_secret          = "acc_ds_secret"
+    userinfo_source        = "USERINFOENDPOINT"
+    authorization_endpoint = "https://auth.example.com/oauth/authorize"
+    token_endpoint         = "https://auth.example.com/oauth/token"
+    userinfo_endpoint      = "https://auth.example.com/oauth/userinfo"
   }
 }
 
@@ -51,10 +55,10 @@ data "cidaas_federation_provider" "by_name" {
 `, acctest.GetBaseURL(), providerName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair("data.cidaas_federation_provider.by_id", "id", resourceName, "id"),
-					resource.TestCheckResourceAttr("data.cidaas_federation_provider.by_id", "provider_type", "google"),
+					resource.TestCheckResourceAttr("data.cidaas_federation_provider.by_id", "provider_type", "custom"),
 					resource.TestCheckResourceAttr("data.cidaas_federation_provider.by_id", "oauth2.client_id", "acc_ds_client"),
 					resource.TestCheckResourceAttrPair("data.cidaas_federation_provider.by_name", "id", resourceName, "id"),
-					resource.TestCheckResourceAttr("data.cidaas_federation_provider.by_name", "display_name", "TF Acc DS Google"),
+					resource.TestCheckResourceAttr("data.cidaas_federation_provider.by_name", "display_name", "TF Acc DS Custom"),
 				),
 			},
 		},

@@ -29,7 +29,15 @@ provider "cidaas" {
 `, acctest.GetBaseURL())
 }
 
+// TestAccFederationProvider_CatalogSocial is opt-in: credentials-only catalog social providers need
+// identity-provider-srv >= v1.8.8 (provider-model >= v1.11.3); older tenants reject them with P10003.
+//
+//	RUN_FEDERATION_CATALOG_SOCIAL_ACC_TEST=1 TF_ACC=1 BASE_URL=... CIDAAS_VERSION=4.x \
+//	  go test ./internal/resources/identity_provider/ -run TestAccFederationProvider_CatalogSocial -v
 func TestAccFederationProvider_CatalogSocial(t *testing.T) {
+	if os.Getenv("RUN_FEDERATION_CATALOG_SOCIAL_ACC_TEST") != "1" {
+		t.Skip("set RUN_FEDERATION_CATALOG_SOCIAL_ACC_TEST=1 to run; needs identity-provider-srv >= v1.8.8 on the tenant (older versions reject catalog social without endpoints, P10003)")
+	}
 	id, name := federationAccTest(t)
 	providerName := "tf_acc_apple_" + id
 	config := func(displayName string) string {

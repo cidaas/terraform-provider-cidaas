@@ -83,3 +83,22 @@ func TestFederationProviderSchemaIsValid(t *testing.T) {
 		t.Fatalf("schema version = %d, want 1 (state upgrade from flat v0)", s.Version)
 	}
 }
+
+func TestFederationTimestamp(t *testing.T) {
+	t.Parallel()
+	for in, want := range map[string]string{
+		"2026-10-16T18:02:21.713792576Z": "2026-10-16T18:02:21.713Z", // create/update response
+		"2026-10-16T18:02:21.713Z":       "2026-10-16T18:02:21.713Z", // GET response
+		"2026-10-16T18:02:23.520456945Z": "2026-10-16T18:02:23.52Z",
+		"2026-10-16T18:02:23.52Z":        "2026-10-16T18:02:23.52Z",
+		"2026-10-16T20:02:21.7137+02:00": "2026-10-16T18:02:21.713Z",
+		"not-a-time":                     "not-a-time",
+	} {
+		if got := federationTimestamp(in).ValueString(); got != want {
+			t.Errorf("federationTimestamp(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if !federationTimestamp("").IsNull() {
+		t.Error("empty timestamp must be null")
+	}
+}

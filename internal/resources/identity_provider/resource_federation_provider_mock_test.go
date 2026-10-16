@@ -95,9 +95,9 @@ func (m *mockFederationAPI) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		m.seq++
 		body["id"] = fmt.Sprintf("fed-%d", m.seq)
-		body["createdTime"] = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
+		body["createdTime"] = time.Date(2026, 1, 1, 0, 0, 0, 123000000, time.UTC).Format(time.RFC3339Nano)
 		m.store(body, nil)
-		respond(http.StatusCreated, m.providers[body["id"].(string)])
+		respond(http.StatusCreated, withNanoTimestamps(m.providers[body["id"].(string)]))
 	case r.Method == http.MethodPut:
 		m.bodies = append(m.bodies, sent)
 		saved, ok := m.providers[id]
@@ -108,7 +108,7 @@ func (m *mockFederationAPI) serve(w http.ResponseWriter, r *http.Request) {
 		body["id"] = id
 		body["createdTime"] = saved["createdTime"]
 		m.store(body, saved)
-		respond(http.StatusOK, m.providers[id])
+		respond(http.StatusOK, withNanoTimestamps(m.providers[id]))
 	case r.Method == http.MethodDelete:
 		if _, ok := m.providers[id]; !ok {
 			respond(http.StatusNotFound, nil)
@@ -122,7 +122,8 @@ func (m *mockFederationAPI) serve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *mockFederationAPI) store(p, saved map[string]interface{}) {
-	p["updatedTime"] = time.Date(2026, 1, 2, 0, 0, 0, m.seq, time.UTC).Format(time.RFC3339Nano)
+	// Stored (and returned by GET) with millisecond precision, like MongoDB.
+	p["updatedTime"] = time.Date(2026, 1, 2, 0, 0, m.seq, 456000000, time.UTC).Format(time.RFC3339Nano)
 	if o, ok := p["oauth2"].(map[string]interface{}); ok {
 		delete(o, "wellknown_endpoint") // bson:"-"
 	}
@@ -139,6 +140,21 @@ func (m *mockFederationAPI) store(p, saved map[string]interface{}) {
 		}
 	}
 	m.providers[p["id"].(string)] = p
+}
+
+// withNanoTimestamps mimics create/update responses, which carry nanosecond timestamps while GET returns
+// the millisecond values stored in MongoDB.
+func withNanoTimestamps(p map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(p))
+	for k, v := range p {
+		out[k] = v
+	}
+	for _, key := range []string{"createdTime", "updatedTime"} {
+		if s, ok := out[key].(string); ok {
+			out[key] = strings.TrimSuffix(s, "Z") + "789Z"
+		}
+	}
+	return out
 }
 
 func mockProviderBlock(baseURL string) string {
