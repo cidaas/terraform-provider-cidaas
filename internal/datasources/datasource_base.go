@@ -25,6 +25,7 @@ const (
 	SCOPE_DATASOURCE               = "cidaas_scope"                  //nolint:revive
 	SOCIAL_PROVIDER_DATASOURCE     = "cidaas_social_provider"        //nolint:revive
 	SYSTEM_TEMPLATE_DATASOURCE     = "cidaas_system_template_option" //nolint:revive
+	VERIFICATION_METHOD_DATASOURCE = "cidaas_verification_method"    //nolint:revive
 )
 
 type Parser[K, V any] func(K) V

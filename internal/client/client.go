@@ -23,6 +23,7 @@ type Client struct {
 	FieldSetup                *FieldSetupService
 	SuggestVerificationMethod *SuggestVerificationMethodService
 	VerificationOptions       *VerificationOptionsService
+	VerificationMethod        *VerificationMethodService
 	AppConfiguration          *AppConfigurationService
 }
 
@@ -104,6 +105,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.FieldSetup = NewFieldSetupService(cfg)
 	c.SuggestVerificationMethod = NewSuggestVerificationMethodService(cfg)
 	c.VerificationOptions = NewVerificationOptionsService(cfg)
+	c.VerificationMethod = NewVerificationMethodService(cfg)
 	c.AppConfiguration = NewAppConfigurationService(cfg)
 	return c, nil
 }
