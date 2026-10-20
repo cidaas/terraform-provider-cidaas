@@ -166,6 +166,7 @@ func TestProvider_ResourceRegistrationParity(t *testing.T) {
 		"cidaas_user_groups":                         true,
 		"cidaas_user_setup":                          true,
 		"cidaas_verification_options":                true,
+		"cidaas_verification_method":                 true,
 		"cidaas_webhook":                             true,
 	}
 

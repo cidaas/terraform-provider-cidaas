@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`cidaas_verification_method`** (v4 only): MFA verification method configuration via `verification-actions-srv/config` (Admin → Multifactor Settings → MFA Settings). Separate from `cidaas_verification_options` and `cidaas_suggest_verification_method`.
+  - **System methods** (`EMAIL`, `SMS`, `TOTP`, …; owner other than `CLIENT`) are adopted and configured: `active`, `locale_text`, `encryption_config` (`enabled`, `mode`). Destroy only removes them from state; the method is left unchanged on the tenant.
+  - **Pluggable methods** (owner `CLIENT`) are created and deleted: `url`, `auth_type` (`Bearer` / `oauth` / `oauth2`), `cidaas_auth_details.client_id`, `prerequisite`, `factor`, `category`, `icon`, `amr_values`, `acr_pin`.
+  - System vs pluggable is decided by the method's `owner` on the server, like verification-actions-srv. Import by `verification_type`.
+  - `locale_text` is always sent on update (the API replaces the list), so omitting it keeps the current texts instead of wiping them.
+  - Plan-time validation: `url` requires `auth_type` and `cidaas_auth_details`, absolute `url`, enums for `auth_type`, `factor` and `encryption_config.mode`, non-empty `locale`; on apply, pluggable-only attributes on system methods and `encryption_config` on pluggable methods are rejected with a clear error.
+- **`data.cidaas_verification_method`** (v4 only): read one verification method by `verification_type`; exposes the resource attributes plus the API-resolved `name` / `description`. A missing type lists the available ones.
+
 ## [4.1.1]
 
 ### Fixed

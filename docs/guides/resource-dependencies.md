@@ -9,7 +9,7 @@ Many cidaas resources reference IDs created by other resources. Express those li
 ## Typical Trustdesk (v4) flow
 
 1. **Access building blocks** — `cidaas_role`, `cidaas_scope` / `cidaas_scope_group`, `cidaas_group_type`, `cidaas_user_groups`
-2. **Extdeps used by apps** — `cidaas_user_setup`, `cidaas_verification_options`, `cidaas_group_selection`, `cidaas_group_verification_filter`, hosted pages
+2. **Extdeps used by apps** — `cidaas_user_setup`, `cidaas_verification_method` (enable MFA methods before listing them in `cidaas_verification_options.verification_options.allowed_methods`), `cidaas_verification_options`, `cidaas_group_selection`, `cidaas_group_verification_filter`, hosted pages
 3. **Application** — `cidaas_app_configuration` (scopes + optional `authentication_setup` / extdep IDs)
 4. **Hosted pages** — `cidaas_hosted_page` → `cidaas_hosted_page_layout` / `cidaas_theme` / `cidaas_translations`
 5. **Identity providers** — `cidaas_federation_provider`
