@@ -61,7 +61,7 @@ resource "cidaas_app_configuration" "example" {
 
   # Link one or more cidaas_federation_provider resources to the app.
   # Replaces social_providers / custom_providers of the deprecated cidaas_app.
-  # webfinger is required when any provider has is_provider_visible = false.
+  # Set webfinger when providers are hidden, so users are routed to them by email domain.
   # identity_providers = {
   #   providers = [
   #     { provider_id = cidaas_federation_provider.entra.id },
@@ -187,7 +187,7 @@ Required:
 
 Optional:
 
-- `webfinger` (String) Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Required when any provider has `is_provider_visible = false`.
+- `webfinger` (String) Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Set it when providers are hidden so users are routed to them by email domain.
 
 <a id="nestedatt--identity_providers--providers"></a>
 ### Nested Schema for `identity_providers.providers`
@@ -198,7 +198,7 @@ Required:
 
 Optional:
 
-- `is_provider_visible` (Boolean) Show the provider on the login page. Defaults to `true`. Hidden providers require `webfinger`.
+- `is_provider_visible` (Boolean) Show the provider on the login page. Defaults to `true`. Hidden providers are typically reached via `webfinger` routing.
 
 
 <a id="nestedatt--redirect_uris"></a>

@@ -290,14 +290,14 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 									Optional:            true,
 									Computed:            true,
 									Default:             booldefault.StaticBool(true),
-									MarkdownDescription: "Show the provider on the login page. Defaults to `true`. Hidden providers require `webfinger`.",
+									MarkdownDescription: "Show the provider on the login page. Defaults to `true`. Hidden providers are typically reached via `webfinger` routing.",
 								},
 							},
 						},
 					},
 					"webfinger": schema.StringAttribute{
 						Optional:            true,
-						MarkdownDescription: "Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Required when any provider has `is_provider_visible = false`.",
+						MarkdownDescription: "Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Set it when providers are hidden so users are routed to them by email domain.",
 						Validators: []validator.String{
 							stringvalidator.OneOf("domain_based_redirection", "user_and_domain_based_redirection", "no_redirection"),
 						},
