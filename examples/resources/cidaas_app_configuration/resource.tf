@@ -46,7 +46,7 @@ resource "cidaas_app_configuration" "example" {
 
   # Link one or more cidaas_federation_provider resources to the app.
   # Replaces social_providers / custom_providers of the deprecated cidaas_app.
-  # Set webfinger when providers are hidden, so users are routed to them by email domain.
+  # webfinger is recommended when any provider has is_provider_visible = false.
   # identity_providers = {
   #   providers = [
   #     { provider_id = cidaas_federation_provider.entra.id },
