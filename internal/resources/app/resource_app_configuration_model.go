@@ -30,6 +30,7 @@ type appConfigurationConfig struct {
 	OwnershipDetails    types.Object `tfsdk:"ownership_details"`
 	ClientAuthConfig    types.Object `tfsdk:"client_auth_config"`
 	SigningKeyConfig    types.Object `tfsdk:"signing_key_config"`
+	IdentityProviders   types.Object `tfsdk:"identity_providers"`
 	CreatedTime         types.String `tfsdk:"created_time"`
 	UpdatedTime         types.String `tfsdk:"updated_time"`
 	Owner               types.String `tfsdk:"owner"`
@@ -41,6 +42,21 @@ type appConfigurationConfig struct {
 	authenticationSetup *authenticationSetupConfig
 	ownershipDetails    *ownershipDetailsConfig
 	clientAuthConfig    *clientAuthConfigBlock
+	identityProviders   *identityProvidersConfig
+}
+
+// identityProvidersConfig is the Terraform nested attribute for identity_providers.
+type identityProvidersConfig struct {
+	Providers types.List   `tfsdk:"providers"`
+	Webfinger types.String `tfsdk:"webfinger"`
+
+	providers []identityProviderRef
+}
+
+// identityProviderRef links a cidaas_federation_provider to the app.
+type identityProviderRef struct {
+	ProviderID        types.String `tfsdk:"provider_id"`
+	IsProviderVisible types.Bool   `tfsdk:"is_provider_visible"`
 }
 
 // pkceConfig is the Terraform nested attribute for app-srv `pkce`.
@@ -147,6 +163,13 @@ func (c *appConfigurationConfig) extract(ctx context.Context) diag.Diagnostics {
 		c.clientAuthConfig = &clientAuthConfigBlock{}
 		diags.Append(c.ClientAuthConfig.As(ctx, c.clientAuthConfig, basetypes.ObjectAsOptions{})...)
 	}
+	if !c.IdentityProviders.IsNull() && !c.IdentityProviders.IsUnknown() {
+		c.identityProviders = &identityProvidersConfig{}
+		diags.Append(c.IdentityProviders.As(ctx, c.identityProviders, basetypes.ObjectAsOptions{})...)
+		if !c.identityProviders.Providers.IsNull() && !c.identityProviders.Providers.IsUnknown() {
+			diags.Append(c.identityProviders.Providers.ElementsAs(ctx, &c.identityProviders.providers, false)...)
+		}
+	}
 	return diags
 }
 
@@ -198,7 +221,24 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 			TokenEndpointAuthMethod: c.clientAuthConfig.TokenEndpointAuthMethod.ValueString(),
 		}
 	}
+	if c.identityProviders != nil {
+		model.IdentityProviders = identityProvidersToClient(c.identityProviders)
+	}
 	return model, diags
+}
+
+// identityProvidersToClient maps the identity_providers nested attribute to the API struct.
+func identityProvidersToClient(cfg *identityProvidersConfig) *client.IdentityProvidersConfig {
+	out := &client.IdentityProvidersConfig{
+		Webfinger: cfg.Webfinger.ValueString(),
+	}
+	for _, p := range cfg.providers {
+		out.Providers = append(out.Providers, client.IdentityProviderRef{
+			ProviderID:        p.ProviderID.ValueString(),
+			IsProviderVisible: boolPtr(p.IsProviderVisible),
+		})
+	}
+	return out
 }
 
 // redirectURIsToClient maps the redirect_uris nested block to the API struct.
@@ -384,6 +424,34 @@ func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurati
 		cfg.SigningKeyConfig = obj
 	} else {
 		cfg.SigningKeyConfig = types.ObjectNull(signingKeyConfigAttrTypes())
+	}
+	// NetID-only identity_providers (no providers, no webfinger) stays null so unmanaged apps don't drift.
+	if ip := model.IdentityProviders; ip != nil && (len(ip.Providers) > 0 || ip.Webfinger != "") {
+		providerType := types.ObjectType{AttrTypes: identityProviderAttrTypes()}
+		elems := make([]attr.Value, 0, len(ip.Providers))
+		for _, p := range ip.Providers {
+			// app-srv treats an omitted isProviderVisible as visible.
+			visible := true
+			if p.IsProviderVisible != nil {
+				visible = *p.IsProviderVisible
+			}
+			obj, d := types.ObjectValue(identityProviderAttrTypes(), map[string]attr.Value{
+				"provider_id":         types.StringValue(p.ProviderID),
+				"is_provider_visible": types.BoolValue(visible),
+			})
+			diags.Append(d...)
+			elems = append(elems, obj)
+		}
+		providers, d := types.ListValue(providerType, elems)
+		diags.Append(d...)
+		obj, d := types.ObjectValue(identityProvidersAttrTypes(), map[string]attr.Value{
+			"providers": providers,
+			"webfinger": stringOrNull(ip.Webfinger),
+		})
+		diags.Append(d...)
+		cfg.IdentityProviders = obj
+	} else {
+		cfg.IdentityProviders = types.ObjectNull(identityProvidersAttrTypes())
 	}
 	return cfg, diags
 }

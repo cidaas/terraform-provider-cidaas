@@ -43,4 +43,15 @@ resource "cidaas_app_configuration" "example" {
       enable_login_spi = false
     }
   }
+
+  # Link one or more cidaas_federation_provider resources to the app.
+  # Replaces social_providers / custom_providers of the deprecated cidaas_app.
+  # webfinger is required when any provider has is_provider_visible = false.
+  # identity_providers = {
+  #   providers = [
+  #     { provider_id = cidaas_federation_provider.entra.id },
+  #     { provider_id = cidaas_federation_provider.google.id, is_provider_visible = false },
+  #   ]
+  #   webfinger = "domain_based_redirection"
+  # }
 }
