@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.1.1]
 
 `cidaas_federation_provider` now matches provider-model v1.11.x. Existing **state** is upgraded automatically (schema v0 → v1), but **HCL** must move the flat OAuth2 attributes into the nested `oauth2` block and set `provider_type`.
 
@@ -31,17 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`cidaas_federation_provider`:** catalog social providers (`apple`, `google`, `microsoft`, …) are created with credentials only; endpoints and `userinfoSource` are no longer forced. `userinfoSource` is no longer hardcoded to `USERINFOENDPOINT`. Read-only fields (timestamps, SAML SP certificates) are never sent.
 - **`cidaas_federation_provider`:** `display_name` is optional (required for SAML only).
 - v3→v4 migration guide: federation attribute mapping and examples use the nested schema.
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.label_text` (snake_case, matching fieldsetup). CamelCase `labelText` is dropped by fieldsetup, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `labelText`.
+- **`cidaas_registration_field`:** CONSENT plain `consent_label` text is expanded on create/update to Trustdesk HTML `<a href="{{consent_id}}">…</a>` (same string on API `label` and `label_text`) using `consent_refs` ([5314](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5314)). Prefer `label_text` for the link body.
 
 ### Removed
 
 - **`cidaas_federation_provider`:** top-level `client_id`, `client_secret`, `client_secret_wo`, `client_secret_wo_version`, `authorization_endpoint`, `token_endpoint`, `userinfo_endpoint`. Use the same attributes inside `oauth2`.
 
-## [4.1.1]
 
-### Fixed
-
-- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.label_text` (snake_case, matching fieldsetup). CamelCase `labelText` is dropped by fieldsetup, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `labelText`.
-- **`cidaas_registration_field`:** CONSENT plain `consent_label` text is expanded on create/update to Trustdesk HTML `<a href="{{consent_id}}">…</a>` (same string on API `label` and `label_text`) using `consent_refs` ([5314](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5314)). Prefer `label_text` for the link body.
 
 ## [4.1.0]
 
