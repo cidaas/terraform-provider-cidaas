@@ -40,6 +40,7 @@ type AppConfigurationModel struct {
 	OwnershipDetails    *OwnershipDetailsConfig    `json:"owner_ship_details,omitempty"`
 	ClientAuthConfig    *AuthConfig                `json:"client_auth_config,omitempty"`
 	SigningKeyConfig    *SigningKeyConfig          `json:"signing_key_config,omitempty"`
+	IdentityProviders   *IdentityProvidersConfig   `json:"identity_providers,omitempty"`
 	CreatedTime         string                     `json:"created_time,omitempty"`
 	UpdatedTime         string                     `json:"updated_time,omitempty"`
 }
@@ -112,6 +113,19 @@ type OwnershipDetailsConfig struct {
 // AuthConfig maps client_auth_config (OAuth client authentication).
 type AuthConfig struct {
 	TokenEndpointAuthMethod string `json:"token_endpoint_auth_method,omitempty"`
+}
+
+// IdentityProvidersConfig maps identity_providers (appv3 identity.IdentityProvidersConfig).
+// net_id is not exposed; NetID is tenant-only on Trustdesk.
+type IdentityProvidersConfig struct {
+	Providers []IdentityProviderRef `json:"providers,omitempty"`
+	Webfinger string                `json:"webfinger,omitempty"`
+}
+
+// IdentityProviderRef links a federation provider to the app by provider_id.
+type IdentityProviderRef struct {
+	ProviderID        string `json:"provider_id"`
+	IsProviderVisible *bool  `json:"isProviderVisible,omitempty"`
 }
 
 // SigningKeyConfig is server-assigned signing key metadata.

@@ -35,7 +35,7 @@ provider "cidaas" {
 - **Applications**: `cidaas_app_configuration`
 - **Hosted page branding**: `cidaas_hosted_page_layout`, `cidaas_theme`, `cidaas_translations`
 - **Identity**: `cidaas_federation_provider`
-- **User / MFA / groups**: `cidaas_user_setup`, `cidaas_verification_options`, `cidaas_suggest_verification_method`, `cidaas_group_selection`, `cidaas_group_verification_filter`
+- **User / MFA / groups**: `cidaas_user_setup`, `cidaas_verification_method`, `cidaas_verification_options`, `cidaas_suggest_verification_method`, `cidaas_group_selection`, `cidaas_group_verification_filter`
 
 **Shared / legacy** (existing configs stay valid; prefer modern replacements where noted):
 

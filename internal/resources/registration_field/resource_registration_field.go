@@ -432,14 +432,19 @@ var regFieldSchema = schema.Schema{
 						},
 					},
 					"consent_label": schema.SingleNestedAttribute{
-						Optional:            true,
-						MarkdownDescription: "required when data_type is CONSENT. Example provided in the example section.",
+						Optional: true,
+						MarkdownDescription: "Required when data_type is CONSENT. Plain text is expanded on create/update to " +
+							"Trustdesk/fieldsetup HTML `<a href=\"{{consent_id}}\">…</a>` using `consent_refs` " +
+							"(same string written to API `label` and `label_text`). Prefer `label_text` for the link body; " +
+							"falls back to `label`, then the first consent id.",
 						Attributes: map[string]schema.Attribute{
 							"label": schema.StringAttribute{
-								Required: true,
+								Required:            true,
+								MarkdownDescription: "Consent label. Plain text is expanded with consent_refs; may already be Trustdesk HTML.",
 							},
 							"label_text": schema.StringAttribute{
-								Required: true,
+								Required:            true,
+								MarkdownDescription: "Preferred link text for the expanded `<a href=\"{{consent_id}}\">…</a>` HTML.",
 							},
 						},
 					},
@@ -853,6 +858,19 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.ConsentRefs = util.SetValueOrNull(res.Data.ConsentRefs)
 	state.Order = util.Int64ValueOrNull(&res.Data.Order)
 
+	// Prior consent_label plain text (before LocalTexts refresh) avoids plan drift vs API HTML.
+	priorConsentByLocale := map[string]*Consent{}
+	resp.Diagnostics.Append(state.ExtractConfigs(ctx)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, plt := range state.localTexts {
+		if plt == nil || plt.consent == nil {
+			continue
+		}
+		priorConsentByLocale[plt.Locale.ValueString()] = plt.consent
+	}
+
 	var localTextsObjectValues []attr.Value
 	typesOfAttribute := map[string]attr.Type{
 		"key":   types.StringType,
@@ -909,11 +927,19 @@ func (r *RegFieldResource) Read(ctx context.Context, req resource.ReadRequest, r
 					if lt.ConsentLabel == nil {
 						return types.ObjectNull(typesOfConsentLabel)
 					}
+					var priorLabel, priorLabelText string
+					if prior := priorConsentByLocale[lt.Locale]; prior != nil {
+						priorLabel = prior.Label.ValueString()
+						priorLabelText = prior.LabelText.ValueString()
+					}
+					label, labelText := cidaas.ConsentLabelForState(
+						lt.ConsentLabel, priorLabel, priorLabelText, res.Data.ConsentRefs,
+					)
 					return types.ObjectValueMust(
 						typesOfConsentLabel,
 						map[string]attr.Value{
-							"label":      util.StringValueOrNull(&lt.ConsentLabel.Label),
-							"label_text": util.StringValueOrNull(&lt.ConsentLabel.LabelText),
+							"label":      util.StringValueOrNull(&label),
+							"label_text": util.StringValueOrNull(&labelText),
 						},
 					)
 				}(),
@@ -1271,10 +1297,11 @@ func prepareRegFieldModel(ctx context.Context, plan RegFieldConfig) (*cidaas.Reg
 				tempLocalText.Attributes = cidaasAttribues
 			}
 			if !s.ConsentLabel.IsNull() && !s.ConsentLabel.IsUnknown() && s.consent != nil {
-				tempLocalText.ConsentLabel = &cidaas.ConsentLabel{
-					Label:     s.consent.Label.ValueString(),
-					LabelText: s.consent.LabelText.ValueString(),
-				}
+				tempLocalText.ConsentLabel = cidaas.ExpandConsentLabelForAPI(
+					s.consent.Label.ValueString(),
+					s.consent.LabelText.ValueString(),
+					regConfig.ConsentRefs,
+				)
 			}
 			*target = append(*target, tempLocalText)
 		}

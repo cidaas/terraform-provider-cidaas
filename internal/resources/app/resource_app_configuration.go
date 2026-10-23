@@ -269,6 +269,41 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					},
 				},
 			},
+			"identity_providers": schema.SingleNestedAttribute{
+				Optional: true,
+				MarkdownDescription: "Identity providers users can log in with on this app (app-srv `identity_providers`). " +
+					"Replaces `social_providers` / `custom_providers` / `saml_providers` / `ad_providers` of the deprecated `cidaas_app`.",
+				Attributes: map[string]schema.Attribute{
+					"providers": schema.ListNestedAttribute{
+						Required:            true,
+						MarkdownDescription: "Providers linked to the app. Each `provider_id` may appear only once.",
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+						},
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"provider_id": schema.StringAttribute{
+									Required:            true,
+									MarkdownDescription: "ID of the provider, e.g. `cidaas_federation_provider.<name>.id`.",
+								},
+								"is_provider_visible": schema.BoolAttribute{
+									Optional:            true,
+									Computed:            true,
+									Default:             booldefault.StaticBool(true),
+									MarkdownDescription: "Show the provider on the login page. Defaults to `true`. Setting to `false` is not recommended without configuring `webfinger`.",
+								},
+							},
+						},
+					},
+					"webfinger": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Recommended when any provider has `is_provider_visible = false`.",
+						Validators: []validator.String{
+							stringvalidator.OneOf("domain_based_redirection", "user_and_domain_based_redirection", "no_redirection"),
+						},
+					},
+				},
+			},
 			"signing_key_config": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{

@@ -174,6 +174,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		app.NewLegacyAppResource,
 		verification.NewSuggestVerificationMethodResource,
 		verification.NewVerificationOptionsResource,
+		verification.NewVerificationMethodResource,
 		group.NewGroupSelectionResource,
 		group.NewGroupVerificationFilterResource,
 
@@ -215,6 +216,8 @@ func (p *cidaasProvider) DataSources(_ context.Context) []func() datasource.Data
 		cidaasDataSources.NewSystemTemplateOption,
 		cidaasDataSources.NewConsent,
 		cidaasDataSources.NewSocialProvider,
+		cidaasDataSources.NewFederationProvider,
+		cidaasDataSources.NewVerificationMethod,
 		cidaasDataSources.NewCustomProvider,
 		cidaasDataSources.NewRegistrationField,
 		cidaasDataSources.NewNotificationServiceSetups,
