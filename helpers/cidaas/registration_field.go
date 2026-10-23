@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
@@ -163,21 +166,102 @@ type Attribute struct {
 
 type ConsentLabel struct {
 	Label     string `json:"label,omitempty"`
-	LabelText string `json:"labelText,omitempty"`
+	LabelText string `json:"label_text,omitempty"` // fieldsetup stores snake_case; camelCase labelText is dropped
 }
 
-// UnmarshalJSON accepts labelText (Trustdesk/fieldsetup) or legacy label_text.
+// UnmarshalJSON accepts label_text (fieldsetup/Trustdesk) or legacy labelText.
 func (c *ConsentLabel) UnmarshalJSON(data []byte) error {
 	var raw map[string]string
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
 	c.Label = raw["label"]
-	c.LabelText = raw["labelText"]
+	c.LabelText = raw["label_text"]
 	if c.LabelText == "" {
-		c.LabelText = raw["label_text"]
+		c.LabelText = raw["labelText"]
 	}
 	return nil
+}
+
+// consentLabelAnchorRE matches Trustdesk consent anchors written by ExpandConsentLabelForAPI.
+var consentLabelAnchorRE = regexp.MustCompile(`(?s)<a\s+href=["']\{\{[^}]+\}\}["']>(.*?)</a>`)
+
+// ExpandConsentLabelForAPI builds Trustdesk/fieldsetup consentLabel HTML.
+// Trustdesk stores the same full HTML in both label and label_text:
+//
+//	<a href="{{consent_id}}">display</a>
+//
+// Plain HCL text is expanded using consentRefs (space-joined for multiple).
+// Strings that already contain href="{{ are left unchanged (idempotent).
+func ExpandConsentLabelForAPI(label, labelText string, consentRefs []string) *ConsentLabel {
+	display := strings.TrimSpace(labelText)
+	if display == "" {
+		display = strings.TrimSpace(label)
+	}
+	if display == "" && len(consentRefs) > 0 {
+		display = consentRefs[0]
+	}
+	if display == "" {
+		return nil
+	}
+	out := display
+	if !strings.Contains(display, `href="{{`) && !strings.Contains(display, "href='{{") {
+		if len(consentRefs) == 0 {
+			return &ConsentLabel{Label: display, LabelText: display}
+		}
+		parts := make([]string, 0, len(consentRefs))
+		escaped := html.EscapeString(display)
+		for _, id := range consentRefs {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			parts = append(parts, fmt.Sprintf(`<a href="{{%s}}">%s</a>`, id, escaped))
+		}
+		if len(parts) == 0 {
+			return &ConsentLabel{Label: display, LabelText: display}
+		}
+		out = strings.Join(parts, " ")
+	}
+	return &ConsentLabel{Label: out, LabelText: out}
+}
+
+// CollapseConsentLabelFromAPI returns plain display text from Trustdesk HTML, or s unchanged.
+func CollapseConsentLabelFromAPI(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+	matches := consentLabelAnchorRE.FindAllStringSubmatch(s, -1)
+	if len(matches) == 0 {
+		return s
+	}
+	display := html.UnescapeString(matches[0][1])
+	for _, m := range matches[1:] {
+		if html.UnescapeString(m[1]) != display {
+			return s
+		}
+	}
+	return display
+}
+
+// ConsentLabelForState keeps prior HCL plain text when it expands to the API value (no plan drift).
+// Otherwise collapses API HTML to plain display for both fields (import / external change).
+func ConsentLabelForState(api *ConsentLabel, priorLabel, priorLabelText string, consentRefs []string) (label, labelText string) {
+	if api == nil {
+		return "", ""
+	}
+	if priorLabel != "" || priorLabelText != "" {
+		if exp := ExpandConsentLabelForAPI(priorLabel, priorLabelText, consentRefs); exp != nil &&
+			exp.Label == api.Label && exp.LabelText == api.LabelText {
+			return priorLabel, priorLabelText
+		}
+	}
+	plain := CollapseConsentLabelFromAPI(api.LabelText)
+	if plain == "" {
+		plain = CollapseConsentLabelFromAPI(api.Label)
+	}
+	return plain, plain
 }
 
 // RegistrationFieldOrder is the PATCH /fieldsetup-srv/fields/order request body.

@@ -35,7 +35,7 @@ Provider 4.x is **Trustdesk-first**, not dual-platform compatibility for staying
 | **Scopes & Roles**        | `cidaas_scope`<br>`cidaas_scope_group`<br>`cidaas_role` | `cidaas_scope`<br>`cidaas_scope_group`<br>`cidaas_role`                                      | Standardized across v3 and v4.                                                                                                                                                                     |
 | **Groups**                | `cidaas_group_type`<br>`cidaas_user_groups`             | `cidaas_group_type`<br>`cidaas_user_groups`                                                  | Unchanged. Both resources still exist and are shared across v3 and v4.                                                                                                                             |
 | **Group selection & filters** | Nested on `cidaas_app` (`group_selection`, `group_role_restriction`) | `cidaas_group_selection`<br>`cidaas_group_verification_filter`                               | Additional v4-only resources. They do not replace `cidaas_group_type` / `cidaas_user_groups`.                                                                                                       |
-| **User Setup & MFA**      | N/A                                                     | `cidaas_user_setup`<br>`cidaas_verification_options`<br>`cidaas_suggest_verification_method` | Native v4 user setup & MFA option features.                                                                                                                                                        |
+| **User Setup & MFA**      | N/A                                                     | `cidaas_user_setup`<br>`cidaas_verification_method`<br>`cidaas_verification_options`<br>`cidaas_suggest_verification_method` | Native v4 user setup & MFA option features. `cidaas_verification_method` enables/disables MFA methods tenant-wide (Admin → MFA Settings) and manages pluggable methods. |
 
 ---
 
@@ -67,11 +67,11 @@ Below is the complete, zero-omissions mapping table showing how all fields from 
 | `require_pkce`                                                                                         | `pkce.require_pkce`                                  | Bool               | Nested under `pkce`. Requires PKCE for authorization code flow.                                                                          |
 | `disable_insecure_pkce_method`                                                                         | `pkce.code_challenge_method`                         | List(String)       | Nested under `pkce`. Former `true` → `["S256"]` (reject plain); former `false`/omitted allow-plain → `["S256", "PLAIN"]`.                 |
 | `token_endpoint_auth_method`                                                                           | `client_auth_config.token_endpoint_auth_method`      | String             | Moved into `client_auth_config` block (`none`, `client_secret_basic`, `private_key_jwt`, `tls_client_auth`).                             |
-| `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers`                                 | List(Object)       | Standardized under `identity_providers` list in v4, linking `cidaas_federation_provider` instances.                                      |
+| `social_providers`, `custom_providers`, `saml_providers`, `ad_providers`                               | `identity_providers.providers`                       | List(Object)       | Each entry `{ provider_id, is_provider_visible }` links a `cidaas_federation_provider` by ID. Optional `identity_providers.webfinger`.  |
 | `hosted_page_group`                                                                                    | `hosted_pages_layout_id`                             | String (Extdep ID) | References the `cidaas_hosted_page_layout` that includes `cidaas_hosted_page` ID.                                                                    |
 | `auto_login_after_register`, `register_with_login_information`, `enable_passwordless_auth` / `enable_password_less_auth`, `allow_user_level_multi_provider`, `social_business_ids` | `authentication_setup.*` on `cidaas_app_configuration` | Bool | Set per app in Terraform. Tenant Default Authentication Setup is admin/Trustdesk-only (not a Terraform resource). Deduplication / field lists stay on `cidaas_user_setup`. NetID is tenant-only and not exposed on the app resource. |
 | `enable_deduplication`, `allow_disposable_email`, `validate_phone_number`, allowed/required fields | `user_setup_id` → `cidaas_user_setup` | String (Extdep ID) | Registration field and dedup policies. |
-| `mfa`, `suggest_verification_methods`, `smart_mfa`, `allowed_mfa`                                      | `authentication_setup.verification_options_id`       | String (Extdep ID) | In v4, MFA settings and policies are managed via `cidaas_verification_options` resource.                                                 |
+| `mfa`, `suggest_verification_methods`, `smart_mfa`, `allowed_mfa`                                      | `authentication_setup.verification_options_id`       | String (Extdep ID) | In v4, MFA settings and policies are managed via `cidaas_verification_options` resource. Which methods exist and are enabled tenant-wide is managed via `cidaas_verification_method`. |
 | `group_selection`                                                                                      | `authentication_setup.group_selection_id`            | String (Extdep ID) | In v4, group selection policies are managed via `cidaas_group_selection` resource.                                                       |
 | `group_role_restriction`                                                                               | `authentication_setup.group_verification_request_id` | String (Extdep ID) | In v4, group verification filters are managed via `cidaas_group_verification_filter` resource.                                           |
 
@@ -184,19 +184,31 @@ In Cidaas v4 (Trustdesk), prefer **`cidaas_federation_provider`** (`/federation/
 
 ### Exhaustive Identity Provider Attribute Mapping
 
-| Legacy Field (`social_provider` / `custom_provider`) | Standardized v4 Field (`cidaas_federation_provider`) | Attribute Type     | Description & Migration Guidance                                                                                                           |
-| :--------------------------------------------------- | :--------------------------------------------------- | :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| `provider_name`                                      | `provider_name`                                      | String             | Unique provider identifier (e.g. `google`, `facebook`, `custom_oidc`). Requires replace.                                                   |
-| `display_name`                                       | `display_name`                                       | String             | Human-readable display name of the provider.                                                                                               |
-| N/A                                                  | `standard_type`                                      | String             | Standard protocol type (`"OAUTH2"`, `"OPENID_CONNECT"`, `"SAML"`, `"LDAP"`). Set to `"OPENID_CONNECT"` or `"OAUTH2"` for social providers. |
-| `client_id`                                          | `client_id`                                          | String             | OAuth/OIDC client ID issued by external IdP.                                                                                               |
-| `client_secret`                                      | `client_secret`                                      | String (Sensitive) | Client secret issued by external IdP.                                                                                                      |
-| `authorization_endpoint`                             | `authorization_endpoint`                             | String             | Authorization endpoint URL of the external IdP.                                                                                            |
-| `token_endpoint`                                     | `token_endpoint`                                     | String             | Token endpoint URL of the external IdP.                                                                                                    |
-| `userinfo_endpoint`                                  | `userinfo_endpoint`                                  | String             | Userinfo endpoint URL of the external IdP.                                                                                                 |
-| `logo_url`                                           | `logo_url`                                           | String             | Icon or logo URL of the provider.                                                                                                          |
-| `domains`                                            | `domains`                                            | List(String)       | Allowed email domains for domain-based routing.                                                                                            |
-| N/A                                                  | `owner`                                              | String             | Owner identifier (defaults to `"client"` for Admin UI compatibility).                                                                      |
+`cidaas_federation_provider` nests protocol settings: exactly one of `oauth2` (`OAUTH2` / `OPENID_CONNECT`), `saml` (`SAML`) or `ldap` (`LDAP`) must match `standard_type`.
+
+| Legacy Field (`social_provider` / `custom_provider`) | Standardized v4 Field (`cidaas_federation_provider`) | Attribute Type     | Description & Migration Guidance                                                                                                                       |
+| :--------------------------------------------------- | :--------------------------------------------------- | :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name` (social) / `provider_name` (custom)           | `provider_name`                                      | String             | Unique technical name per tenant (`^[a-zA-Z0-9_-]+$`). Requires replace.                                                                               |
+| `provider_name` (social, e.g. `google`)              | `provider_type`                                      | String             | Platform: catalog social key (`google`, `apple`, `microsoft`, …) or `custom`. Sent as API `provider` (`provider` is a reserved Terraform meta-argument). |
+| `display_name`                                       | `display_name`                                       | String             | Human-readable display name. Required for `SAML`.                                                                                                      |
+| `standard_type`                                      | `standard_type`                                      | String             | `"OAUTH2"`, `"OPENID_CONNECT"`, `"SAML"` or `"LDAP"`.                                                                                                  |
+| `client_id`                                          | `oauth2.client_id`                                   | String             | OAuth/OIDC client ID issued by the external IdP.                                                                                                       |
+| `client_secret` / `client_secret_wo`                 | `oauth2.client_secret` / `oauth2.client_secret_wo`   | String (Sensitive) | Required unless `oauth2.pkce = true`. Prefer the write-only variant with `oauth2.client_secret_wo_version`.                                            |
+| `authorization_endpoint`                             | `oauth2.authorization_endpoint`                      | String             | Custom providers only (or use `oauth2.wellknown_endpoint`). Not needed for catalog social providers.                                                   |
+| `token_endpoint`                                     | `oauth2.token_endpoint`                              | String             | Custom providers only (or use `oauth2.wellknown_endpoint`).                                                                                            |
+| `userinfo_endpoint`                                  | `oauth2.userinfo_endpoint`                           | String             | Custom providers with `userinfo_source = "USERINFOENDPOINT"` and no `wellknown_endpoint`.                                                              |
+| N/A                                                  | `oauth2.userinfo_source`                             | String             | `USERINFOENDPOINT`, `IDTOKEN` or `ACCESSTOKEN`. Required for custom providers.                                                                         |
+| `scopes`                                             | `oauth2.scopes` / `oauth2.scopes_config`             | List / Object      | Scope names, or the full scope setup (label + `required` / `recommended`).                                                                             |
+| `claims`                                             | `oauth2.claims`                                      | Object             | `required_claims` / `optional_claims` with `user_info` and `id_token` lists.                                                                           |
+| `userinfo_fields`                                    | `attribute_mapping`                                  | Map(Object)        | Map key = `field_key` (`email`, `customFields.<key>`, `identityCustomFields.<key>`); `external_key` is the provider attribute.                          |
+| `logo_url`                                           | `logo_url`                                           | String             | Icon or logo URL of the provider.                                                                                                                      |
+| `domains`                                            | `domains`                                            | List(String)       | Allowed email domains for domain-based routing.                                                                                                        |
+| `enabled_for_admin_portal`                           | `enabled_for_admin_portal`                           | Bool               | Availability for the admin portal login.                                                                                                               |
+| N/A                                                  | `owner`                                              | String             | Defaults to `"client"` for Admin UI compatibility.                                                                                                     |
+
+Existing `cidaas_federation_provider` state from provider versions ≤ 4.1.x (flat `client_id`, endpoints at the top level) is upgraded automatically to the nested `oauth2` shape with `provider_type = "custom"` and `oauth2.userinfo_source = "USERINFOENDPOINT"`; update the HCL accordingly.
+
+To read an existing provider, use the `cidaas_federation_provider` data source with `id` or `provider_name`.
 
 ### Identity Provider Before / After HCL Comparison
 
@@ -205,6 +217,7 @@ In Cidaas v4 (Trustdesk), prefer **`cidaas_federation_provider`** (`/federation/
 ```hcl
 # Legacy Social Provider (v3)
 resource "cidaas_social_provider" "google" {
+  name          = "default_google"
   provider_name = "google"
   client_id     = "google-client-id-123"
   client_secret = "google-client-secret-456"
@@ -225,36 +238,35 @@ resource "cidaas_custom_provider" "custom_oidc" {
 #### Standardized v4 (`cidaas_federation_provider`)
 
 ```hcl
-# Standardized Social Provider (v4)
+# Catalog social provider (v4): no endpoints needed
 resource "cidaas_federation_provider" "google" {
-  provider_name = "google"
+  provider_name = "default_google"
+  provider_type = "google"
   display_name  = "Google Login"
   standard_type = "OPENID_CONNECT"
 
-  client_id     = "google-client-id-123"
-  client_secret = "google-client-secret-456"
-
-  authorization_endpoint = "https://accounts.google.com/o/oauth2/v2/auth"
-  token_endpoint         = "https://oauth2.googleapis.com/token"
-  userinfo_endpoint      = "https://openidconnect.googleapis.com/v1/userinfo"
-  logo_url               = "https://cdn.example.com/google-logo.svg"
-  owner                  = "client"
+  oauth2 = {
+    client_id     = "google-client-id-123"
+    client_secret = "google-client-secret-456"
+  }
 }
 
-# Standardized Custom Provider (v4)
+# Custom provider (v4)
 resource "cidaas_federation_provider" "custom_oidc" {
   provider_name = "custom_idp"
+  provider_type = "custom"
   display_name  = "Corporate OIDC IdP"
   standard_type = "OPENID_CONNECT"
+  domains       = ["example.com"]
 
-  client_id     = "custom-client-id"
-  client_secret = "custom-client-secret"
-
-  authorization_endpoint = "https://idp.example.com/oauth/authorize"
-  token_endpoint         = "https://idp.example.com/oauth/token"
-  userinfo_endpoint      = "https://idp.example.com/oauth/userinfo"
-  domains                = ["example.com"]
-  owner                  = "client"
+  oauth2 = {
+    client_id              = "custom-client-id"
+    client_secret          = "custom-client-secret"
+    userinfo_source        = "USERINFOENDPOINT"
+    authorization_endpoint = "https://idp.example.com/oauth/authorize"
+    token_endpoint         = "https://idp.example.com/oauth/token"
+    userinfo_endpoint      = "https://idp.example.com/oauth/userinfo"
+  }
 }
 ```
 

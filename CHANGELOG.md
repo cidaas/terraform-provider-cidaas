@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.1]
+
+`cidaas_federation_provider` now matches provider-model v1.11.x. Existing **state** is upgraded automatically (schema v0 → v1), but **HCL** must move the flat OAuth2 attributes into the nested `oauth2` block and set `provider_type`.
+
+### Added
+
+- **`data.cidaas_federation_provider`:** look up one federation provider by `id` (`GET /federation/providers/:id`) or `provider_name` (`GET /federation/providers?provider_name=`, exactly one match required). Exposes the resource attributes; secrets are sensitive.
+- **`cidaas_federation_provider`:** nested `oauth2`, `saml` and `ldap` blocks (exactly one must match `standard_type`), `provider_type` (API `provider`: catalog social key or `custom`), `description`, `enabled_for_admin_portal`, `attribute_mapping`, `created_time` / `updated_time`.
+  - `oauth2`: `pkce`, `userinfo_source`, `wellknown_endpoint`, `authorization_parameters`, `token_endpoint_auth` (JSON), `scopes`, `scopes_config`, `claims`, `amr_config`, `groups`, `client_secret` / `client_secret_wo` + `client_secret_wo_version`.
+  - `saml`: `meta_data`, `sign_auth_request`, `user_id_attribute`, `protocol_binding_method`, `idp_initiated_config`, `signature_config`, `encryption_config`; computed `sp_signing_certificates` / `sp_encryption_certificates`.
+  - `ldap`: `connection_string` / `host`, `port`, `use_ssl`, `bind_dn`, `bind_credentials` / `bind_credentials_wo` + version, `base_dn` / `search_base`, `filter`, `user_filter`, `unique_field`, `user_sync`, `default_groups`.
+- Plan-time validation: nest vs `standard_type`, `display_name` for SAML, custom OAuth2 endpoints (`wellknown_endpoint` or `authorization_endpoint` + `token_endpoint`, `userinfo_endpoint` for `USERINFOENDPOINT`) and `userinfo_source`, client secret unless PKCE, https endpoints, LDAP connection and search base, `attribute_mapping` key = `field_key` and `data_type` per protocol.
+- **`cidaas_verification_method`** (v4 only): MFA verification method configuration via `verification-actions-srv/config` (Admin → Multifactor Settings → MFA Settings). Separate from `cidaas_verification_options` and `cidaas_suggest_verification_method`.
+  - **System methods** (`EMAIL`, `SMS`, `TOTP`, …; owner other than `CLIENT`) are adopted and configured: `active`, `locale_text`, `encryption_config` (`enabled`, `mode`). Destroy only removes them from state; the method is left unchanged on the tenant.
+  - **Pluggable methods** (owner `CLIENT`) are created and deleted: `url`, `auth_type` (`Bearer` / `oauth` / `oauth2`), `cidaas_auth_details.client_id`, `prerequisite`, `factor`, `category`, `icon`, `amr_values`, `acr_pin`.
+  - System vs pluggable is decided by the method's `owner` on the server, like verification-actions-srv. Import by `verification_type`.
+  - `locale_text` is always sent on update (the API replaces the list), so omitting it keeps the current texts instead of wiping them.
+  - Plan-time validation: `url` requires `auth_type` and `cidaas_auth_details`, absolute `url`, enums for `auth_type`, `factor` and `encryption_config.mode`, non-empty `locale`; on apply, pluggable-only attributes on system methods and `encryption_config` on pluggable methods are rejected with a clear error.
+- **`data.cidaas_verification_method`** (v4 only): read one verification method by `verification_type`; exposes the resource attributes plus the API-resolved `name` / `description`. A missing type lists the available ones.
+- **`cidaas_app_configuration.identity_providers`:** link one or more identity providers (e.g. `cidaas_federation_provider`) to an app via app-srv `identity_providers` — `providers[] { provider_id, is_provider_visible }` and `webfinger`. Replaces `social_providers` / `custom_providers` / `saml_providers` / `ad_providers` of the deprecated `cidaas_app` ([5511](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5511), [GitHub #30](https://github.com/Cidaas/terraform-provider-cidaas/issues/30)).
+
+### Changed
+
+- **`cidaas_federation_provider`:** catalog social providers (`apple`, `google`, `microsoft`, …) are created with credentials only; endpoints and `userinfoSource` are no longer forced. `userinfoSource` is no longer hardcoded to `USERINFOENDPOINT`. Read-only fields (timestamps, SAML SP certificates) are never sent.
+- **`cidaas_federation_provider`:** `display_name` is optional (required for SAML only).
+- v3→v4 migration guide: federation attribute mapping and examples use the nested schema.
+- **`cidaas_registration_field`:** CONSENT `local_texts.consent_label` is sent as API `consentLabel.label_text` (snake_case, matching fieldsetup). CamelCase `labelText` is dropped by fieldsetup, so Trustdesk showed the name but not the consent label. Reads still accept Trustdesk `localeText` / legacy `labelText`.
+- **`cidaas_registration_field`:** CONSENT plain `consent_label` text is expanded on create/update to Trustdesk HTML `<a href="{{consent_id}}">…</a>` (same string on API `label` and `label_text`) using `consent_refs` ([5314](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5314)). Prefer `label_text` for the link body.
+
+### Removed
+
+- **`cidaas_federation_provider`:** top-level `client_id`, `client_secret`, `client_secret_wo`, `client_secret_wo_version`, `authorization_endpoint`, `token_endpoint`, `userinfo_endpoint`. Use the same attributes inside `oauth2`.
+
+
+
 ## [4.1.0]
 
 Minor after `v4.0.1`. Existing 4.0.x **state** stays valid, but `cidaas_app_configuration` **HCL** that still uses top-level `require_pkce` / `disable_insecure_pkce_method` must move those into nested `pkce`.
@@ -36,7 +71,7 @@ Patch after `v4.0.0`. Existing 3.5.x / 4.0.0 state stays valid. Prefer HCL `cida
 
 ### Added
 
-- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"` ([5208](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5208)). `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
+- Provider attributes **`client_id`** and **`client_secret`** on `provider "cidaas"`. `client_secret` is `Sensitive`. Precedence: HCL → `TERRAFORM_PROVIDER_CIDAAS_CLIENT_ID` / `TERRAFORM_PROVIDER_CIDAAS_CLIENT_SECRET`.
 - **Data sources** restored (4.0.0 shipped none): `cidaas_role`, `cidaas_group_type`, `cidaas_scope`, `cidaas_scope_group`, `cidaas_system_template_option`, `cidaas_consent`, `cidaas_social_provider`, `cidaas_custom_provider`, `cidaas_registration_field`, `cidaas_notification_service_setup`, `cidaas_notification_service_setups`, `cidaas_notification_templates`, `cidaas_notification_template_groups`, `cidaas_webhook_events`.
 
 ### Changed
