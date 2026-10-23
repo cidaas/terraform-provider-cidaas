@@ -139,6 +139,20 @@ func stringListOrNull(values []string) types.List {
 	return stringList(values)
 }
 
+func identityProviderAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"provider_id":         types.StringType,
+		"is_provider_visible": types.BoolType,
+	}
+}
+
+func identityProvidersAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"providers": types.ListType{ElemType: types.ObjectType{AttrTypes: identityProviderAttrTypes()}},
+		"webfinger": types.StringType,
+	}
+}
+
 // pkceAttrTypes is the Framework attr type map for the nested pkce object.
 func pkceAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{

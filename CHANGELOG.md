@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `locale_text` is always sent on update (the API replaces the list), so omitting it keeps the current texts instead of wiping them.
   - Plan-time validation: `url` requires `auth_type` and `cidaas_auth_details`, absolute `url`, enums for `auth_type`, `factor` and `encryption_config.mode`, non-empty `locale`; on apply, pluggable-only attributes on system methods and `encryption_config` on pluggable methods are rejected with a clear error.
 - **`data.cidaas_verification_method`** (v4 only): read one verification method by `verification_type`; exposes the resource attributes plus the API-resolved `name` / `description`. A missing type lists the available ones.
+- **`cidaas_app_configuration.identity_providers`:** link one or more identity providers (e.g. `cidaas_federation_provider`) to an app via app-srv `identity_providers` — `providers[] { provider_id, is_provider_visible }` and `webfinger`. Replaces `social_providers` / `custom_providers` / `saml_providers` / `ad_providers` of the deprecated `cidaas_app` ([5511](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5511), [GitHub #30](https://github.com/Cidaas/terraform-provider-cidaas/issues/30)).
 
 ### Changed
 

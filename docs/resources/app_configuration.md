@@ -58,6 +58,17 @@ resource "cidaas_app_configuration" "example" {
       enable_login_spi = false
     }
   }
+
+  # Link one or more cidaas_federation_provider resources to the app.
+  # Replaces social_providers / custom_providers of the deprecated cidaas_app.
+  # webfinger is recommended when any provider has is_provider_visible = false.
+  # identity_providers = {
+  #   providers = [
+  #     { provider_id = cidaas_federation_provider.entra.id },
+  #     { provider_id = cidaas_federation_provider.google.id, is_provider_visible = false },
+  #   ]
+  #   webfinger = "domain_based_redirection"
+  # }
 }
 ```
 
@@ -79,6 +90,7 @@ resource "cidaas_app_configuration" "example" {
 - `enabled` (Boolean)
 - `grant_types` (List of String)
 - `hosted_pages_layout_id` (String) Reference to `cidaas_hosted_page_layout`.
+- `identity_providers` (Attributes) Identity providers users can log in with on this app (app-srv `identity_providers`). Replaces `social_providers` / `custom_providers` / `saml_providers` / `ad_providers` of the deprecated `cidaas_app`. (see [below for nested schema](#nestedatt--identity_providers))
 - `pkce` (Attributes) Nested PKCE object sent to and read from app-srv (`pkce`). Replaces the former top-level `require_pkce` / `disable_insecure_pkce_method` bools on this resource. `code_challenge_method = ["S256"]` rejects insecure `plain` (AUTH10048); `["S256", "PLAIN"]` allows both methods. Computed from the API when omitted. (see [below for nested schema](#nestedatt--pkce))
 - `redirect_uris` (Attributes) (see [below for nested schema](#nestedatt--redirect_uris))
 - `response_types` (List of String)
@@ -164,6 +176,29 @@ Optional:
 Optional:
 
 - `token_endpoint_auth_method` (String) OAuth token endpoint auth method. NON_INTERACTIVE defaults to `client_secret_basic` (requires a client secret). Use `none` when secrets are managed outside this resource.
+
+
+<a id="nestedatt--identity_providers"></a>
+### Nested Schema for `identity_providers`
+
+Required:
+
+- `providers` (Attributes List) Providers linked to the app. Each `provider_id` may appear only once. (see [below for nested schema](#nestedatt--identity_providers--providers))
+
+Optional:
+
+- `webfinger` (String) Email-based provider routing. One of `domain_based_redirection`, `user_and_domain_based_redirection`, `no_redirection`. Recommended when any provider has `is_provider_visible = false`.
+
+<a id="nestedatt--identity_providers--providers"></a>
+### Nested Schema for `identity_providers.providers`
+
+Required:
+
+- `provider_id` (String) ID of the provider, e.g. `cidaas_federation_provider.<name>.id`.
+
+Optional:
+
+- `is_provider_visible` (Boolean) Show the provider on the login page. Defaults to `true`. Setting to `false` is not recommended without configuring `webfinger`.
 
 
 <a id="nestedatt--redirect_uris"></a>
