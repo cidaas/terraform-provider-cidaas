@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`cidaas_event_retention`** (v4 only): per-event-type data retention (`daysToLive` of changelog / user activity events) via webhook-srv `GET`/`PATCH /webhook-srv/eventdescriptions/retention` ([2539](https://gitlab.widas.de/cidaas-v2/framework/issues/-/work_items/2539)). Separate from `cidaas_webhook`.
+  - One instance per tenant: `retention` maps event type ID → days to live; computed `catalog` lists every configurable event type with `object_type`, current `days_to_live` and `default_days_to_live` / `min_days_to_live` / `max_days_to_live`.
+  - Only listed event types are managed. Removing an entry, or destroying the resource, restores that event type's default `daysToLive`. Unchanged entries are not re-sent.
+  - Plan-time validation against the live catalog, matching webhook-srv: unknown event types, immutable event types (no retention bounds) and values outside min/max are rejected before anything is sent, since the API applies entries one by one.
+  - Clear error when retention is not active on the tenant (`custom_reporting` feature off, webhook-srv 403 "retention is not active"). Requires scopes `cidaas:eventdescriptions_retention_read` / `cidaas:eventdescriptions_retention_write`.
+  - Import with ID `event_retention`; import adopts every configurable event type.
+
 ## [4.1.1]
 
 `cidaas_federation_provider` now matches provider-model v1.11.x. Existing **state** is upgraded automatically (schema v0 → v1), but **HCL** must move the flat OAuth2 attributes into the nested `oauth2` block and set `provider_type`.
