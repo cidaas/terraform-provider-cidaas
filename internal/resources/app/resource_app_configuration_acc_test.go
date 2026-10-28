@@ -125,6 +125,11 @@ resource "cidaas_app_configuration" "test" {
     code_challenge_method = ["S256"]
   }
 
+  # require_pkce mandates a public client (app-srv APP10015).
+  client_auth_config = {
+    token_endpoint_auth_method = "none"
+  }
+
   redirect_uris = {
     redirect_uris       = ["https://example.com/callback"]
     allowed_logout_urls = ["https://example.com"]

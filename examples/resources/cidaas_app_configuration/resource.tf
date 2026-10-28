@@ -20,6 +20,11 @@ resource "cidaas_app_configuration" "example" {
     code_challenge_method = ["S256"]
   }
 
+  # A SINGLE_PAGE app with require_pkce must be a public client (no client secret).
+  client_auth_config = {
+    token_endpoint_auth_method = "none"
+  }
+
   ownership_details = {
     company_name    = "Example Corp"
     company_address = "1 Example Way"
