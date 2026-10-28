@@ -3,7 +3,6 @@ package notification
 import (
 	"context"
 	"errors"
-	"regexp"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/cidaas"
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
@@ -92,9 +91,11 @@ var notificationTemplateSchema = schema.Schema{
 			},
 		},
 		"locale": schema.StringAttribute{
-			Required: true,
+			Required:            true,
+			MarkdownDescription: "BCP47 locale tag for the template content, either language-only (e.g. `en`, `de`) or language-REGION (e.g. `en-US`, `de-DE`). Must be one of the locales supported by cidaas. Changing it forces a new resource.",
 			Validators: []validator.String{
-				stringvalidator.RegexMatches(regexp.MustCompile(`^[a-z]{2}-[A-Z]{2}$`), "locale must match language-REGION format (e.g., en-US)"),
+				// notification-srv stores language-only locales (en, de) for seeded templates; they must be importable.
+				stringvalidator.OneOf(util.AllowedBCP47Locales...),
 			},
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),
