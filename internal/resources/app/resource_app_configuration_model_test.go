@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/Cidaas/terraform-provider-cidaas/helpers/util"
@@ -294,5 +295,64 @@ func TestFlattenAppConfigurationIdentityProvidersNullWhenEmpty(t *testing.T) {
 	}
 	if !cfg.IdentityProviders.IsNull() {
 		t.Fatalf("identity_providers=%v want null", cfg.IdentityProviders)
+	}
+}
+
+func TestToModelSendsAdditionalAccessTokenPayload(t *testing.T) {
+	t.Parallel()
+	cfg := appConfigurationConfig{
+		ClientName:                   types.StringValue("app-1"),
+		ClientType:                   types.StringValue("SINGLE_PAGE"),
+		AdditionalAccessTokenPayload: util.SetValueOrEmpty([]string{"email", "roles"}),
+	}
+	model, diags := cfg.toModel(context.Background())
+	if diags.HasError() {
+		t.Fatalf("toModel: %v", diags)
+	}
+	got := model.AdditionalAccessTokenPayload
+	slices.Sort(got)
+	if !slices.Equal(got, []string{"email", "roles"}) {
+		t.Fatalf("additional_access_token_payload=%v", got)
+	}
+}
+
+func TestToModelOmitsAdditionalAccessTokenPayloadWhenUnknown(t *testing.T) {
+	t.Parallel()
+	cfg := appConfigurationConfig{
+		ClientName:                   types.StringValue("app-1"),
+		ClientType:                   types.StringValue("SINGLE_PAGE"),
+		AdditionalAccessTokenPayload: types.SetUnknown(types.StringType),
+	}
+	model, diags := cfg.toModel(context.Background())
+	if diags.HasError() {
+		t.Fatalf("toModel: %v", diags)
+	}
+	if model.AdditionalAccessTokenPayload != nil {
+		t.Fatalf("additional_access_token_payload=%v want nil", model.AdditionalAccessTokenPayload)
+	}
+}
+
+func TestFlattenAppConfigurationAdditionalAccessTokenPayload(t *testing.T) {
+	t.Parallel()
+	cfg, diags := flattenAppConfiguration(client.AppConfigurationModel{
+		ClientID:                     "id-1",
+		ClientName:                   "app-1",
+		ClientType:                   "SINGLE_PAGE",
+		AdditionalAccessTokenPayload: []string{"email"},
+	})
+	if diags.HasError() {
+		t.Fatalf("flatten: %v", diags)
+	}
+	if got := util.SetToStrings(cfg.AdditionalAccessTokenPayload); !slices.Equal(got, []string{"email"}) {
+		t.Fatalf("additional_access_token_payload=%v", got)
+	}
+
+	// Unset on the API reads back as an empty (known) set, not null.
+	cfg, diags = flattenAppConfiguration(client.AppConfigurationModel{ClientID: "id-2", ClientName: "app-2", ClientType: "SINGLE_PAGE"})
+	if diags.HasError() {
+		t.Fatalf("flatten: %v", diags)
+	}
+	if cfg.AdditionalAccessTokenPayload.IsNull() || len(cfg.AdditionalAccessTokenPayload.Elements()) != 0 {
+		t.Fatalf("additional_access_token_payload=%v want empty set", cfg.AdditionalAccessTokenPayload)
 	}
 }

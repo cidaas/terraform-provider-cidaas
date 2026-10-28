@@ -70,6 +70,81 @@ func TestAccAppConfiguration_Basic(t *testing.T) {
 	})
 }
 
+func TestAccAppConfiguration_AdditionalAccessTokenPayload(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping acceptance test in short mode")
+	}
+	t.Parallel()
+	acctest.SkipIfV3(t)
+
+	name := "tf-app-" + acctest.RandString(8)
+	resourceName := "cidaas_app_configuration.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             testCheckAppConfigurationDestroyed(resourceName),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAppConfigurationPayloadConfig(name, []string{"email"}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "additional_access_token_payload.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "additional_access_token_payload.*", "email"),
+				),
+			},
+			{
+				// Omitting the attribute keeps the value on the app.
+				Config: testAccAppConfigurationPayloadConfig(name, nil),
+				Check:  resource.TestCheckResourceAttr(resourceName, "additional_access_token_payload.#", "1"),
+			},
+			{
+				Config: testAccAppConfigurationPayloadConfig(name, []string{}),
+				Check:  resource.TestCheckResourceAttr(resourceName, "additional_access_token_payload.#", "0"),
+			},
+		},
+	})
+}
+
+// testAccAppConfigurationPayloadConfig omits additional_access_token_payload when payload is nil.
+func testAccAppConfigurationPayloadConfig(name string, payload []string) string {
+	payloadHCL := ""
+	if payload != nil {
+		payloadHCL = "additional_access_token_payload = " + hclStringList(payload)
+	}
+	return fmt.Sprintf(`
+%s
+resource "cidaas_app_configuration" "test" {
+  client_name = %q
+  client_type = "SINGLE_PAGE"
+
+  grant_types    = ["authorization_code"]
+  response_types = ["code"]
+
+  pkce = {
+    require_pkce          = true
+    code_challenge_method = ["S256"]
+  }
+
+  redirect_uris = {
+    redirect_uris       = ["https://example.com/callback"]
+    allowed_logout_urls = ["https://example.com"]
+  }
+
+  ownership_details = {
+    company_name    = "Terraform Acc Test Corp"
+    company_address = "1 Test Way"
+    company_website = "https://example.com"
+  }
+
+  scopes = {
+    allowed_scopes = ["openid", "email"]
+  }
+
+  %s
+}
+`, acctest.ProviderConfig(), name, payloadHCL)
+}
+
 func testAccAppConfigurationConfig(name string, allowed, defaults []string) string {
 	allowedHCL := hclStringList(allowed)
 	defaultsHCL := hclStringList(defaults)
