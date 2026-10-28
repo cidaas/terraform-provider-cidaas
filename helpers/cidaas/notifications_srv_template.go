@@ -223,14 +223,7 @@ func (t *NotificationsSrvTemplate) FindGraph(ctx context.Context, filter json.Ra
 	if err != nil {
 		return nil, fmt.Errorf("failed to read graph/templates body: %w", err)
 	}
-	out, err := ParseNotificationSrvData[[]NotificationsSrvTemplateModel](bodyBytes, res.StatusCode)
-	if err != nil {
-		return nil, err
-	}
-	if out == nil {
-		return nil, nil
-	}
-	return *out, nil
+	return ParseNotificationSrvGraphList[NotificationsSrvTemplateModel](bodyBytes, res.StatusCode)
 }
 
 func ComputeNotificationTemplateDocID(m NotificationsSrvTemplateModel) string {
