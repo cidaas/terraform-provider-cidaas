@@ -25,6 +25,7 @@ type Client struct {
 	VerificationOptions       *VerificationOptionsService
 	VerificationMethod        *VerificationMethodService
 	AppConfiguration          *AppConfigurationService
+	EventRetention            *EventRetentionService
 }
 
 type Config struct {
@@ -107,6 +108,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.VerificationOptions = NewVerificationOptionsService(cfg)
 	c.VerificationMethod = NewVerificationMethodService(cfg)
 	c.AppConfiguration = NewAppConfigurationService(cfg)
+	c.EventRetention = NewEventRetentionService(cfg)
 	return c, nil
 }
 

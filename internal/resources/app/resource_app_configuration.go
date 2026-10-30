@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/Cidaas/terraform-provider-cidaas/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -15,15 +16,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
-	_ resource.Resource                = &appConfigurationResource{}
-	_ resource.ResourceWithConfigure   = &appConfigurationResource{}
-	_ resource.ResourceWithImportState = &appConfigurationResource{}
+	_ resource.Resource                   = &appConfigurationResource{}
+	_ resource.ResourceWithConfigure      = &appConfigurationResource{}
+	_ resource.ResourceWithImportState    = &appConfigurationResource{}
+	_ resource.ResourceWithValidateConfig = &appConfigurationResource{}
 
 	clientTypeValues = []string{
 		"NON_INTERACTIVE",
@@ -304,6 +307,18 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					},
 				},
 			},
+			"additional_access_token_payload": schema.SetAttribute{
+				Optional:    true,
+				Computed:    true,
+				ElementType: types.StringType,
+				MarkdownDescription: "User attributes added as extra claims to the access token " +
+					"(\"Additional Access Token Payload\" in the Admin UI), e.g. `[\"email\", \"roles\"]`. " +
+					"Not allowed for `NON_INTERACTIVE` and `SAML_SP` apps. When omitted, the current value on the app " +
+					"(e.g. set in the Admin UI) is kept on update; set `[]` to clear it.",
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"signing_key_config": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
@@ -311,9 +326,29 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"next_kid":   schema.StringAttribute{Computed: true},
 				},
 			},
-			"created_time": schema.StringAttribute{Computed: true},
-			"updated_time": schema.StringAttribute{Computed: true},
 		},
+	}
+}
+
+// tokenPayloadForbiddenClientTypes cannot carry additional_access_token_payload
+// (app-model rule app.additional_access_token_payload.allowed): SAML_SP issues no OAuth
+// access tokens and NON_INTERACTIVE (M2M) tokens have no user claims.
+var tokenPayloadForbiddenClientTypes = []string{"NON_INTERACTIVE", "SAML_SP"}
+
+// ValidateConfig rejects additional_access_token_payload on client types app-srv refuses it for,
+// so the error shows at plan time instead of as a 400 on apply.
+func (r *appConfigurationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var clientType types.String
+	var payload types.Set
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("client_type"), &clientType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("additional_access_token_payload"), &payload)...)
+	if resp.Diagnostics.HasError() || clientType.IsNull() || clientType.IsUnknown() || payload.IsNull() || payload.IsUnknown() {
+		return
+	}
+	if len(payload.Elements()) > 0 && slices.Contains(tokenPayloadForbiddenClientTypes, clientType.ValueString()) {
+		resp.Diagnostics.AddAttributeError(path.Root("additional_access_token_payload"), "additional_access_token_payload not allowed",
+			fmt.Sprintf("`additional_access_token_payload` is not supported for client_type %s: NON_INTERACTIVE (M2M) tokens carry no user claims "+
+				"and SAML_SP apps issue no OAuth access tokens. Remove the attribute or set it to `[]`.", clientType.ValueString()))
 	}
 }
 

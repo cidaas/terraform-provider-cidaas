@@ -190,12 +190,5 @@ func (t *TemplateTypeServiceImpl) FindGraphTemplateTypes(ctx context.Context, fi
 	if err != nil {
 		return nil, fmt.Errorf("failed to read graph/templatetypes body: %w", err)
 	}
-	out, err := ParseNotificationSrvData[[]TemplateTypeModel](bodyBytes, res.StatusCode)
-	if err != nil {
-		return nil, err
-	}
-	if out == nil {
-		return nil, nil
-	}
-	return *out, nil
+	return ParseNotificationSrvGraphList[TemplateTypeModel](bodyBytes, res.StatusCode)
 }

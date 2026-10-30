@@ -180,14 +180,7 @@ func (t *NotificationsSrvTemplateGroup) FindGraphGroups(ctx context.Context, fil
 	if err != nil {
 		return nil, fmt.Errorf("failed to read graph/templategroups body: %w", err)
 	}
-	out, err := ParseNotificationSrvData[[]NotificationsSrvTemplateGroupData](bodyBytes, res.StatusCode)
-	if err != nil {
-		return nil, err
-	}
-	if out == nil {
-		return nil, nil
-	}
-	return *out, nil
+	return ParseNotificationSrvGraphList[NotificationsSrvTemplateGroupData](bodyBytes, res.StatusCode)
 }
 
 func (t *NotificationsSrvTemplateGroup) GetTemplateFilters(ctx context.Context, groupID string) (json.RawMessage, error) {
