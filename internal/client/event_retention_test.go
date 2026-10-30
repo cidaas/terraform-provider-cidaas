@@ -90,3 +90,18 @@ func TestEventRetentionInactive(t *testing.T) {
 		t.Fatalf("expected ErrRetentionInactive, got %v", err)
 	}
 }
+
+// A 403 for missing scopes must not look like "inactive": Read would drop the resource from state.
+func TestEventRetentionForbiddenNotInactive(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"success":false,"status":403,"error":{"error":"insufficient scope"}}`))
+	}))
+	defer srv.Close()
+
+	_, err := NewEventRetentionService(Config{BaseURL: srv.URL}).List(context.Background())
+	if err == nil || errors.Is(err, ErrRetentionInactive) {
+		t.Fatalf("expected a non-inactive error, got %v", err)
+	}
+}

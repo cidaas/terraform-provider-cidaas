@@ -328,7 +328,8 @@ func (r *eventRetentionResource) notConfigurableReason(ctx context.Context, id s
 	exists, err := r.client.EventRetention.EventTypeExists(ctx, id)
 	switch {
 	case err != nil:
-		return fmt.Sprintf("event type %s is not in the retention catalog (see the catalog attribute).", id)
+		return fmt.Sprintf("event type %s is not in the retention catalog (see the catalog attribute); "+
+			"checking whether it exists failed: %s", id, err)
 	case !exists:
 		return fmt.Sprintf("unknown event type: %s.", id)
 	default:

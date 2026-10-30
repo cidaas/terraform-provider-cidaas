@@ -106,8 +106,11 @@ func (s *EventRetentionService) EventTypeExists(ctx context.Context, id string) 
 	return true, nil
 }
 
+// mapRetentionErr matches the message, not just the 403: a token missing the retention scopes also
+// gets 403, and Read drops the resource from state on ErrRetentionInactive. An unmatched message
+// therefore fails loudly instead of silently removing state.
 func mapRetentionErr(err error) error {
-	if err != nil && strings.Contains(err.Error(), "retention is not active") {
+	if err != nil && strings.Contains(strings.ToLower(err.Error()), "retention is not active") {
 		return errors.Join(ErrRetentionInactive, err)
 	}
 	return err
