@@ -168,6 +168,7 @@ func TestProvider_ResourceRegistrationParity(t *testing.T) {
 		"cidaas_verification_options":                true,
 		"cidaas_verification_method":                 true,
 		"cidaas_webhook":                             true,
+		"cidaas_event_retention":                     true,
 	}
 
 	registered := make(map[string]bool)
