@@ -201,6 +201,7 @@ func (p *cidaasProvider) Resources(_ context.Context) []func() resource.Resource
 		consent.NewConsentVersionResource,
 
 		webhook.NewWebhookResource,
+		webhook.NewEventRetentionResource,
 		identityprovider.NewFederationProviderResource,
 		identityprovider.NewSocialProviderResource,
 		identityprovider.NewCustomProviderResource,

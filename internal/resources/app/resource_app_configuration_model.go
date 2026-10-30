@@ -31,9 +31,9 @@ type appConfigurationConfig struct {
 	ClientAuthConfig    types.Object `tfsdk:"client_auth_config"`
 	SigningKeyConfig    types.Object `tfsdk:"signing_key_config"`
 	IdentityProviders   types.Object `tfsdk:"identity_providers"`
-	CreatedTime         types.String `tfsdk:"created_time"`
-	UpdatedTime         types.String `tfsdk:"updated_time"`
-	Owner               types.String `tfsdk:"owner"`
+	// AdditionalAccessTokenPayload is a Set because claim order is irrelevant (matches cidaas_app).
+	AdditionalAccessTokenPayload types.Set    `tfsdk:"additional_access_token_payload"`
+	Owner                        types.String `tfsdk:"owner"`
 
 	pkce                *pkceConfig
 	redirectURIs        *redirectURIsConfig
@@ -196,6 +196,9 @@ func (c *appConfigurationConfig) toModel(ctx context.Context) (client.AppConfigu
 	}
 	model.GrantTypes = util.ListToStrings(c.GrantTypes)
 	model.ResponseTypes = util.ListToStrings(c.ResponseTypes)
+	// PUT is a full replace: an omitted value is reset by app-srv. When unconfigured, the plan
+	// carries the prior state (UseStateForUnknown), so a value set outside Terraform is resent.
+	model.AdditionalAccessTokenPayload = util.SetToStrings(c.AdditionalAccessTokenPayload)
 
 	if c.redirectURIs != nil {
 		model.RedirectURIs = redirectURIsToClient(c.redirectURIs)
@@ -312,8 +315,8 @@ func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurati
 		ResponseTypes:       stringList(model.ResponseTypes),
 		HostedPagesLayoutID: stringOrNull(model.HostedPagesLayoutID),
 		UserSetupID:         stringOrNull(model.UserSetupID),
-		CreatedTime:         stringOrNull(model.CreatedTime),
-		UpdatedTime:         stringOrNull(model.UpdatedTime),
+		// Always known (empty when unset) so an explicit `[]` in config stays consistent after apply.
+		AdditionalAccessTokenPayload: util.SetValueOrEmpty(model.AdditionalAccessTokenPayload),
 	}
 	// Build pkce state from the API response (no plan-keep workaround).
 	if model.PKCE != nil {

@@ -37,7 +37,7 @@ resource "cidaas_notification_template" "welcome_email_en" {
 - `content` (String) The body content of the template (e.g. HTML or text format).
 - `description` (String) Description of the notification template (10 to 600 characters).
 - `group_id` (String) Notification group identifier (e.g. `default`).
-- `locale` (String) BCP47 locale tag for the template content (e.g. `en`, `en-US`, `de-DE`).
+- `locale` (String) BCP47 locale tag for the template content, either language-only (e.g. `en`, `de`) or language-REGION (e.g. `en-US`, `de-DE`). Must be one of the locales supported by cidaas. Changing it forces a new resource.
 - `message_format` (String) Message format identifier (e.g. `html`, `text`).
 - `template_key` (String) Unique template key matching a registered template type (e.g. `WELCOME_USER`).
 

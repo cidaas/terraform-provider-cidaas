@@ -25,6 +25,19 @@ type notificationSrvEnvelope struct {
 	Data     json.RawMessage `json:"data"`
 }
 
+// ParseNotificationSrvGraphList parses a notification-srv graph search response. The graph APIs answer
+// 204 No Content (no body) when the filter matches nothing, which is an empty result, not an error.
+func ParseNotificationSrvGraphList[T any](body []byte, httpStatus int) ([]T, error) {
+	if httpStatus == http.StatusNoContent {
+		return nil, nil
+	}
+	out, err := ParseNotificationSrvData[[]T](body, httpStatus)
+	if err != nil || out == nil {
+		return nil, err
+	}
+	return *out, nil
+}
+
 func ParseNotificationSrvData[T any](body []byte, httpStatus int) (*T, error) {
 	var env notificationSrvEnvelope
 	if err := json.Unmarshal(body, &env); err != nil {

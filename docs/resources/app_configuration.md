@@ -35,6 +35,11 @@ resource "cidaas_app_configuration" "example" {
     code_challenge_method = ["S256"]
   }
 
+  # A SINGLE_PAGE app with require_pkce must be a public client (no client secret).
+  client_auth_config = {
+    token_endpoint_auth_method = "none"
+  }
+
   ownership_details = {
     company_name    = "Example Corp"
     company_address = "1 Example Way"
@@ -45,6 +50,10 @@ resource "cidaas_app_configuration" "example" {
     allowed_scopes = ["openid", "profile"]
     default_scopes = ["openid"]
   }
+
+  # Extra user attributes added as access token claims (Admin UI: "Additional Access Token Payload").
+  # Not allowed for NON_INTERACTIVE and SAML_SP. Omit to keep the value set on the app; [] clears it.
+  additional_access_token_payload = ["email", "roles"]
 
   # Per-app authentication setup (Trustdesk). Tenant defaults are not managed by Terraform.
   # login_spi is app-only.
@@ -84,6 +93,7 @@ resource "cidaas_app_configuration" "example" {
 
 ### Optional
 
+- `additional_access_token_payload` (Set of String) User attributes added as extra claims to the access token ("Additional Access Token Payload" in the Admin UI), e.g. `["email", "roles"]`. Not allowed for `NON_INTERACTIVE` and `SAML_SP` apps. When omitted, the current value on the app (e.g. set in the Admin UI) is kept on update; set `[]` to clear it.
 - `authentication_setup` (Attributes) (see [below for nested schema](#nestedatt--authentication_setup))
 - `client_auth_config` (Attributes) (see [below for nested schema](#nestedatt--client_auth_config))
 - `client_id` (String) OAuth client ID. Auto-generated when omitted on create. Import key.
@@ -99,10 +109,8 @@ resource "cidaas_app_configuration" "example" {
 
 ### Read-Only
 
-- `created_time` (String)
 - `owner` (String) Application owner. Always `client` for Trustdesk customer apps (set automatically on create/update).
 - `signing_key_config` (Attributes) (see [below for nested schema](#nestedatt--signing_key_config))
-- `updated_time` (String)
 
 <a id="nestedatt--ownership_details"></a>
 ### Nested Schema for `ownership_details`
