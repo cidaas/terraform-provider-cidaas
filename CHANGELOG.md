@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`cidaas_notification_template`:** `locale` now accepts language-only tags such as `de` and `en`. Since v4.0.0 the validator only allowed `language-REGION` (`^[a-z]{2}-[A-Z]{2}$`), so seeded notification-srv templates stored with `de`/`en` could not be imported (`terraform plan -generate-config-out` failed with `Invalid Attribute Value Match`) or managed. `locale` is now validated against the same BCP47 list as `cidaas_template` ([5545](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5545)).
+- **`data.cidaas_notification_templates`, `data.cidaas_notification_template_groups`:** a `graph_filter` that matches nothing now returns an empty list instead of failing with `failed to parse notification-srv response`. notification-srv answers graph searches without a match with `204 No Content` and no body; the template type graph search had the same handling and is fixed too.
+
 ## [4.1.1]
 
 `cidaas_federation_provider` now matches provider-model v1.11.x. Existing **state** is upgraded automatically (schema v0 → v1), but **HCL** must move the flat OAuth2 attributes into the nested `oauth2` block and set `provider_type`.
