@@ -326,8 +326,6 @@ func (r *appConfigurationResource) Schema(_ context.Context, _ resource.SchemaRe
 					"next_kid":   schema.StringAttribute{Computed: true},
 				},
 			},
-			"created_time": schema.StringAttribute{Computed: true},
-			"updated_time": schema.StringAttribute{Computed: true},
 		},
 	}
 }

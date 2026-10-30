@@ -109,10 +109,8 @@ resource "cidaas_app_configuration" "example" {
 
 ### Read-Only
 
-- `created_time` (String)
 - `owner` (String) Application owner. Always `client` for Trustdesk customer apps (set automatically on create/update).
 - `signing_key_config` (Attributes) (see [below for nested schema](#nestedatt--signing_key_config))
-- `updated_time` (String)
 
 <a id="nestedatt--ownership_details"></a>
 ### Nested Schema for `ownership_details`

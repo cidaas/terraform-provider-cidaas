@@ -43,8 +43,6 @@ type AppConfigurationModel struct {
 	IdentityProviders   *IdentityProvidersConfig   `json:"identity_providers,omitempty"`
 	// AdditionalAccessTokenPayload lists extra user attributes added as access token claims.
 	AdditionalAccessTokenPayload []string `json:"additional_access_token_payload,omitempty"`
-	CreatedTime                  string   `json:"created_time,omitempty"`
-	UpdatedTime                  string   `json:"updated_time,omitempty"`
 }
 
 // PKCEConfig is the app-srv nested `pkce` object.

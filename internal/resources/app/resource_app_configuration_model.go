@@ -33,8 +33,6 @@ type appConfigurationConfig struct {
 	IdentityProviders   types.Object `tfsdk:"identity_providers"`
 	// AdditionalAccessTokenPayload is a Set because claim order is irrelevant (matches cidaas_app).
 	AdditionalAccessTokenPayload types.Set    `tfsdk:"additional_access_token_payload"`
-	CreatedTime                  types.String `tfsdk:"created_time"`
-	UpdatedTime                  types.String `tfsdk:"updated_time"`
 	Owner                        types.String `tfsdk:"owner"`
 
 	pkce                *pkceConfig
@@ -319,8 +317,6 @@ func flattenAppConfiguration(model client.AppConfigurationModel) (appConfigurati
 		UserSetupID:         stringOrNull(model.UserSetupID),
 		// Always known (empty when unset) so an explicit `[]` in config stays consistent after apply.
 		AdditionalAccessTokenPayload: util.SetValueOrEmpty(model.AdditionalAccessTokenPayload),
-		CreatedTime:                  stringOrNull(model.CreatedTime),
-		UpdatedTime:                  stringOrNull(model.UpdatedTime),
 	}
 	// Build pkce state from the API response (no plan-keep workaround).
 	if model.PKCE != nil {
