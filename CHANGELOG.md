@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`cidaas_app_configuration.additional_access_token_payload`:** user attributes added as extra access token claims ("Additional Access Token Payload" in the Admin UI), previously only available on the deprecated `cidaas_app`. Setting it on `NON_INTERACTIVE` or `SAML_SP` apps fails at plan time (app-srv rejects it for those types). When the attribute is omitted, the current value on the app (e.g. set in the Admin UI) is sent back on update instead of being reset by the full-replace PUT; set `[]` to clear it ([5551](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5551)).
+
 ### Fixed
 
 - **`cidaas_notification_template`:** `locale` now accepts language-only tags such as `de` and `en`. Since v4.0.0 the validator only allowed `language-REGION` (`^[a-z]{2}-[A-Z]{2}$`), so seeded notification-srv templates stored with `de`/`en` could not be imported (`terraform plan -generate-config-out` failed with `Invalid Attribute Value Match`) or managed. `locale` is now validated against the same BCP47 list as `cidaas_template` ([5545](https://gitlab.widas.de/cidaas-v2/service-management/cidaas-support/-/work_items/5545)).

@@ -20,6 +20,11 @@ resource "cidaas_app_configuration" "example" {
     code_challenge_method = ["S256"]
   }
 
+  # A SINGLE_PAGE app with require_pkce must be a public client (no client secret).
+  client_auth_config = {
+    token_endpoint_auth_method = "none"
+  }
+
   ownership_details = {
     company_name    = "Example Corp"
     company_address = "1 Example Way"
@@ -30,6 +35,10 @@ resource "cidaas_app_configuration" "example" {
     allowed_scopes = ["openid", "profile"]
     default_scopes = ["openid"]
   }
+
+  # Extra user attributes added as access token claims (Admin UI: "Additional Access Token Payload").
+  # Not allowed for NON_INTERACTIVE and SAML_SP. Omit to keep the value set on the app; [] clears it.
+  additional_access_token_payload = ["email", "roles"]
 
   # Per-app authentication setup (Trustdesk). Tenant defaults are not managed by Terraform.
   # login_spi is app-only.
